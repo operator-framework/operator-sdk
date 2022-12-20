@@ -50,7 +50,7 @@ For operators distributed through the [Operator Lifecycle Manager (OLM)][olm]:
 
 [manifest_list]: https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list
 [image_index]: https://github.com/opencontainers/image-spec/blob/main/image-index.md
-[buildah]: https://github.com/containers/buildah/blob/main/docs/buildah-bud.md#building-an-multi-architecture-image-using-a---manifest-option-requires-emulation-software
+[buildah]: https://github.com/containers/buildah/blob/main/docs/buildah-build.1.md#building-an-multi-architecture-image-using-the---manifest-option-requires-emulation-software
 [buildx]: https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
 [buildx_multiarch]: https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
 [olm]: https://olm.operatorframework.io/docs/

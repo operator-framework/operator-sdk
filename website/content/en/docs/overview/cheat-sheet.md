@@ -70,7 +70,7 @@ make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [operatorhub-io]: https://operatorhub.io/
 [upgrade-project]: /docs/olm-integration/generation/#upgrade-your-operator
-[channel-namming-doc]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/channel-naming.md
+[channel-namming-doc]: https://olm.operatorframework.io/docs/best-practices/channel-naming/
 [controllers-k8s-doc]: https://kubernetes.io/docs/concepts/architecture/controller
 [gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [extend-k8s-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
