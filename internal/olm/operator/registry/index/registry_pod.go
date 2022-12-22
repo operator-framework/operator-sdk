@@ -139,6 +139,16 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 				Type: corev1.SeccompProfileTypeRuntimeDefault,
 			},
 		}
+
+		// Update the Registry Pod container security context to be restrictive
+		rp.pod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
+			Privileged:               pointer.Bool(false),
+			ReadOnlyRootFilesystem:   pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{"ALL"},
+			},
+		}
 	}
 
 	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
@@ -277,14 +287,7 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: rp.GRPCPort},
 					},
-					SecurityContext: &corev1.SecurityContext{
-						Privileged:               pointer.Bool(false),
-						ReadOnlyRootFilesystem:   pointer.Bool(false),
-						AllowPrivilegeEscalation: pointer.Bool(false),
-						Capabilities: &corev1.Capabilities{
-							Drop: []corev1.Capability{"ALL"},
-						},
-					},
+					WorkingDir: "/tmp",
 				},
 			},
 			ServiceAccountName: rp.cfg.ServiceAccount,
@@ -362,11 +365,11 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
+const cmdTemplate = `[[ -f {{ .DBPath }} ]] && cp {{ .DBPath }} /tmp/tmp.db; \
 {{- range $i, $item := .BundleItems }}
-opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
+opm registry add -d /tmp/tmp.db -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
 {{- end }}
-opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+opm registry serve -d /tmp/tmp.db -p {{ .GRPCPort }}
 `
 
 // getContainerCmd uses templating to construct the container command

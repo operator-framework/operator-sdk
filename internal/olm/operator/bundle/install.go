@@ -17,6 +17,7 @@ package bundle
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -102,13 +103,7 @@ func (i *Install) setup(ctx context.Context) error {
 		if i.IndexImageCatalogCreator.BundleAddMode != "" {
 			return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 		}
-	} else {
-		// index image is of the SQLite index format.
-		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImageCatalogCreator.IndexImage)
-		log.Warn(deprecationMsg)
-	}
 
-	if i.IndexImageCatalogCreator.HasFBCLabel {
 		// FBC variables
 		f := &fbcutil.FBCContext{
 			Package: labels[registrybundle.PackageLabel],
@@ -130,13 +125,20 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 
 		i.IndexImageCatalogCreator.FBCContent = content
+		i.OperatorInstaller.Channel = fbcutil.DefaultChannel
+	} else {
+		// index image is of the SQLite index format.
+		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImageCatalogCreator.IndexImage)
+		log.Warn(deprecationMsg)
+
+		// set the channel the old way
+		i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 	}
 
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
-	i.OperatorInstaller.Channel = fbcutil.DefaultChannel
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
