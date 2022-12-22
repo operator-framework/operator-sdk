@@ -5,9 +5,9 @@ aliases:
   # Contributors who can be contacted to perform admin-related tasks on the repo.
   # This role is a subset of the approver role.
   sdk-admins:
-  - asmacdo
-  - jmrodri
   - joelanford
+  - everettraven
+  - oceanc80
 
   # Contributors who can approve any PRs in the repo.
   sdk-approvers:
@@ -16,7 +16,8 @@ aliases:
   - rashmigottipati
   - theishshah
   - varshaprasad96
-  - everettraven
+  - grokspawn
+  - anik120
 
   # Contributors who can review and LGTM any PRs in the repo.
   sdk-reviewers:
@@ -30,3 +31,5 @@ aliases:
   - estroz
   - camilamacedo86
   - marc-obrien
+  - asmacdo
+  - jmrodri
