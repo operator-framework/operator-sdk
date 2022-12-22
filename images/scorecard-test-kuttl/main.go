@@ -57,7 +57,7 @@ func main() {
 
 	var suite *Testsuite
 	if len(jsonReport.Testsuite) == 0 {
-		printErrorStatus(errors.New("empty kuttl test suite was found"))
+		printErrorStatus(errors.New("no kuttl test suite was found. kuttl may not have run successfully"))
 		return
 	}
 
@@ -103,6 +103,7 @@ func printErrorStatus(err error) {
 	r := v1alpha3.TestResult{}
 	r.State = v1alpha3.FailState
 	r.Errors = []string{err.Error()}
+	r.Log = getKuttlLogs()
 	s.Results = append(s.Results, r)
 	jsonOutput, err := json.MarshalIndent(s, "", "    ")
 	if err != nil {
@@ -189,14 +190,12 @@ type Testsuites struct {
 func getKuttlLogs() string {
 	stderrFile, err := os.ReadFile("/tmp/kuttl.stderr")
 	if err != nil {
-		printErrorStatus(fmt.Errorf("could not open kuttl stderr file %v", err))
-		return err.Error()
+		return fmt.Sprintf("could not open kuttl stderr file: %v", err)
 	}
 
 	stdoutFile, err := os.ReadFile("/tmp/kuttl.stdout")
 	if err != nil {
-		printErrorStatus(fmt.Errorf("could not open kuttl stdout file %v", err))
-		return err.Error()
+		return fmt.Sprintf("could not open kuttl stdout file: %v", err)
 	}
 
 	return string(stderrFile) + string(stdoutFile)
