@@ -198,12 +198,10 @@ We will use the `v1.3.1` release version in this example.
 
 #### 0. Lock down release branches on GitHub
 
-Lock down the `v1.3.x` branch to prevent further merges/commits.
-
-To do this, edit the `Branch protection rules`: https://github.com/operator-framework/operator-sdk/settings/branches
-
-- click `Edit` on the `v.*` branch rule.
-- In section `Protect matching branches` of the `Rule settings` box, set "Required approving reviewers" to `6`.
+1. Lock down the `v1.3.x` branch to prevent further commits before the release completes:
+  1. Go to `Settings -> Branches` in the SDK repo.
+  1. Under `Branch protection rules`, click `Edit` on the `v*.` branch rule.
+  1. In section `Protect matching branches` of the `Rule settings` box, increase the number of required approving reviewers to `6`.
 
 #### 1. Branch
 

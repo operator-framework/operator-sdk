@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
-	pointer "k8s.io/utils/pointer"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -132,6 +132,16 @@ func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration
 		f.pod.Spec.SecurityContext = &corev1.PodSecurityContext{
 			SeccompProfile: &corev1.SeccompProfile{
 				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		}
+
+		// Update the Registry Pod container security context to be restrictive
+		f.pod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
+			Privileged:               pointer.Bool(false),
+			ReadOnlyRootFilesystem:   pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{"ALL"},
 			},
 		}
 	}
@@ -306,14 +316,6 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 						{Name: defaultContainerPortName, ContainerPort: f.GRPCPort},
 					},
 					VolumeMounts: volumeMounts,
-					SecurityContext: &corev1.SecurityContext{
-						Privileged:               pointer.Bool(false),
-						ReadOnlyRootFilesystem:   pointer.Bool(false),
-						AllowPrivilegeEscalation: pointer.Bool(false),
-						Capabilities: &corev1.Capabilities{
-							Drop: []corev1.Capability{"ALL"},
-						},
-					},
 				},
 			},
 			ServiceAccountName: f.cfg.ServiceAccount,
