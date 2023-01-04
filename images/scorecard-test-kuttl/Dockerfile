@@ -19,7 +19,7 @@ RUN GOOS=linux GOARCH=$TARGETARCH make build/scorecard-test-kuttl
 
 # Final image.
 #FROM kudobuilder/kuttl@sha256:924a709a1d2c6bede8815415ea5d5be640b506ec5aeaddc68acb443ae8ee7926
-FROM kudobuilder/kuttl:v0.12.1
+FROM kudobuilder/kuttl:v0.15.0
 
 ENV HOME=/opt/scorecard-test-kuttl \
     USER_NAME=scorecard-test-kuttl \
