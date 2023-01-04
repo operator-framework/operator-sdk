@@ -818,8 +818,8 @@ github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 h1:3
 github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
-github.com/operator-framework/api v0.17.2-0.20221028193825-b611f6cef49c h1:aQPFE1Oc7qh02FniuUrAeUemv01wfisfUHGL1aQOxEc=
-github.com/operator-framework/api v0.17.2-0.20221028193825-b611f6cef49c/go.mod h1:34tb98EwTN5SZLkgoxwvRkhMJKLHUWHOrrcv1ZwvEeA=
+github.com/operator-framework/api v0.17.4-0.20221221181915-f1b729684854 h1:/EFqPU6baS6MzfLvIeGlfVV0bDLehlA1jwSxHxL0D9s=
+github.com/operator-framework/api v0.17.4-0.20221221181915-f1b729684854/go.mod h1:34tb98EwTN5SZLkgoxwvRkhMJKLHUWHOrrcv1ZwvEeA=
 github.com/operator-framework/helm-operator-plugins v0.0.12-0.20221014213227-6f6106714f0d h1:xPqV1TH9ZCbo/fNIp1CVMYlKkD28wmIMrwuwibXaXo4=
 github.com/operator-framework/helm-operator-plugins v0.0.12-0.20221014213227-6f6106714f0d/go.mod h1:zaxx1ikQMg/sm/j5WDG2aJHK4phIti5TkeKH8EePt0M=
 github.com/operator-framework/java-operator-plugins v0.7.1-0.20221007075838-2e24140314fb h1:lHKsuPfcDwgFFvwwh4OdA9MUyZ+xY82Q/xztJkotUKI=
