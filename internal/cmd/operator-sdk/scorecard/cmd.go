@@ -190,7 +190,7 @@ func (c *scorecardCmd) run() (err error) {
 	}
 
 	podSecFlag := true
-	if c.podSecurity == "resticted" {
+	if c.podSecurity == "restricted" {
 		podSecFlag = true
 	} else if c.podSecurity == "legacy" {
 		podSecFlag = false
