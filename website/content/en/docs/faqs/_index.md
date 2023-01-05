@@ -126,7 +126,7 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:        scheme,
 		// Specify that ImageStreamTag's should not be cached.
-		ClientBuilder: manager.NewClientBuilder().WithUncached(&imagev1.ImageStreamTag{}),
+		ClientDisableCacheFor:  []client.Object{&imagev1.ImageStreamTag{}},
 	})
 }
 ```
