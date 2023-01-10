@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.2.0
 	github.com/onsi/gomega v1.20.2
 	github.com/operator-framework/api v0.17.4-0.20221221181915-f1b729684854
-	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20221014213227-6f6106714f0d
+	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230109213218-ebfbea851192
 	github.com/operator-framework/java-operator-plugins v0.7.1-0.20221007075838-2e24140314fb
 	github.com/operator-framework/operator-lib v0.11.1-0.20220921174810-791cc547e6c5
 	github.com/operator-framework/operator-manifest-tools v0.2.3-0.20220901033859-2a7ce32ef673
@@ -33,7 +33,7 @@ require (
 	golang.org/x/text v0.3.8
 	golang.org/x/tools v0.1.12
 	gomodules.xyz/jsonpatch/v3 v3.0.1
-	helm.sh/helm/v3 v3.10.1
+	helm.sh/helm/v3 v3.10.3
 	k8s.io/api v0.25.3
 	k8s.io/apiextensions-apiserver v0.25.3
 	k8s.io/apimachinery v0.25.3
