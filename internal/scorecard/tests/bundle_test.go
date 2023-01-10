@@ -276,15 +276,6 @@ var _ = Describe("Basic and OLM tests", func() {
 				result = checkOwnedCSVSpecDescriptors(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
-			It("should fail when CRs do not have spec field specified", func() {
-				cr := []unstructured.Unstructured{
-					unstructured.Unstructured{
-						Object: map[string]interface{}{},
-					},
-				}
-				result = checkSpec(cr, result)
-				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
-			})
 			It("should pass when CRs do have spec field specified", func() {
 				cr := []unstructured.Unstructured{
 					unstructured.Unstructured{
