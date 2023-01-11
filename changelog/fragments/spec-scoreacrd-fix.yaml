@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      (scorecard): Fixes a bug where an error would be thrown if a Custom Resource did not have a `.spec` field, which is a perfectly valid scenario.  Instead of throwing an error scorecard will now issue a warning.
+      (scorecard): Fixes a bug where an error would be thrown if a Custom Resource did not have a `.spec` field, which is a perfectly valid scenario.  Instead of throwing an error scorecard will now issue a suggestion.
 
     # kind is one of:
     # - addition
