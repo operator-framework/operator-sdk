@@ -26,106 +26,38 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/discovery"
-	cached "k8s.io/client-go/discovery/cached"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-var _ genericclioptions.RESTClientGetter = &restClientGetter{}
-
-type restClientGetter struct {
-	restConfig      *rest.Config
-	discoveryClient discovery.CachedDiscoveryInterface
-	restMapper      meta.RESTMapper
-	namespaceConfig clientcmd.ClientConfig
-}
-
-func (c *restClientGetter) ToRESTConfig() (*rest.Config, error) {
-	return c.restConfig, nil
-}
-
-func (c *restClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
-	return c.discoveryClient, nil
-}
-
-func (c *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
-	return c.restMapper, nil
-}
-
-func (c *restClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
-	return c.namespaceConfig
-}
-
-var _ clientcmd.ClientConfig = &namespaceClientConfig{}
-
-type namespaceClientConfig struct {
-	namespace string
-}
-
-func (c namespaceClientConfig) RawConfig() (clientcmdapi.Config, error) {
-	return clientcmdapi.Config{}, nil
-}
-
-func (c namespaceClientConfig) ClientConfig() (*rest.Config, error) {
-	return nil, nil
-}
-
-func (c namespaceClientConfig) Namespace() (string, bool, error) {
-	return c.namespace, false, nil
-}
-
-func (c namespaceClientConfig) ConfigAccess() clientcmd.ConfigAccess {
-	return nil
-}
-
-func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.RESTClientGetter, error) {
-	cfg := mgr.GetConfig()
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	cdc := cached.NewMemCacheClient(dc)
-	rm := mgr.GetRESTMapper()
-
-	return &restClientGetter{
-		restConfig:      cfg,
-		discoveryClient: cdc,
-		restMapper:      rm,
-		namespaceConfig: &namespaceClientConfig{ns},
-	}, nil
-}
 
 var _ kube.Interface = &ownerRefInjectingClient{}
 
-func NewOwnerRefInjectingClient(base kube.Client, restMapper meta.RESTMapper,
-	cr *unstructured.Unstructured) (kube.Interface, error) {
+func NewOwnerRefInjectingClient(base kube.Interface, restMapper meta.RESTMapper,
+	obj client.Object) (kube.Interface, error) {
 
-	if cr != nil {
-		if cr.GetObjectKind().GroupVersionKind().Empty() || cr.GetName() == "" || cr.GetUID() == "" {
-			var err = errors.New("owner resource is invalid")
-			return nil, err
+	if obj != nil {
+		if obj.GetObjectKind() != nil {
+			if obj.GetObjectKind().GroupVersionKind().Empty() || obj.GetName() == "" || obj.GetUID() == "" {
+				var err = errors.New("owner resource is invalid")
+				return nil, err
+			}
 		}
 	}
 	return &ownerRefInjectingClient{
-		Client:     base,
+		Interface:  base,
 		restMapper: restMapper,
-		owner:      cr,
+		owner:      obj,
 	}, nil
 }
 
 type ownerRefInjectingClient struct {
-	kube.Client
+	kube.Interface
 	restMapper meta.RESTMapper
-	owner      *unstructured.Unstructured
+	owner      client.Object
 }
 
 func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.ResourceList, error) {
-	resourceList, err := c.Client.Build(reader, validate)
+	resourceList, err := c.Interface.Build(reader, validate)
 	if err != nil {
 		return resourceList, err
 	}
@@ -146,7 +78,7 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 		// If the resource contains the Helm resource-policy keep annotation, then do not add
 		// the owner reference. So when the CR is deleted, Kubernetes won't GCs the resource.
 		if useOwnerRef && !containsResourcePolicyKeep(u.GetAnnotations()) {
-			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GroupVersionKind())
+			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GetObjectKind().GroupVersionKind())
 			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
 			err := handler.SetOwnerAnnotations(u, c.owner)
