@@ -28,7 +28,7 @@ const (
 	deploymentSizeUndesiredAlert = "MemcachedDeploymentSizeUndesired"
 	operatorDownAlert            = "MemcachedOperatorDown"
 	operatorUpTotalRecordingRule = "memcached_operator_up_total"
-	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/"
+	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/"
 )
 
 // NewPrometheusRule creates new PrometheusRule(CR) for the operator to have alerts and recording rules

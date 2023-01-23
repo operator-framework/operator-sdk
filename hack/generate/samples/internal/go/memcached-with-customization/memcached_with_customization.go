@@ -27,7 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 )
 
-// Memcached defines the Memcached Sample in GO using webhooks
+// Memcached defines the Memcached Sample in GO using webhooks and monitoring code
 type Memcached struct {
 	ctx *pkg.SampleContext
 }
@@ -39,9 +39,9 @@ var prometheusAPIVersion = "v0.59.0"
 // GenerateSample will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
 func GenerateSample(binaryPath, samplesPath string) {
-	log.Infof("starting to generate Go memcached sample with webhooks")
+	log.Infof("starting to generate Go memcached sample with webhooks and metrics documentation")
 	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
-	pkg.CheckError("generating Go memcached with webhooks context", err)
+	pkg.CheckError("generating Go memcached with webhooks and metrics documentation context", err)
 
 	generateWithMonitoring = false
 	if strings.HasSuffix(samplesPath, "monitoring") {
@@ -53,11 +53,11 @@ func GenerateSample(binaryPath, samplesPath string) {
 	memcached.Run()
 }
 
-// Prepare the Context for the Memcached with WebHooks Go Sample
+// Prepare the Context for the Memcached with webhooks and metrics documentation Go Sample
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
 func (mh *Memcached) Prepare() {
-	log.Infof("destroying directory for Memcached with Webhooks Go samples")
+	log.Infof("destroying directory for Memcached with webhooks and metrics documentation Go samples")
 	mh.ctx.Destroy()
 
 	log.Infof("creating directory")
@@ -71,7 +71,7 @@ func (mh *Memcached) Prepare() {
 	mh.ctx.Kind = "Memcached"
 }
 
-// Run the steps to create the Memcached with Webhooks Go Sample
+// Run the steps to create the Memcached with metrics and webhooks Go Sample
 func (mh *Memcached) Run() {
 
 	if strings.Contains(mh.ctx.Dir, "v4-alpha") {
@@ -150,6 +150,13 @@ func (mh *Memcached) Run() {
 	cmd.Dir = mh.ctx.Dir
 	_, err = mh.ctx.Run(cmd)
 	pkg.CheckError("Running go mod tidy", err)
+
+	if generateWithMonitoring {
+		cmd := exec.Command("make", "generate-metricsdocs")
+		cmd.Dir = mh.ctx.Dir
+		_, err = mh.ctx.Run(cmd)
+		pkg.CheckError("Running make generate-metricsdocs", err)
+	}
 
 	log.Infof("creating the bundle")
 	err = mh.ctx.GenerateBundle()
@@ -548,6 +555,35 @@ func (mh *Memcached) implementingMetrics() {
 		goFilesHeader,
 		metricsFragment)
 	pkg.CheckError("adding metrics content", err)
+
+	// Add metricsdocs directory
+	err = os.Mkdir(filepath.Join(mh.ctx.Dir, "monitoring/metricsdocs"), os.ModePerm)
+	pkg.CheckError("creating metricsdocs directory", err)
+
+	// Create metricsdocs file
+	metricsdocsPath := filepath.Join(mh.ctx.Dir, "monitoring/metricsdocs/metricsdocs.go")
+	_, err = os.Create(metricsdocsPath)
+	pkg.CheckError("creating metricsdocs file", err)
+
+	// Add go files header
+	err = kbutil.InsertCode(metricsdocsPath,
+		"",
+		goFilesHeader)
+	pkg.CheckError("adding go files header", err)
+
+	// Create metricsdocs generator tool
+	err = kbutil.InsertCode(metricsdocsPath,
+		goFilesHeader,
+		metricsdocsFragment)
+	pkg.CheckError("creating metricsdocs generator tool", err)
+
+	// Create docs directory
+	err = os.Mkdir(filepath.Join(mh.ctx.Dir, "docs"), os.ModePerm)
+	pkg.CheckError("creating docs directory", err)
+
+	// Create monitoring directory
+	err = os.Mkdir(filepath.Join(mh.ctx.Dir, "docs/monitoring"), os.ModePerm)
+	pkg.CheckError("creating monitoring directory", err)
 }
 
 func (mh *Memcached) implementingAlerts() {
@@ -618,16 +654,14 @@ func (mh *Memcached) implementingPromRuleCi() {
 }
 
 func (mh *Memcached) implementingRunbooks() {
-	// Create docs directory
-	err := os.Mkdir(filepath.Join(mh.ctx.Dir, "docs"), os.ModePerm)
-	pkg.CheckError("creating docs directory", err)
+	runbooksPath := "docs/monitoring/runbooks/"
 
 	// Create runbooks directory
-	err = os.Mkdir(filepath.Join(mh.ctx.Dir, "docs/runbooks"), os.ModePerm)
+	err := os.Mkdir(filepath.Join(mh.ctx.Dir, runbooksPath), os.ModePerm)
 	pkg.CheckError("creating runbooks directory", err)
 
 	// Create MemcachedDeploymentSizeUndesired runbook file
-	memcachedDeploymentSizeUndesiredRunbookPath := filepath.Join(mh.ctx.Dir, "docs/runbooks/memcachedDeploymentSizeUndesired.md")
+	memcachedDeploymentSizeUndesiredRunbookPath := filepath.Join(mh.ctx.Dir, runbooksPath, "memcachedDeploymentSizeUndesired.md")
 	_, err = os.Create(memcachedDeploymentSizeUndesiredRunbookPath)
 	pkg.CheckError("creating MemcachedDeploymentSizeUndesired runbook file", err)
 
@@ -638,7 +672,7 @@ func (mh *Memcached) implementingRunbooks() {
 	pkg.CheckError("adding MemcachedDeploymentSizeUndesired runbook content", err)
 
 	// Create MemcachedOperatorDown runbook file
-	memcachedOperatorDownRunbookPath := filepath.Join(mh.ctx.Dir, "docs/runbooks/memcachedOperatorDown.md")
+	memcachedOperatorDownRunbookPath := filepath.Join(mh.ctx.Dir, runbooksPath, "memcachedOperatorDown.md")
 	_, err = os.Create(memcachedOperatorDownRunbookPath)
 	pkg.CheckError("creating MemcachedOperatorDown runbook file", err)
 
@@ -776,6 +810,12 @@ func (mh *Memcached) customizingMakefile() {
 		`$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -`,
 		makefileFragment)
 	pkg.CheckError("adding prom-rule-ci target to the makefile", err)
+
+	// Add metrics documentation
+	err = kbutil.InsertCode(makefilePath,
+		`$(MAKE) docker-push IMG=$(CATALOG_IMG)`,
+		metricsdocsMakefileFragment)
+	pkg.CheckError("adding metrics documentation", err)
 }
 
 const metricsFragment = `
@@ -787,20 +827,156 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
+// MetricDescription is an exported struct that defines the metric description (Name, Help)
+// as a new type named MetricDescription.
+type MetricDescription struct {
+	Name string
+	Help string
+	Type string
+}
+
+// metricsDescription is a map of string keys (metrics) to MetricDescription values (Name, Help).
+var metricDescription = map[string]MetricDescription{
+	"MemcachedDeploymentSizeUndesiredCountTotal": {
+		Name: "memcached_deployment_size_undesired_count_total",
+		Help: "Total number of times the deployment size was not as desired.",
+		Type: "Counter",
+	},
+}
+
 var (
 	// MemcachedDeploymentSizeUndesiredCountTotal will count how many times was required
 	// to perform the operation to ensure that the number of replicas on the cluster
 	// is the same as the quantity desired and specified via the custom resource size spec.
 	MemcachedDeploymentSizeUndesiredCountTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "memcached_deployment_size_undesired_count_total",
-			Help: "Total number of times the deployment size was not as desired.",
+			Name: metricDescription["MemcachedDeploymentSizeUndesiredCountTotal"].Name,
+			Help: metricDescription["MemcachedDeploymentSizeUndesiredCountTotal"].Help,
 		},
 	)
 )
-// Register metrics with the global prometheus registry
+
+// RegisterMetrics will register metrics with the global prometheus registry
 func RegisterMetrics() {
 	metrics.Registry.MustRegister(MemcachedDeploymentSizeUndesiredCountTotal)
+}
+
+// ListMetrics will create a slice with the metrics available in metricDescription
+func ListMetrics() []MetricDescription {
+	v := make([]MetricDescription, 0, len(metricDescription))
+	// Insert value (Name, Help) for each metric
+	for _, value := range metricDescription {
+		v = append(v, value)
+	}
+
+	return v
+}
+`
+
+const metricsdocsFragment = `
+
+package main
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/example/memcached-operator/monitoring"
+)
+
+// please run "make generate-metricsdocs" to run this tool and update metrics documentation
+const (
+	title      = "# Operator Metrics\n"
+	background = "This document aims to help users that are not familiar with metrics exposed by this operator.\n" +
+		"The metrics documentation is auto-generated by the utility tool \"monitoring/metricsdocs\" and reflects all of the metrics that are exposed by the operator.\n\n"
+
+	KVSpecificMetrics = "## Operator Metrics List\n"
+
+	opening = title +
+		background +
+		KVSpecificMetrics
+
+	// footer
+	footerHeading = "## Developing new metrics\n"
+	footerContent = "After developing new metrics or changing old ones, please run \"make generate-metricsdocs\" to regenerate this document.\n\n" +
+		"If you feel that the new metric doesn't follow these rules, please change \"monitoring/metricsdocs\" according to your needs.\n"
+
+	footer = footerHeading + footerContent
+)
+
+// TODO: scaffolding these helpers with operator-lib: https://github.com/operator-framework/operator-lib.
+
+// metricList contains the name, description, and type for each metric.
+func main() {
+	metricList := metricDescriptionListToMetricList(monitoring.ListMetrics())
+	sort.Sort(metricList)
+	writeToStdOut(metricList)
+}
+
+// writeToStdOut receives a list of metrics and prints them to STDOUT.
+func writeToStdOut(metricsList metricList) {
+	fmt.Print(opening)
+	metricsList.writeOut()
+	fmt.Print(footer)
+}
+
+// Metric is an exported struct that defines the metric
+// name, description, and type as a new type named Metric.
+type Metric struct {
+	name        string
+	description string
+	metricType  string
+}
+
+func metricDescriptionToMetric(md monitoring.MetricDescription) Metric {
+	return Metric{
+		name:        md.Name,
+		description: md.Help,
+		metricType:  md.Type,
+	}
+}
+
+// writeOut receives a metric of type metric and prints
+// the metric name, description, and type.
+func (m Metric) writeOut() {
+	fmt.Println("###", m.name)
+	fmt.Println(m.description, "Type: "+m.metricType+".")
+}
+
+// metricList is an array that contain metrics from type metric,
+// as a new type named metricList.
+type metricList []Metric
+
+// metricDescriptionListToMetricList collects the metrics exposed by the
+// operator, and inserts them into the metricList array.
+func metricDescriptionListToMetricList(mdl []monitoring.MetricDescription) metricList {
+	res := make([]Metric, len(mdl))
+	for i, md := range mdl {
+		res[i] = metricDescriptionToMetric(md)
+	}
+
+	return res
+}
+
+// Len implements sort.Interface.Len
+func (m metricList) Len() int {
+	return len(m)
+}
+
+// Less implements sort.Interface.Less
+func (m metricList) Less(i, j int) bool {
+	return m[i].name < m[j].name
+}
+
+// Swap implements sort.Interface.Swap
+func (m metricList) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+func (m metricList) writeOut() {
+	for _, met := range m {
+		met.writeOut()
+	}
 }
 `
 
@@ -820,7 +996,7 @@ const (
 	deploymentSizeUndesiredAlert = "MemcachedDeploymentSizeUndesired"
 	operatorDownAlert            = "MemcachedOperatorDown"
 	operatorUpTotalRecordingRule = "memcached_operator_up_total"
-	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/"
+	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/"
 )
 
 // NewPrometheusRule creates new PrometheusRule(CR) for the operator to have alerts and recording rules
@@ -930,7 +1106,7 @@ tests:
               description: "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes."
             exp_labels:
               severity: "warning"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedDeploymentSizeUndesired.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedDeploymentSizeUndesired.md"
       - eval_time: 5m
         alertname: MemcachedOperatorDown
         exp_alerts:
@@ -938,7 +1114,7 @@ tests:
               description: "No running memcached-operator pods were detected in the last 5 min."
             exp_labels:
               severity: "critical"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedOperatorDown.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedOperatorDown.md"
       # it must not trigger before 15m
       - eval_time: 14m
         alertname: MemcachedDeploymentSizeUndesired
@@ -954,7 +1130,7 @@ tests:
               description: "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes."
             exp_labels:
               severity: "warning"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedDeploymentSizeUndesired.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedDeploymentSizeUndesired.md"
       - eval_time: 15m
         alertname: MemcachedOperatorDown
         exp_alerts:
@@ -962,7 +1138,7 @@ tests:
               description: "No running memcached-operator pods were detected in the last 5 min."
             exp_labels:
               severity: "critical"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedOperatorDown.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedOperatorDown.md"
 `
 
 const ruleSpecDumperFragment = `
@@ -1205,6 +1381,15 @@ prom-rules-verify: build-prom-spec-dumper
 		"${current-dir}/_out/rule-spec-dumper" \
 		"${current-dir}/monitoring/prom-rule-ci/prom-rules-tests.yaml"
 
+`
+
+const metricsdocsMakefileFragment = `
+
+##@ Generate the metrics documentation
+.PHONY: generate-metricsdocs
+generate-metricsdocs:
+	mkdir -p $(shell pwd)/docs/monitoring
+	go run -ldflags="${LDFLAGS}" ./monitoring/metricsdocs > docs/monitoring/metrics.md
 `
 
 const webhooksFragment = `
