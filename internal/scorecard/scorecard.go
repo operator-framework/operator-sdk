@@ -33,7 +33,7 @@ import (
 
 type TestRunner interface {
 	Initialize(context.Context) error
-	RunTest(context.Context, v1alpha3.TestConfiguration) (*v1alpha3.TestStatus, error)
+	RunTest(context.Context, v1alpha3.TestConfiguration, bool) (*v1alpha3.TestStatus, error)
 	Cleanup(context.Context) error
 }
 
@@ -42,6 +42,7 @@ type Scorecard struct {
 	Selector    labels.Selector
 	TestRunner  TestRunner
 	SkipCleanup bool
+	PodSecurity bool
 }
 
 type PodTestRunner struct {
@@ -56,6 +57,7 @@ type PodTestRunner struct {
 	UntarImage     string
 
 	configMapName string
+	PodSecurity   bool
 }
 
 type FakeTestRunner struct {
@@ -141,7 +143,7 @@ func (o Scorecard) runStageSequential(ctx context.Context, tests []v1alpha3.Test
 }
 
 func (o Scorecard) runTest(ctx context.Context, test v1alpha3.TestConfiguration) v1alpha3.Test {
-	result, err := o.TestRunner.RunTest(ctx, test)
+	result, err := o.TestRunner.RunTest(ctx, test, o.PodSecurity)
 	if err != nil {
 		result = convertErrorToStatus(err, "")
 	}
@@ -217,10 +219,19 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 }
 
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration) (*v1alpha3.TestStatus, error) {
+func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration, podSec bool) (*v1alpha3.TestStatus, error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
+	if podSec {
+		secCtx := v1.PodSecurityContext{}
+		secCtx.RunAsNonRoot = &podSec
+		secCtx.SeccompProfile = &v1.SeccompProfile{
+			Type: v1.SeccompProfileTypeRuntimeDefault,
+		}
+
+		podDef.Spec.SecurityContext = &secCtx
+	}
 
 	if test.Storage.Spec.MountPath.Path != "" {
 		addStorageToPod(podDef, test.Storage.Spec.MountPath.Path, r.StorageImage)
@@ -248,7 +259,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 }
 
 // RunTest executes a single test
-func (r FakeTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration) (result *v1alpha3.TestStatus, err error) {
+func (r FakeTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration, podSec bool) (result *v1alpha3.TestStatus, err error) {
 	select {
 	case <-time.After(r.Sleep):
 		return r.TestStatus, r.Error
