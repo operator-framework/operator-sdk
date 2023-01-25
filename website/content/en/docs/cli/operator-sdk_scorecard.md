@@ -24,6 +24,7 @@ operator-sdk scorecard [flags]
   -L, --list                     Option to enable listing which tests are run
   -n, --namespace string         namespace to run the test images in
   -o, --output string            Output format for results. Valid values: text, json, xunit (default "text")
+      --pod-security string      option to run scorecard with legacy pod security context (default "legacy")
   -l, --selector string          label selector to determine which tests are run
   -s, --service-account string   Service account to use for tests (default "default")
   -x, --skip-cleanup             Disable resource cleanup after tests are run
