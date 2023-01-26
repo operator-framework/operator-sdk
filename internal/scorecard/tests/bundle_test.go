@@ -283,7 +283,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 				result = checkSpec(cr, result)
-				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
+				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 			})
 			It("should pass when CRs do have spec field specified", func() {
 				cr := []unstructured.Unstructured{

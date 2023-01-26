@@ -50,8 +50,7 @@ func checkSpec(crSet []unstructured.Unstructured,
 	res scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 	for _, cr := range crSet {
 		if cr.Object["spec"] == nil {
-			res.Errors = append(res.Errors, fmt.Sprintf("error spec does not exist for the custom resource %s", cr.GetName()))
-			res.State = scapiv1alpha3.FailState
+			res.State = scapiv1alpha3.PassState
 			res.Suggestions = append(res.Suggestions, fmt.Sprintf("spec missing from [%+v]", cr.GetName()))
 			return res
 		}
