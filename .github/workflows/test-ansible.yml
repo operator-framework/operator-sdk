@@ -5,7 +5,7 @@ on:
 jobs:
   check_docs_only:
     name: check_docs_only
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
@@ -22,7 +22,7 @@ jobs:
 
   e2e:
     name: e2e
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
@@ -37,7 +37,7 @@ jobs:
 
   e2e-molecule:
     name: e2e-molecule
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:

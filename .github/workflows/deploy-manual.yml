@@ -13,7 +13,7 @@ on:
 jobs:
   # Build the ansible-operator-base image.
   ansible-operator-base:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     environment: deploy
     steps:
 
