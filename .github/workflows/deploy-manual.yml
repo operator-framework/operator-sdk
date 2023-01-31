@@ -63,7 +63,7 @@ jobs:
         echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
 
     - name: build and push ansible 2.9 dep image
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         file: ./images/ansible-operator/base.Dockerfile
         context: ./images/ansible-operator
@@ -74,7 +74,7 @@ jobs:
           GIT_COMMIT=${{ steps.base_tag_29.outputs.git_commit }}
 
     - name: build and push ansible 2.11 dep image
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         file: ./images/ansible-operator-2.11-preview/base.Dockerfile
         context: ./images/ansible-operator-2.11-preview
