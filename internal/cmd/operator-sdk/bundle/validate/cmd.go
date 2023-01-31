@@ -159,10 +159,11 @@ func NewCmd() *cobra.Command {
 			}
 
 			// if a test failed don't print that it was successful
-			if !failed {
-				logger.Info("All validation tests have completed successfully")
+			if failed {
+				os.Exit(1)
 			}
 
+			logger.Info("All validation tests have completed successfully")
 			return nil
 		},
 	}
