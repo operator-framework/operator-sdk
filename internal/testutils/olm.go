@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	OlmVersionForTestSuite = "0.22.0"
+	OlmVersionForTestSuite = "0.23.1"
 )
 
 var makefilePackagemanifestsFragment = `
