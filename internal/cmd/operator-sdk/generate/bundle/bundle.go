@@ -311,7 +311,9 @@ func (c bundleCmd) pinImages(manifestPath string) error {
 	if err != nil {
 		return err
 	}
-	resolver, err := imageresolver.GetResolver(imageresolver.ResolverCrane, nil)
+	resolverArgs := make(map[string]string)
+	resolverArgs["usedefault"] = "true"
+	resolver, err := imageresolver.GetResolver(imageresolver.ResolverCrane, resolverArgs)
 	if err != nil {
 		return err
 	}

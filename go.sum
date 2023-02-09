@@ -826,8 +826,8 @@ github.com/operator-framework/java-operator-plugins v0.7.1-0.20221007075838-2e24
 github.com/operator-framework/java-operator-plugins v0.7.1-0.20221007075838-2e24140314fb/go.mod h1:OpTW9khbip8t1urqW1siXHIaq397P1aOAi/4BbWdgXo=
 github.com/operator-framework/operator-lib v0.11.1-0.20220921174810-791cc547e6c5 h1:j5gsormB+r0rc/aH+VNVIBOb39VAy7TGvJz2MXAWrQQ=
 github.com/operator-framework/operator-lib v0.11.1-0.20220921174810-791cc547e6c5/go.mod h1:oXEeSsDYG40pXJtj5CIEsZW8aLLLQ4xB0AmrsB/tKqg=
-github.com/operator-framework/operator-manifest-tools v0.2.3-0.20220901033859-2a7ce32ef673 h1:D4yF9mVC3JmpBpLVEMSzBlaJqN8D6WeJ0e/+Szv4l5A=
-github.com/operator-framework/operator-manifest-tools v0.2.3-0.20220901033859-2a7ce32ef673/go.mod h1:pYXBtryqeokM8MiCtSsGxQUI/vZgcFLMhEI0gkt9KFI=
+github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230213223805-9262eb48b716 h1:PXoHF/J5VFD1OGeY47x+HjL1RKsqW1gaV0w8nt2OAe0=
+github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230213223805-9262eb48b716/go.mod h1:pYXBtryqeokM8MiCtSsGxQUI/vZgcFLMhEI0gkt9KFI=
 github.com/operator-framework/operator-registry v1.26.3-0.20220930210947-614d6a955dc0 h1:dOC9sDcQwAxMk9BnL9uacOAE+7LpdrOruckovzlzVj0=
 github.com/operator-framework/operator-registry v1.26.3-0.20220930210947-614d6a955dc0/go.mod h1:yCJaYiwRDd+Vi+ACtN1QlwRfJB/moStJvtlW+VOyx9o=
 github.com/otiai10/copy v1.2.0 h1:HvG945u96iNadPoG2/Ja2+AUJeW5YuFQMixq9yirC+k=
