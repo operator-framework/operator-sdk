@@ -97,7 +97,7 @@ This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.g
 
 For an in-depth explanation of Kubernetes APIs and the group-version-kind model, check out these [kubebuilder docs][kb-doc-gkvs].
 
-In general, it's recommended to have one controller responsible for manage each API created for the project to
+In general, it's recommended to have one controller responsible to manage each API created for the project to
 properly follow the design goals set by [controller-runtime][controller-runtime].
 
 ### Define the API
