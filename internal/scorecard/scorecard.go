@@ -224,13 +224,29 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
 	if podSec {
-		secCtx := v1.PodSecurityContext{}
-		secCtx.RunAsNonRoot = &podSec
-		secCtx.SeccompProfile = &v1.SeccompProfile{
+		// creating a pod security context to support running in default namespace
+		podSecCtx := v1.PodSecurityContext{}
+		podSecCtx.RunAsNonRoot = &podSec
+		podSecCtx.RunAsUser = &[]int64{1000}[0]
+		podSecCtx.RunAsGroup = &[]int64{1000}[0]
+		podSecCtx.SeccompProfile = &v1.SeccompProfile{
 			Type: v1.SeccompProfileTypeRuntimeDefault,
 		}
 
-		podDef.Spec.SecurityContext = &secCtx
+		// creating a security context to be used by all containers in the pod
+		secCtx := v1.SecurityContext{}
+		secCtx.RunAsNonRoot = &podSec
+		secCtx.AllowPrivilegeEscalation = &[]bool{false}[0]
+		secCtx.Capabilities = &v1.Capabilities{
+			Drop: []v1.Capability{
+				"ALL",
+			},
+		}
+
+		podDef.Spec.SecurityContext = &podSecCtx
+
+		podDef.Spec.Containers[0].SecurityContext = &secCtx
+		podDef.Spec.InitContainers[0].SecurityContext = &secCtx
 	}
 
 	if test.Storage.Spec.MountPath.Path != "" {
