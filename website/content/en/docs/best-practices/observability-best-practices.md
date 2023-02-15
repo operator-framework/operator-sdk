@@ -65,6 +65,46 @@ The most common types are:
  - `Gauge` Value can be increased and decreased as needed.
 5. `_total` suffix should be used for accumulating count. If your metrics has labels with high cardinality, like `pod`/`container` it usually means that you can aggregate it more, thus it will not require `_total` suffix.
 
+#### Recommended Metrics
+
+* `<operator-name-prefix>_operator_health_status` - The metric reports the operator health status. It should be reported by the operator itself based on the internal operator validations.  
+  This metric allows the cluster users, to view all operators health statuses with a single query and improves the overall cluster observability.
+
+  In order to maintain consistency, it is recommended to use the following health statuses as the metric values:
+  * `0` - Indicates that the operator is healthy and working as expected.
+  * `1` - Indicates that the operator has some issues that needs to be addressed and can potentially lead to loss of functionality.
+  * `2` - Indicates that the operator is unhealthy and there is a loss of functionality that should be addressed.
+
+  Metric Type: `Gauge`
+
+  Metric labels:
+  * `name` - The operator name [Recommended].
+  
+  Metric Help:
+  * Indicates whether the operator health status is healthy (0), warning (1) or critical (2).
+
+  **Example:**  
+```go
+	desc := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "memcached_operator_health_status",
+			Help:      "Indicates whether the operator health status is healthy (0), warning (1) or critical (2).",
+		},prometheus.Labels{"name": "Memcached"})
+```
+
+  **Query:** To view all operators health statuses with a single query, users can use the following PromQL query, `{__name__=~".*operator_health_status"}`.
+
+{{% alert title="Note" color="info" %}}
+  The following recommended operator health metric is new and may include minor changes.  
+
+  In order for this metric to be useful for the users, it MUST be reported in a consistent way across all the operators. If you would prefer to follow any other level of granularity to indicate health statuses, a different metric name MUST be used, and it should be clearly documented such that an external observer can infer the indicator values accordingly.  
+
+  It is suggested to report the metric values as numbers that represent the health statuses, since using strings like: Healthy/Warning/Error, can be implemented in many ways that would cause consistency issues and disagreements, like terminology preferences (For example: `Error` vs. `Unhealthy`), spelling errors, capital letters etc.  
+
+If you have any feedback please open an issue at [Operator SDK](https://github.com/operator-framework/operator-sdk/issues).
+{{% /alert %}}
+
+
 ### Prometheus Labels
 [Prometheus labels](https://prometheus.io/docs/practices/naming/#labels) are used to differentiate the characteristics of the thing that is being measured.
 
@@ -257,3 +297,6 @@ This is something the administrator should be aware of, but may not require imme
    - Metric / Recording rule exists.
    - Metric / Recording rule value is as expected.
    - Metric / Recording rule name follows the best practices guideline.
+
+## How to contribute
+If you find an issue or would like to contribute additional information to this document, please file an issue or submit a PR to the [Operator SDK](https://github.com/operator-framework/operator-sdk/issues).
