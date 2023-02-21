@@ -165,5 +165,5 @@ Ansible-based Operator, you must
 
 
 [admission-controllers]:https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
-[validating-webhook]:https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#validatingwebhookconfiguration-v1-admissionregistration-k8s-io
-[mutating-webhook]:https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#mutatingwebhookconfiguration-v1-admissionregistration-k8s-io
+[validating-webhook]:https://v1-26.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#validatingwebhookconfiguration-v1-admissionregistration-k8s-io
+[mutating-webhook]:https://v1-26.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#mutatingwebhookconfiguration-v1-admissionregistration-k8s-io
