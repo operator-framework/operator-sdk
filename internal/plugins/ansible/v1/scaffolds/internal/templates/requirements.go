@@ -43,4 +43,6 @@ collections:
     version: "2.3.1"
   - name: cloud.common
     version: "2.1.1"
+  - name: community.docker
+    version: "3.4.0"
 `
