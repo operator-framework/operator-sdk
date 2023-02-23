@@ -227,8 +227,6 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 		// creating a pod security context to support running in default namespace
 		podSecCtx := v1.PodSecurityContext{}
 		podSecCtx.RunAsNonRoot = &podSec
-		podSecCtx.RunAsUser = &[]int64{1000}[0]
-		podSecCtx.RunAsGroup = &[]int64{1000}[0]
 		podSecCtx.SeccompProfile = &v1.SeccompProfile{
 			Type: v1.SeccompProfileTypeRuntimeDefault,
 		}
