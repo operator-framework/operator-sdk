@@ -69,12 +69,12 @@ var _ = Describe("Running the scorecard command", func() {
 			flag = cmd.Flags().Lookup("storage-image")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("b"))
-			Expect(flag.DefValue).To(Equal("docker.io/library/busybox@sha256:c71cb4f7e8ececaffb34037c2637dc86820e4185100e18b4d02d613a9bd772af"))
+			Expect(flag.DefValue).To(Equal("quay.io/operator-framework/scorecard-storage:latest"))
 
 			flag = cmd.Flags().Lookup("untar-image")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("u"))
-			Expect(flag.DefValue).To(Equal("registry.access.redhat.com/ubi8@sha256:910f6bc0b5ae9b555eb91b88d28d568099b060088616eba2867b07ab6ea457c7"))
+			Expect(flag.DefValue).To(Equal("quay.io/operator-framework/scorecard-untar:latest"))
 		})
 	})
 
