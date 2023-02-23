@@ -1,6 +1,7 @@
 # This Dockerfile defines the base image for the ansible-operator image.
 # It is built with dependencies that take a while to download, thus speeding
 # up ansible deploy jobs.
+
 FROM registry.access.redhat.com/ubi8/ubi:8.7 AS builder
 
 # Install Rust so that we can ensure backwards compatibility with installing/building the cryptography wheel across all platforms
@@ -23,7 +24,7 @@ RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
   && pip3 install --upgrade pip~=23.0.1 \
-  && pip3 install pipenv==2022.1.8 \
+  && pip3 install pipenv==2023.2.18 \
   && pipenv install --deploy \
   && pipenv check  -i 42926 -i 42923 -i 45114 \
   && yum remove -y gcc libffi-devel openssl-devel python38-devel \
@@ -47,6 +48,7 @@ RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
   && yum install -y python38-pip python38-setuptools \
   && pip3 install --upgrade pip~=23.0.1 \
+  && pip3 install pipenv==2023.2.18 \
   && yum clean all \
   && rm -rf /var/cache/yum
 
