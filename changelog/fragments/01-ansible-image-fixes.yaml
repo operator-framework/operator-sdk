@@ -1,0 +1,17 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+     For ansible operators: fix a bug where the quay.io/operator-framework/ansible-operator image did not
+     include the cryptography package on ppc64le & s390x architectures.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
