@@ -27,7 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 )
 
-// Memcached defines the Memcached Sample in GO using webhooks and monitoring code
+// Memcached defines the Memcached Sample in GO using webhooks or webhooks and monitoring code
 type Memcached struct {
 	ctx *pkg.SampleContext
 }
@@ -39,25 +39,40 @@ var prometheusAPIVersion = "v0.59.0"
 // GenerateSample will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
 func GenerateSample(binaryPath, samplesPath string) {
-	log.Infof("starting to generate Go memcached sample with webhooks and metrics documentation")
-	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
-	pkg.CheckError("generating Go memcached with webhooks and metrics documentation context", err)
-
 	generateWithMonitoring = false
 	if strings.HasSuffix(samplesPath, "monitoring") {
 		generateWithMonitoring = true
 	}
+
+	var logInfo, errorInfo string
+	if generateWithMonitoring {
+		logInfo = "starting to generate Go memcached sample with webhooks and monitoring"
+		errorInfo = "generating Go memcached with webhooks and monitoring context"
+	} else {
+		logInfo = "starting to generate Go memcached sample with webhooks"
+		errorInfo = "generating Go memcached with webhooks context"
+	}
+
+	log.Infof(logInfo)
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
+	pkg.CheckError(errorInfo, err)
 
 	memcached := Memcached{&ctx}
 	memcached.Prepare()
 	memcached.Run()
 }
 
-// Prepare the Context for the Memcached with webhooks and metrics documentation Go Sample
+// Prepare the Context for the Memcached with webhooks or with webhooks and monitoring Go Sample
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
 func (mh *Memcached) Prepare() {
-	log.Infof("destroying directory for Memcached with webhooks and metrics documentation Go samples")
+	var logInfo string
+	if generateWithMonitoring {
+		logInfo = "destroying directory for Go Memcached sample with webhooks and monitoring"
+	} else {
+		logInfo = "destroying directory for Go Memcached sample with webhooks"
+	}
+	log.Infof(logInfo)
 	mh.ctx.Destroy()
 
 	log.Infof("creating directory")
@@ -71,7 +86,7 @@ func (mh *Memcached) Prepare() {
 	mh.ctx.Kind = "Memcached"
 }
 
-// Run the steps to create the Memcached with metrics and webhooks Go Sample
+// Run the steps to create the Memcached with webhooks or with webhooks and monitoring Go Sample
 func (mh *Memcached) Run() {
 
 	if strings.Contains(mh.ctx.Dir, "v4-alpha") {
