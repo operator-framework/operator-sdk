@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (scorecard): update default storage and untar images to images
+      that run as non-root users by default. This ensures full compliance
+      with restricted PSA guidelines when using `--pod-security=restricted`.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false

@@ -91,10 +91,10 @@ If the argument holds an image tag, it must be present remotely.`,
 	scorecardCmd.Flags().DurationVarP(&c.waitTime, "wait-time", "w", 30*time.Second,
 		"seconds to wait for tests to complete. Example: 35s")
 	scorecardCmd.Flags().StringVarP(&c.storageImage, "storage-image", "b",
-		"docker.io/library/busybox@sha256:c71cb4f7e8ececaffb34037c2637dc86820e4185100e18b4d02d613a9bd772af",
+		"quay.io/operator-framework/scorecard-storage:latest",
 		"Storage image to be used by the Scorecard pod")
 	scorecardCmd.Flags().StringVarP(&c.untarImage, "untar-image", "u",
-		"registry.access.redhat.com/ubi8@sha256:910f6bc0b5ae9b555eb91b88d28d568099b060088616eba2867b07ab6ea457c7",
+		"quay.io/operator-framework/scorecard-untar:latest",
 		"Untar image to be used by the Scorecard pod")
 	scorecardCmd.Flags().StringVarP(&c.testOutput, "test-output", "t", "test-output",
 		"Test output directory.")
