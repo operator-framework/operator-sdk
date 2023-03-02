@@ -183,7 +183,9 @@ See the [OpenAPI validation][openapi-validation] doc for details.
 
 ## Implement the Controller
 
-For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
+For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation. 
+
+**Note**: If you used a value other than `github.com/example/memcached-operator` for repository (`--repo` flag) when running the `operator-sdk init` command, modify accordingly in the `import` block of the file.
 
 **Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered.
 If you'd like to skip this section, head to the [deploy](#run-the-operator) section to see how to run the operator.
