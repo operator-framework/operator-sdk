@@ -45,7 +45,7 @@ jobs:
         fetch-depth: 0
         submodules: recursive
     - run: make test-docs
-    - uses: gaurav-nelson/github-action-markdown-link-check@1.0.13
+    - uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
       with:
         max-depth: 1
         config-file: '.github/workflows/markdown-link-check-config.json'
