@@ -9,7 +9,7 @@ ansible-runner-http = "==1.0.0"
 ipaddress = "==1.0.23"
 openshift = "~=0.13.0"
 jmespath = "==0.10.0"
-cryptography = "*"
+cryptography = "3.3.2"
 ansible-core = "~=2.11.0"
 oauthlib = "==3.2.1"
 
