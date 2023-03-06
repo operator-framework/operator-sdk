@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ansible-runner = "~=1.4.7"
+ansible-runner = "~=2.1.1"
 ansible-runner-http = "==1.0.0"
 ipaddress = "==1.0.23"
 openshift = "~=0.13.0"
