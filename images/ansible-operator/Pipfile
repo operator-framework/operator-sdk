@@ -11,7 +11,7 @@ openshift = "~=0.13.0"
 ansible = "~=2.9.15"
 jmespath = "==0.10.0"
 cryptography = "==3.3.2"
-oauthlib = "==3.2.1"
+oauthlib = "==3.2.2"
 
 [dev-packages]
 
