@@ -2,12 +2,19 @@
 # It is built with dependencies that take a while to download, thus speeding
 # up ansible deploy jobs.
 
-FROM registry.access.redhat.com/ubi8/ubi:8.7 AS builder
+FROM registry.access.redhat.com/ubi8/ubi:8.7
+ARG TARGETARCH
 
-# Install Rust so that we can ensure backwards compatibility with installing/building the cryptography wheel across all platforms
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-RUN rustc --version
+# Label this image with the repo and commit that built it, for freshmaking purposes.
+ARG GIT_COMMIT=devel
+LABEL git_commit=$GIT_COMMIT
+
+RUN mkdir -p /etc/ansible \
+  && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
+  && echo '[defaults]' > /etc/ansible/ansible.cfg \
+  && echo 'roles_path = /opt/ansible/roles' >> /etc/ansible/ansible.cfg \
+  && echo 'library = /usr/share/ansible/openshift' >> /etc/ansible/ansible.cfg
+
 
 # Copy python dependencies (including ansible) to be installed using Pipenv
 COPY Pipfile* ./
@@ -23,37 +30,13 @@ ENV PIP_NO_CACHE_DIR=1 \
 RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
-  && pip3 install --upgrade pip~=23.0.1 \
-  && pip3 install pipenv==2023.2.18 \
+  && pip3 install --upgrade pip~=21.1.0 \
+  && pip3 install pipenv==2022.1.8 \
   && pipenv install --deploy \
-  && pipenv check  -i 42926 -i 42923 -i 45114 \
+  && pipenv check  -i 42926 -i 42923 -i 45114 -i 53304 -i 53303 -i 53302 -i 53299 -i 53298 -i 53301 -i 53306 -i 53307 -i 53305 -i 53048 \
   && yum remove -y gcc libffi-devel openssl-devel python38-devel \
   && yum clean all \
   && rm -rf /var/cache/yum
-
-FROM registry.access.redhat.com/ubi8/ubi:8.7
-ARG TARGETARCH
-
-# Label this image with the repo and commit that built it, for freshmaking purposes.
-ARG GIT_COMMIT=devel
-LABEL git_commit=$GIT_COMMIT
-
-RUN mkdir -p /etc/ansible \
-  && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
-  && echo '[defaults]' > /etc/ansible/ansible.cfg \
-  && echo 'roles_path = /opt/ansible/roles' >> /etc/ansible/ansible.cfg \
-  && echo 'library = /usr/share/ansible/openshift' >> /etc/ansible/ansible.cfg
-
-RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
-  && yum update -y \
-  && yum install -y python38-pip python38-setuptools \
-  && pip3 install --upgrade pip~=23.0.1 \
-  && pip3 install pipenv==2023.2.18 \
-  && yum clean all \
-  && rm -rf /var/cache/yum
-
-COPY --from=builder /usr/local/lib64/python3.8/site-packages /usr/local/lib64/python3.8/site-packages
-COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
 
 ENV TINI_VERSION=v0.19.0
 RUN curl -L -o /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${TARGETARCH} \

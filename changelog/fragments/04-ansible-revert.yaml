@@ -2,8 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-     For ansible operators: fix a bug where the quay.io/operator-framework/ansible-operator image did not
-     include the cryptography package on ppc64le & s390x architectures.
+      (ansible): Revert the cryptography package unpinning and repin to v3.3.2
 
     # kind is one of:
     # - addition
@@ -11,7 +10,8 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "bugfix"
+    kind: "change"
 
     # Is this a breaking change?
     breaking: false
+
