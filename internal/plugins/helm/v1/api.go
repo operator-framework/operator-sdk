@@ -201,11 +201,13 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 	}
 
 	// Check that the provided group can be added to the project
+	// nolint:staticcheck
 	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.Group) {
 		return fmt.Errorf("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
 	// Selected CRD version must match existing CRD versions.
+	// nolint:staticcheck
 	if pluginutil.HasDifferentCRDVersion(p.config, p.resource.API.CRDVersion) {
 		return fmt.Errorf("only one CRD version can be used for all resources, cannot add %q", p.resource.API.CRDVersion)
 	}
