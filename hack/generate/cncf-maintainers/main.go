@@ -33,9 +33,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	expandedOwners := make(map[string]sets.String)
+	expandedOwners := make(map[string]sets.Set[string])
 	for group, ownersAliases := range owners {
-		expandedOwners[group] = sets.NewString()
+		expandedOwners[group] = sets.New[string]()
 		for _, alias := range ownersAliases {
 			if members, ok := aliases.Aliases[alias]; ok {
 				expandedOwners[group].Insert(members...)
@@ -47,7 +47,7 @@ func main() {
 
 	outOwners := make(map[string][]string)
 	for g, m := range expandedOwners {
-		outOwners[g] = m.List()
+		outOwners[g] = sets.List(m)
 	}
 
 	out, err := yaml.Marshal(outOwners)
