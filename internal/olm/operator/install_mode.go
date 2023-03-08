@@ -131,8 +131,8 @@ func (i InstallMode) CheckCompatibility(csv *v1alpha1.ClusterServiceVersion, ope
 
 // GetSupportedInstallModes returns the given slice of InstallModes as a
 // String set.
-func GetSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.String {
-	supported := sets.NewString()
+func GetSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.Set[string] {
+	supported := sets.New[string]()
 	for _, im := range csvInstallModes {
 		if im.Supported {
 			supported.Insert(string(im.Type))

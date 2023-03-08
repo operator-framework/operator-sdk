@@ -58,8 +58,8 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	switch req.Method {
 	case http.MethodGet:
 		// GET request means we need to check the cache
-		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"),
-			GrouplessAPIPrefixes: sets.NewString("api")}
+		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.Set[string]{"api": {}, "apis": {}},
+			GrouplessAPIPrefixes: sets.Set[string]{"api": {}}}
 		r, err := rf.NewRequestInfo(req)
 		if err != nil {
 			log.Error(err, "Failed to convert request")

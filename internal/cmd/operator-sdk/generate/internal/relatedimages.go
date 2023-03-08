@@ -31,7 +31,7 @@ func FindRelatedImages(manifestCol *collector.Manifests) ([]operatorsv1alpha1.Re
 		relatedImages:           []*relatedImage{},
 		relatedImagesByName:     make(map[string][]*relatedImage),
 		relatedImagesByImageRef: make(map[string][]*relatedImage),
-		seenRelatedImages:       sets.NewString(),
+		seenRelatedImages:       sets.Set[string]{},
 	}
 
 	for _, deployment := range manifestCol.Deployments {
@@ -65,7 +65,7 @@ type relatedImageCollector struct {
 	relatedImages           []*relatedImage
 	relatedImagesByName     map[string][]*relatedImage
 	relatedImagesByImageRef map[string][]*relatedImage
-	seenRelatedImages       sets.String
+	seenRelatedImages       sets.Set[string]
 }
 
 func (c *relatedImageCollector) collectFromEnvironment(containerRef string, env []corev1.EnvVar) error {
