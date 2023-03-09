@@ -179,10 +179,7 @@ func (mh *Memcached) Run() {
 
 // isV3 checks if the golang plugin version is v3 or v4
 func (mh *Memcached) isV3() bool {
-	if strings.Contains(mh.ctx.Dir, "go/v3") {
-		return true
-	}
-	return false
+	return strings.Contains(mh.ctx.Dir, "go/v3")
 }
 
 // uncommentDefaultKustomizationV3 will uncomment code in config/default/kustomization.yaml
