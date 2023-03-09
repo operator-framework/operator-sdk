@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controller
 
 import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -36,10 +37,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
+	"github.com/example/memcached-operator/monitoring"
 )
 
 const memcachedFinalizer = "cache.example.com/finalizer"
+const ruleName = "memcached-operator-rules"
+const namespace = "memcached-operator-system"
 
 // Definitions to manage status conditions
 const (
@@ -66,6 +72,7 @@ type MemcachedReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
+//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -78,15 +85,39 @@ type MemcachedReconciler struct {
 // For further info:
 // - About Operator Pattern: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 // - About Controllers: https://kubernetes.io/docs/concepts/architecture/controller/
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
+
+	// Check if prometheus rule already exists, if not create a new one
+	foundRule := &monitoringv1.PrometheusRule{}
+	err := r.Get(ctx, types.NamespacedName{Name: ruleName, Namespace: namespace}, foundRule)
+	if err != nil && apierrors.IsNotFound(err) {
+		// Define a new prometheus rule
+		prometheusRule := monitoring.NewPrometheusRule(namespace)
+		if err := r.Create(ctx, prometheusRule); err != nil {
+			log.Error(err, "Failed to create prometheus rule")
+			return ctrl.Result{}, nil
+		}
+	}
+
+	if err == nil {
+		// Check if prometheus rule spec was changed, if so set as desired
+		desiredRuleSpec := monitoring.NewPrometheusRuleSpec()
+		if !reflect.DeepEqual(foundRule.Spec.DeepCopy(), desiredRuleSpec) {
+			desiredRuleSpec.DeepCopyInto(&foundRule.Spec)
+			if r.Update(ctx, foundRule); err != nil {
+				log.Error(err, "Failed to update prometheus rule")
+				return ctrl.Result{}, nil
+			}
+		}
+	}
 
 	// Fetch the Memcached instance
 	// The purpose is check if the Custom Resource for the Kind Memcached
 	// is applied on the cluster if not we return nil to stop the reconciliation
 	memcached := &cachev1alpha1.Memcached{}
-	err := r.Get(ctx, req.NamespacedName, memcached)
+	err = r.Get(ctx, req.NamespacedName, memcached)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// If the custom resource is not found then, it usually means that it was deleted or not created
@@ -237,6 +268,8 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// via the Size spec of the Custom Resource which we are reconciling.
 	size := memcached.Spec.Size
 	if *found.Spec.Replicas != size {
+		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()
 		found.Spec.Replicas = &size
 		if err = r.Update(ctx, found); err != nil {
 			log.Error(err, "Failed to update Deployment",

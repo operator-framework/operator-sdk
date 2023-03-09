@@ -32,6 +32,7 @@ import (
 	deployimagev1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1"
 	golangv2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2"
 	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
+	golangv4 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v4"
 	grafanav1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/optional/grafana/v1alpha"
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
@@ -90,9 +91,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	)
 	gov4AlphaBundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: 4, Stage: stage.Alpha},
 		kustomizev2Alpha.Plugin{},
-		// TODO: We need to bump here golangv4-alpha when Kubebuilder
-		// begin to provide it without k8s 1.22 support
-		golangv3.Plugin{},
+		golangv4.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
