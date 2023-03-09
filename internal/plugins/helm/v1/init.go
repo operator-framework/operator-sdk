@@ -234,14 +234,5 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
 	}
 
-	//TODO: Remove below code snippet whenever the scaffolding is updated in Kubebuilder to have proper YAML output.
-	const target = "      # according to the platforms which are supported by your solution. "
-	const replace = "      # according to the platforms which are supported by your solution."
-
-	err = util.ReplaceInFile(managerFile, target, replace)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
