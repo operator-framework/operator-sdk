@@ -3,19 +3,14 @@ run:
 linters:
   enable:
     - nakedret
-    - interfacer
-    - varcheck
-    - deadcode
-    - structcheck
     - misspell
-    - maligned
     - ineffassign
     - goconst
     - goimports
     - errcheck
     - dupl
     - unparam
-    - golint
+    - revive
     - staticcheck
     - unused
     - gosimple
@@ -27,7 +22,7 @@ issues:
     # Allow dot imports for ginkgo and gomega
     - source: ginkgo|gomega
       linters:
-      - golint
+      - revive
       text: "should not use dot imports"
 
     - linters:
