@@ -788,19 +788,20 @@ func (mh *Memcached) customizingController() {
 func (mh *Memcached) customizingMain() {
 	var mainPath string
 
+	var mainPath string
+	marker := "\"github.com/example/memcached-operator/"
 	if mh.isV3() {
 		mainPath = filepath.Join(mh.ctx.Dir, "main.go")
-		err := kbutil.InsertCode(mainPath,
-			`"github.com/example/memcached-operator/controllers"`,
-			monitoringImportFragment)
-		pkg.CheckError("adding monitoringv1 import", err)
+		marker += "controllers\""
 	} else {
 		mainPath = filepath.Join(mh.ctx.Dir, "cmd", "main.go")
-		err := kbutil.InsertCode(mainPath,
-			`"github.com/example/memcached-operator/internal/controller"`,
-			monitoringImportFragment)
-		pkg.CheckError("adding monitoringv1 import", err)
+		marker += "internal/controller\""
 	}
+
+	err := kbutil.InsertCode(mainPath,
+		marker,
+		monitoringImportFragment)
+	pkg.CheckError("adding monitoringv1 import", err)
 
 	// Add monitoring imports
 	err := kbutil.InsertCode(mainPath,
@@ -820,17 +821,17 @@ func (mh *Memcached) customizingDockerfile() {
 	dockerfilePath := filepath.Join(mh.ctx.Dir, "Dockerfile")
 
 	// Copy monitoring
+	var ctrlCopy string
 	if mh.isV3() {
-		err := kbutil.InsertCode(dockerfilePath,
-			"COPY controllers/ controllers/",
-			"\nCOPY monitoring/ monitoring/")
-		pkg.CheckError("adding COPY monitoring/", err)
+		ctrlCopy = "controllers/"
 	} else {
-		err := kbutil.InsertCode(dockerfilePath,
-			"COPY internal/controller/ internal/controller/",
-			"\nCOPY monitoring/ monitoring/")
-		pkg.CheckError("adding COPY monitoring/", err)
+		ctrlCopy = "internal/controllers/"
 	}
+
+	err := kbutil.InsertCode(dockerfilePath,
+		fmt.Sprintf("COPY %s %s", ctrlCopy, ctrlCopy),
+		"\nCOPY monitoring/ monitoring/")
+	pkg.CheckError("adding COPY monitoring/", err)
 }
 
 const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
