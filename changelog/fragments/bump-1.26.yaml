@@ -56,3 +56,4 @@ entries:
               - gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
               + gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
          ```
+         

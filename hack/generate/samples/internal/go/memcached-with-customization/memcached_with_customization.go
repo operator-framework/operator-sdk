@@ -788,7 +788,6 @@ func (mh *Memcached) customizingController() {
 func (mh *Memcached) customizingMain() {
 	var mainPath string
 
-	var mainPath string
 	marker := "\"github.com/example/memcached-operator/"
 	if mh.isV3() {
 		mainPath = filepath.Join(mh.ctx.Dir, "main.go")
@@ -804,7 +803,7 @@ func (mh *Memcached) customizingMain() {
 	pkg.CheckError("adding monitoringv1 import", err)
 
 	// Add monitoring imports
-	err := kbutil.InsertCode(mainPath,
+	err = kbutil.InsertCode(mainPath,
 		`"sigs.k8s.io/controller-runtime/pkg/log/zap"`,
 		monitoringv1ImportFragment)
 	pkg.CheckError("adding monitoringv1 import", err)
