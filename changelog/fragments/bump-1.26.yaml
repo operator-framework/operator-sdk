@@ -36,7 +36,7 @@ entries:
       header: Upgrade K8s versions to use 1.26
       body: >
         Regarding the upcoming major changes in the plugin, please note that `go/v3` is being deprecated by Kubebuilder hence Operator SDK would also be migrating to `go/v4` soon.
-        1) Update your `go.mod` file to upgrade the dependencies and run `go mod tidy` to download then
+        1) Update your `go.mod` file to upgrade the dependencies and run `go mod tidy` to download them
         ```go
         k8s.io/api v0.26.2
         k8s.io/apiextensions-apiserver v0.26.2
@@ -56,4 +56,3 @@ entries:
               - gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
               + gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
          ```
-         
