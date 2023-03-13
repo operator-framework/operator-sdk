@@ -91,6 +91,8 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	)
 	gov4AlphaBundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: 4, Stage: stage.Alpha},
 		kustomizev2Alpha.Plugin{},
+		// # TODO(rashmigottipati): make v4 stable with the next release of KB
+		// as `go/v3` is getting deprecated by KB hence Operator SDK would also be migrating to v4 soon.
 		golangv4.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
