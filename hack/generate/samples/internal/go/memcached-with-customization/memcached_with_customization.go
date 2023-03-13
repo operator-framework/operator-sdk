@@ -824,7 +824,7 @@ func (mh *Memcached) customizingDockerfile() {
 	if mh.isV3() {
 		ctrlCopy = "controllers/"
 	} else {
-		ctrlCopy = "internal/controllers/"
+		ctrlCopy = "internal/controller/"
 	}
 
 	err := kbutil.InsertCode(dockerfilePath,
