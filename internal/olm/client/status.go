@@ -111,8 +111,8 @@ func (s Status) HasInstalledResources() (bool, error) {
 }
 
 // getCRDKindSet returns the set of all kinds specified by all CRDs in s.
-func (s Status) getCRDKindSet() (sets.String, error) {
-	crdKindSet := sets.NewString()
+func (s Status) getCRDKindSet() (sets.Set[string], error) {
+	crdKindSet := sets.New[string]()
 	for _, r := range s.Resources {
 		if r.GVK.Kind == "CustomResourceDefinition" {
 			u := &unstructured.Unstructured{}

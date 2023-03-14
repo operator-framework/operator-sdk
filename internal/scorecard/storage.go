@@ -16,6 +16,7 @@ package scorecard
 
 import (
 	"archive/tar"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -67,7 +68,7 @@ func (r PodTestRunner) execInPod(podName, mountPath, containerName string) (io.R
 	go func() {
 		defer outStream.Close()
 		defer errStream.Close()
-		err = exec.Stream(remotecommand.StreamOptions{
+		err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
 			Stdin:  nil,
 			Stdout: outStream,
 			Stderr: errStream,

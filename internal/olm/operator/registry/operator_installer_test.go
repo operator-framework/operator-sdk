@@ -625,13 +625,13 @@ var _ = Describe("OperatorInstaller", func() {
 	Describe("getTargetNamespaces", func() {
 		var (
 			oi        OperatorInstaller
-			supported sets.String
+			supported sets.Set[string]
 		)
 		BeforeEach(func() {
 			oi = OperatorInstaller{
 				cfg: &operator.Configuration{},
 			}
-			supported = sets.NewString()
+			supported = sets.New[string]()
 		})
 		It("should return an error when nothing is supported", func() {
 			target, err := oi.getTargetNamespaces(supported)

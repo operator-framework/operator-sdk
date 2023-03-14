@@ -50,8 +50,8 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 	case http.MethodPost:
 		dump, _ := httputil.DumpRequest(req, false)
 		log.V(2).Info("Dumping request", "RequestDump", string(dump))
-		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"),
-			GrouplessAPIPrefixes: sets.NewString("api")}
+		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.Set[string]{"api": {}, "apis": {}},
+			GrouplessAPIPrefixes: sets.Set[string]{"api": {}}}
 		r, err := rf.NewRequestInfo(req)
 		if err != nil {
 			m := "Could not convert request"
