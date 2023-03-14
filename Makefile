@@ -9,7 +9,7 @@ export IMAGE_VERSION = v1.27.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe --tags)" = "$(shell git describe --tags --abbrev=0)" && echo $(shell git describe --tags)) || echo $(shell git describe --tags --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.25.0
+export K8S_VERSION = 1.26.0
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -57,7 +57,7 @@ fix: ## Fixup files in the repo.
 
 .PHONY: setup-lint
 setup-lint: ## Setup the lint
-	$(SCRIPTS_DIR)/fetch golangci-lint 1.50.0
+	$(SCRIPTS_DIR)/fetch golangci-lint 1.51.2
 
 .PHONY: lint
 lint: setup-lint ## Run the lint check
@@ -175,12 +175,12 @@ cluster-create::
 
 .PHONY: dev-install
 dev-install::
-	$(SCRIPTS_DIR)/fetch kind 0.16.0
+	$(SCRIPTS_DIR)/fetch kind 0.17.0
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
-	$(SCRIPTS_DIR)/fetch kind 0.16.0
+	$(SCRIPTS_DIR)/fetch kind 0.17.0
 	$(TOOLS_DIR)/kind delete cluster --name $(KIND_CLUSTER)
 	rm -f $(KUBECONFIG)
 

@@ -247,7 +247,7 @@ func TestAnsibleVerbosityString(t *testing.T) {
 
 func TestMakeParameters(t *testing.T) {
 	var (
-		inputSpec string = "testKey"
+		inputSpec = "testKey"
 	)
 
 	testCases := []struct {
