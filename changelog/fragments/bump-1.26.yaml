@@ -49,7 +49,7 @@ entries:
         sigs.k8s.io/controller-tools v0.11.3
         sigs.k8s.io/kubebuilder/v3 v3.9.1
         ```
-        2) [go/v3] With the bump to Kubebuilder 3.9.1, the `go/v3` projects are now scaffolded with 0.13.1 version of kube-rbac-proxy. Modify the version of kube-rbac-proxy in the following scaffolded files:
+        2) [go/v3, ansible/v1, helm/v1] With the bump to Kubebuilder 3.9.1, the `go/v3` projects are now scaffolded with 0.13.1 version of kube-rbac-proxy. Modify the version of kube-rbac-proxy in the following scaffolded files:
         - config/default/manager_auth_proxy_patch.yaml
         - bundle/manifests/memcached-operator.clusterserviceversion.yaml        
 
@@ -75,6 +75,9 @@ entries:
             + build: manifests generate fmt vet ## Build manager binary.
           ```
         6) [gov4alpha] The gov4alpha plugin is now being scaffolded with Kubebuilder's go/v4-alpha which has a modified project file structure according to Go's best practices. Refer https://github.com/kubernetes-sigs/kubebuilder/pull/2985 for changes. Make the following changes in your scaffolded project if gov4aplha plugin was used:          - Replacing `go run ./main.go` to `go run ./cmd/main.go` due to the change in project structure.
-          - Replacing `test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)` with
-          `test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-          GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)`. For more info, refer https://github.com/kubernetes-sigs/kubebuilder/pull/3218.
+           - Replacing 
+          ```diff 
+            - `test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)`
+            + test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
+            GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+          ```
