@@ -78,6 +78,9 @@ Following this, there are a few steps which need to be done in your operator pro
 
 2. Uncommenting sections in `config/default/kustomization.yaml` to enable webhook and cert-manager configuration through kustomize. Cert-manager (or any third party solution) can be used to provision certificates for webhook server. This is explained in detail [here](https://book.kubebuilder.io/cronjob-tutorial/running-webhook.html#deploy-webhooks).
 
+**Note**
+If OLM is being used to deploy the operator, then the section prefixed with `[CERT-MANAGER]` need not be uncommented. This is because, OLM currently handles the cert generation and rotation for webhook deployment using self-signed certs. It also does not allow users to specify the name or mount location for the certs. More documentation on this issue can be found [here](https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#deploying-an-operator-with-webhooks-using-olm).
+
 ### Generate webhook manifests and enable webhook deployment 
 
 Once your webhooks are implemented, all that’s left is to create the `WebhookConfiguration` manifests required to register your webhooks with Kubernetes:
