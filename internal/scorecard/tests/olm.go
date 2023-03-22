@@ -257,8 +257,8 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	}
 
 	if !hasStatusDefinition {
-		r.Suggestions = append(r.Suggestions, fmt.Sprintf("%s does not have status spec. Note that"+
-			"All objects that represent a physical resource whose state may vary from the user's desired "+
+		r.Suggestions = append(r.Suggestions, fmt.Sprintf("%s does not have status spec. Note that "+
+			"all objects that represent a physical resource whose state may vary from the user's desired "+
 			"intent SHOULD have a spec and a status. "+
 			"More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status", crdDescription.Name))
 	}
