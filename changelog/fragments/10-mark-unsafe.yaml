@@ -1,0 +1,25 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      markUnsafe now correctly marks as unsafe the spec extra variable.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
