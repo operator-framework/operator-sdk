@@ -105,3 +105,45 @@ func containsResourcePolicyKeep(annotations map[string]string) bool {
 	resourcePolicyType = strings.ToLower(strings.TrimSpace(resourcePolicyType))
 	return resourcePolicyType == kube.KeepPolicy
 }
+
+type labelInjectingClient struct {
+	kube.Interface
+	labels map[string]string
+}
+
+func NewLabelInjectingClient(base kube.Interface, labels map[string]string) kube.Interface {
+	return &labelInjectingClient{
+		Interface: base,
+		labels:    labels,
+	}
+}
+
+func (c *labelInjectingClient) Build(reader io.Reader, validate bool) (kube.ResourceList, error) {
+	resourceList, err := c.Interface.Build(reader, validate)
+	if err != nil {
+		return resourceList, err
+	}
+	err = resourceList.Visit(func(r *resource.Info, err error) error {
+		if err != nil {
+			return err
+		}
+		objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(r.Object)
+		if err != nil {
+			return err
+		}
+		u := &unstructured.Unstructured{Object: objMap}
+		labels := u.GetLabels()
+		if labels == nil {
+			labels = map[string]string{}
+		}
+		for k, v := range c.labels {
+			labels[k] = v
+		}
+		u.SetLabels(labels)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resourceList, nil
+}
