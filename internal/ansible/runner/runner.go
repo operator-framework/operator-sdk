@@ -394,7 +394,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 func markUnsafe(values interface{}) interface{} {
 	switch v := values.(type) {
 	case []interface{}:
-		var p []interface{}
+		p := make([]interface{}, 0)
 		for _, n := range v {
 			p = append(p, markUnsafe(n))
 		}
