@@ -113,15 +113,205 @@ func init() {
 * After adding new import paths to your operator project, run `go mod vendor` if a `vendor/` directory is present in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
-### Metrics
+### Monitoring and Observability
+This section covers how to create custom metrics, [alerts] and [recording rules] for your operator. It focuses on the technical aspects, and demonstrates the implementation by updating the sample [memcached-operator].
 
-To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the Kubebuilder documentation.
+For more information regarding monitoring best practices, take a look at our docs on [observability-best-practices].  
 
+#### Prerequisites
+The following steps are required in order to inspect the operator's custom metrics, alerts and recording rules:
+- Install Prometheus and Prometheus Operator. We recommend using [kube-prometheus] in production if you don’t have your own monitoring system. If you are just experimenting, you can only install Prometheus and Prometheus Operator.
+- Make sure Prometheus has access to the operator's namespace, by setting the corresponding RBAC rules.
+  
+  Example: [prometheus_role.yaml] and [prometheus_role_binding.yaml]
+
+#### Publishing Custom Metrics
+If you wish to publish custom metrics for your operator, this can be easily achieved by using the global registry from `controller-runtime/pkg/metrics`.
+One way to achieve this is to declare your collectors as global variables, register them using `RegisterMetrics()` and call it in the controller's `init()` function.
+
+Example custom metric: [MemcachedDeploymentSizeUndesiredCountTotal]
+
+```go
+package monitoring
+
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
+)
+
+var (
+	MemcachedDeploymentSizeUndesiredCountTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "memcached_deployment_size_undesired_count_total",
+			Help: "Total number of times the deployment size was not as desired.",
+		},
+	)
+)
+
+// RegisterMetrics will register metrics with the global prometheus registry
+func RegisterMetrics() {
+	metrics.Registry.MustRegister(MemcachedDeploymentSizeUndesiredCountTotal)
+}
+```
+
+- The above example creates a new `Counter` metric. For other metrics' types, see [Prometheus Documentation].
+- For more information regarding operators metrics best-practices, please follow [observability-best-practices].
+
+[init() function example]:
+
+```go
+package main
+
+
+import (
+   ...
+   "github.com/example/memcached-operator/monitoring"
+)
+
+func init() {
+   ...
+   monitoring.RegisterMetrics()
+   ...
+}
+```
+
+The next step would be to set the controller's logic according to which we update the metric's value. In this case, the new metric type is `Counter`, thus a valid update operation would be to increment its value. 
+
+[Metric update example]:
+
+```go
+...
+size := memcached.Spec.Size
+if *found.Spec.Replicas != size {
+    // Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+    monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()
+}
+...
+```
+Different metrics types have different valid operations. For more information, please follow [Prometheus Golang client].
+
+#### Publishing Alerts and Recording Rules
+In order to add alerts and recording rules, which are unique to the operator's needs, we'll create a dedicated PrometheusRule object, by using [prometheus-operator API].
+
+[PrometheusRule example]:
+
+```go
+package monitoring
+
+import (
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+)
+
+// NewPrometheusRule creates new PrometheusRule(CR) for the operator to have alerts and recording rules
+func NewPrometheusRule(namespace string) *monitoringv1.PrometheusRule {
+	return &monitoringv1.PrometheusRule{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: monitoringv1.SchemeGroupVersion.String(),
+			Kind:       "PrometheusRule",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "memcached-operator-rules",
+			Namespace: "memcached-operator-system",
+		},
+		Spec: *NewPrometheusRuleSpec(),
+	}
+}
+
+// NewPrometheusRuleSpec creates PrometheusRuleSpec for alerts and recording rules
+func NewPrometheusRuleSpec() *monitoringv1.PrometheusRuleSpec {
+	return &monitoringv1.PrometheusRuleSpec{
+		Groups: []monitoringv1.RuleGroup{{
+			Name: "memcached.rules",
+			Rules: []monitoringv1.Rule{
+				createOperatorUpTotalRecordingRule(), 
+				createOperatorDownAlertRule()
+			},
+		}},
+	}
+}
+
+// createOperatorUpTotalRecordingRule creates memcached_operator_up_total recording rule
+func createOperatorUpTotalRecordingRule() monitoringv1.Rule {
+   return monitoringv1.Rule{
+      Record: "memcached_operator_up_total",
+      Expr:   intstr.FromString("sum(up{pod=~'memcached-operator-controller-manager-.*'} or vector(0))"),
+   }
+}
+
+// createOperatorDownAlertRule creates MemcachedOperatorDown alert rule
+func createOperatorDownAlertRule() monitoringv1.Rule {
+	return monitoringv1.Rule{
+		Alert: "MemcachedOperatorDown",
+		Expr:  intstr.FromString("memcached_operator_up_total == 0"),
+		Annotations: map[string]string{
+			"description": "No running memcached-operator pods were detected in the last 5 min.",
+		},
+		For: "5m",
+		Labels: map[string]string{
+			"severity":    "critical",
+		},
+	}
+}
+```
+
+Then, we may want to ensure that the new PrometheusRule is being created and reconciled. One way to achieve this is by expanding the existing `Reconcile()` function logic.
+
+[PrometheusRule reconciliation example]:
+
+```go
+func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    ...
+    ...
+    // Check if prometheus rule already exists, if not create a new one
+    foundRule := &monitoringv1.PrometheusRule{}
+    err := r.Get(ctx, types.NamespacedName{Name: ruleName, Namespace: namespace}, foundRule)
+    if err != nil && apierrors.IsNotFound(err) {
+        // Define a new prometheus rule
+        prometheusRule := monitoring.NewPrometheusRule(namespace)
+        if err := r.Create(ctx, prometheusRule); err != nil {
+            log.Error(err, "Failed to create prometheus rule")
+            return ctrl.Result{}, nil
+        }
+    }
+    
+    if err == nil {
+    // Check if prometheus rule spec was changed, if so set as desired
+    desiredRuleSpec := monitoring.NewPrometheusRuleSpec()
+    if !reflect.DeepEqual(foundRule.Spec.DeepCopy(), desiredRuleSpec) {
+        desiredRuleSpec.DeepCopyInto(&foundRule.Spec)
+        if r.Update(ctx, foundRule); err != nil {
+            log.Error(err, "Failed to update prometheus rule")
+            return ctrl.Result{}, nil
+        }
+    }
+    ...
+    ...
+}
+```
+
+- Please review the [observability-best-practices] for additional important information regarding alerts and recording rules.
+
+
+#### Alerts Unit Testing
+It is highly recommended implementing unit tests for prometheus rules. For more information, please follow the Prometheus [unit testing documentation]. For examples of unit testing in a Golang operator, see the sample memcached-operator [alerts unit tests].
+
+#### Inspecting the metrics, alerts and recording rules with Prometheus UI
+Finally, in order to inspect the exposed metrics and alerts, we need to forward the corresponding port where metrics are published by Prometheus (usually `9090`, which is the default value). This can be done with the following command:
+```bash
+$ kubectl -n monitoring port-forward svc/prometheus-k8s 9090
+```
+
+
+where we assume that the prometheus service is available in the `monitoring` namespace.
+
+Now you can access Prometheus UI using `http://localhost:9090`. For more details on exposing prometheus metrics, please refer [kube-prometheus docs].
 
 ### Handle Cleanup on Deletion
 
 Operators may create objects as part of their operational duty. Object accumulation can consume unnecessary resources, slow down the API and clutter the user interface. As such it is important for operators to keep good hygiene and to clean up resources when they are not needed. Here are a few common scenarios.
-
+ 
 #### Internal Resources
 
 A typical example of correct resource cleanup is the [Jobs][jobs] implementation. When a Job is created, one or multiple Pods are created as child resources. When a Job is deleted, the associated Pods are deleted as well. This is a very common pattern easily achieved by setting an owner reference from the parent (Job) to the child (Pod) object. Here is a code snippet for doing so, where "r" is the reconcilier and "ctrl" the controller-runtime library:
@@ -311,3 +501,21 @@ Authors may decide to distribute their bundles for various architectures: x86_64
 [apimachinery_condition]: https://github.com/kubernetes/apimachinery/blob/d4f471b82f0a17cda946aeba446770563f92114d/pkg/apis/meta/v1/types.go#L1368
 [helpers-conditions]: https://github.com/kubernetes/apimachinery/blob/master/pkg/api/meta/conditions.go
 [multi_arch]:/docs/advanced-topics/multi-arch
+[observability-best-practices]:https://sdk.operatorframework.io/docs/best-practices/observability-best-practices/
+[alerts]:https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+[recording rules]:https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
+[prometheus_role.yaml]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/config/rbac/prometheus_role.yaml
+[prometheus_role_binding.yaml]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/config/rbac/prometheus_role_binding.yaml
+[MemcachedDeploymentSizeUndesiredCountTotal]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring/metrics.go
+[init() function example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/cmd/main.go
+[Metric update example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/internal/controller/memcached_controller.go
+[Prometheus Documentation]:https://prometheus.io/docs/concepts/metric_types/
+[Prometheus Golang client]:https://pkg.go.dev/github.com/prometheus/client_golang/prometheus
+[kube-prometheus]:https://github.com/prometheus-operator/kube-prometheus
+[memcached-operator]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator
+[prometheus-operator API]:https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md
+[PrometheusRule example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring/alerts.go
+[PrometheusRule reconciliation example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/internal/controller/memcached_controller.go
+[unit testing documentation]:https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
+[alerts unit tests]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring/prom-rule-ci
+[kube-prometheus docs]:https://github.com/prometheus-operator/kube-prometheus/blob/main/docs/access-ui.md#prometheus
