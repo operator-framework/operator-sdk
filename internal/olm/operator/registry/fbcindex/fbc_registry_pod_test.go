@@ -15,8 +15,13 @@
 package fbcindex
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
+	"math/rand"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -27,7 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -61,9 +66,9 @@ var _ = Describe("FBCRegistryPod", func() {
 			cs  *v1alpha1.CatalogSource
 		)
 
-		BeforeEach(func() {
+		JustBeforeEach(func() {
 			cs = &v1alpha1.CatalogSource{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-catalogsource",
 				},
 			}
@@ -85,55 +90,28 @@ var _ = Describe("FBCRegistryPod", func() {
 		})
 
 		Context("with valid registry pod values", func() {
+
 			It("should create the FBCRegistryPod successfully", func() {
 				expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
 				Expect(rp).NotTo(BeNil())
 				Expect(rp.pod.Name).To(Equal(expectedPodName))
 				Expect(rp.pod.Namespace).To(Equal(rp.cfg.Namespace))
 				Expect(rp.pod.Spec.Containers[0].Name).To(Equal(defaultContainerName))
-				if len(rp.pod.Spec.Containers) > 0 {
-					if len(rp.pod.Spec.Containers[0].Ports) > 0 {
-						Expect(rp.pod.Spec.Containers[0].Ports[0].ContainerPort).To(Equal(rp.GRPCPort))
-					}
-				}
+				Expect(rp.pod.Spec.Containers).Should(HaveLen(1))
+				Expect(rp.pod.Spec.Containers[0].Ports).Should(HaveLen(1))
+				Expect(rp.pod.Spec.Containers[0].Ports[0].ContainerPort).To(Equal(rp.GRPCPort))
+				Expect(rp.pod.Spec.Containers[0].Command).Should(HaveLen(3))
+				Expect(rp.pod.Spec.Containers[0].Command).Should(ContainElements("sh", "-c", containerCommandFor(rp.FBCIndexRootDir, rp.GRPCPort)))
+				Expect(rp.pod.Spec.InitContainers).Should(HaveLen(1))
 			})
 
 			It("should create a registry pod when database path is not provided", func() {
 				Expect(rp.FBCIndexRootDir).To(Equal(fmt.Sprintf("/%s-configs", cs.Name)))
 			})
-
-			It("should return a valid container command for one image", func() {
-				output, err := rp.getContainerCmd()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(output).Should(Equal(containerCommandFor(rp.FBCIndexRootDir, rp.GRPCPort)))
-			})
-
-			It("should return a valid container command for three images", func() {
-				bundleItems := append(defaultBundleItems,
-					index.BundleItem{
-						ImageTag: "quay.io/example/example-operator-bundle:0.3.0",
-						AddMode:  index.ReplacesBundleAddMode,
-					},
-					index.BundleItem{
-						ImageTag: "quay.io/example/example-operator-bundle:1.0.1",
-						AddMode:  index.SemverBundleAddMode,
-					},
-					index.BundleItem{
-						ImageTag: "localhost/example-operator-bundle:1.0.1",
-						AddMode:  index.SemverBundleAddMode,
-					},
-				)
-				rp2 := FBCRegistryPod{
-					GRPCPort:    defaultGRPCPort,
-					BundleItems: bundleItems,
-				}
-				output, err := rp2.getContainerCmd()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(output).Should(Equal(containerCommandFor(rp2.FBCIndexRootDir, rp2.GRPCPort)))
-			})
 		})
 
 		Context("with invalid registry pod values", func() {
+
 			It("should error when bundle image is not provided", func() {
 				expectedErr := "bundle image set cannot be empty"
 				rp := &FBCRegistryPod{}
@@ -164,53 +142,81 @@ var _ = Describe("FBCRegistryPod", func() {
 			})
 		})
 
-		Context("creating a ConfigMap", func() {
-			It("makeBaseConfigMap() should return a basic ConfigMap manifest", func() {
-				cm := rp.makeBaseConfigMap()
+		Context("creating a compressed ConfigMap", func() {
+			It("cmWriter.makeBaseConfigMap() should return a basic ConfigMap manifest", func() {
+				cm := rp.cmWriter.newConfigMap("test-cm")
+				Expect(cm.Name).Should(Equal("test-cm"))
 				Expect(cm.GetObjectKind().GroupVersionKind()).Should(Equal(corev1.SchemeGroupVersion.WithKind("ConfigMap")))
 				Expect(cm.GetNamespace()).Should(Equal(cfg.Namespace))
-				Expect(cm.Data).ShouldNot(BeNil())
-				Expect(cm.Data).Should(BeEmpty())
+				Expect(cm.Data).Should(BeNil())
+				Expect(cm.BinaryData).ShouldNot(BeNil())
+				Expect(cm.BinaryData).Should(BeEmpty())
 			})
 
-			It("partitionedConfigMaps() should return a single ConfigMap", func() {
+			It("partitionedConfigMaps() should return a single compressed ConfigMap", func() {
 				rp.FBCContent = testYaml
-				expectedYaml := ""
-				for i, yaml := range strings.Split(testYaml, "---")[1:] {
-					if i != 0 {
-						expectedYaml += "\n---\n"
-					}
+				expectedYaml := strings.TrimPrefix(strings.TrimSpace(testYaml), "---\n")
 
-					expectedYaml += yaml
-				}
-				cms := rp.partitionedConfigMaps()
+				cms, err := rp.partitionedConfigMaps()
+				Expect(err).ShouldNot(HaveOccurred())
 				Expect(cms).Should(HaveLen(1))
-				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
-				Expect(cms[0].Data["extraFBC"]).Should(Equal(expectedYaml))
+				Expect(cms[0].BinaryData).Should(HaveKey("extraFBC"))
+
+				By("uncompressed the BinaryData")
+				uncompressed := decompressCM(cms[0])
+				Expect(uncompressed).Should(Equal(expectedYaml))
 			})
 
-			It("partitionedConfigMaps() should return multiple ConfigMaps", func() {
-				// Create a large yaml manifest
-				largeYaml := ""
-				for i := len([]byte(largeYaml)); i < maxConfigMapSize; {
-					largeYaml += testYaml
-					i = len([]byte(largeYaml))
+			It("partitionedConfigMaps() should return a single compressed ConfigMap for large yaml", func() {
+				largeYaml := strings.Builder{}
+				for largeYaml.Len() < maxConfigMapSize {
+					largeYaml.WriteString(testYaml)
 				}
+				rp.FBCContent = largeYaml.String()
 
+				expectedYaml := strings.TrimPrefix(strings.TrimSpace(largeYaml.String()), "---\n")
+				expectedYaml = regexp.MustCompile(`\n\n+`).ReplaceAllString(expectedYaml, "\n")
+
+				cms, err := rp.partitionedConfigMaps()
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(cms).Should(HaveLen(1))
+				Expect(cms[0].BinaryData).Should(HaveKey("extraFBC"))
+
+				actualBinaryData := cms[0].BinaryData["extraFBC"]
+				Expect(len(actualBinaryData)).Should(BeNumerically("<", maxConfigMapSize))
+				By("uncompress the BinaryData")
+				uncompressed := decompressCM(cms[0])
+				Expect(uncompressed).Should(Equal(expectedYaml))
+			})
+
+			It("partitionedConfigMaps() should return a multiple compressed ConfigMaps for a huge yaml", func() {
+				// build completely random yamls. This is because gzip relies on duplications, and so repeated text is
+				// compressed very well, so we'll need a really huge input to create more than one CM. When using random
+				// input, gzip will create larger output, and we can get to multiple CM with much smaller input.
+				largeYamlBuilder := strings.Builder{}
+				for largeYamlBuilder.Len() < maxConfigMapSize*2 {
+					largeYamlBuilder.WriteString(generateRandYaml())
+				}
+				largeYaml := largeYamlBuilder.String()
 				rp.FBCContent = largeYaml
 
-				cms := rp.partitionedConfigMaps()
+				expectedYaml := strings.TrimPrefix(strings.TrimSpace(largeYaml), "---\n")
+				expectedYaml = regexp.MustCompile(`\n\n+`).ReplaceAllString(expectedYaml, "\n")
+
+				cms, err := rp.partitionedConfigMaps()
+				Expect(err).ShouldNot(HaveOccurred())
+
 				Expect(cms).Should(HaveLen(2))
-				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
-				Expect(cms[0].Data["extraFBC"]).ShouldNot(BeEmpty())
-				Expect(cms[1].Data).Should(HaveKey("extraFBC"))
-				Expect(cms[1].Data["extraFBC"]).ShouldNot(BeEmpty())
+				Expect(cms[0].BinaryData).Should(HaveKey("extraFBC"))
+				Expect(cms[1].BinaryData).Should(HaveKey("extraFBC"))
+				decompressed1 := decompressCM(cms[1])
+				decompressed0 := decompressCM(cms[0])
+				Expect(decompressed0 + "\n---\n" + decompressed1).Should(Equal(expectedYaml))
 			})
 
-			It("createOrUpdateConfigMap() should create the ConfigMap if it does not exist", func() {
-				cm := rp.makeBaseConfigMap()
-				cm.SetName("test-cm")
-				cm.Data["test"] = "hello test world!"
+			It("createOrUpdateConfigMap() should create the compressed ConfigMap if it does not exist", func() {
+				cm := rp.cmWriter.newConfigMap("test-cm")
+				cm.BinaryData["test"] = compress("hello test world!")
 
 				Expect(rp.createOrUpdateConfigMap(cm)).Should(Succeed())
 
@@ -219,12 +225,11 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(testCm).Should(BeEquivalentTo(cm))
 			})
 
-			It("createOrUpdateConfigMap() should update the ConfigMap if it already exists", func() {
-				cm := rp.makeBaseConfigMap()
-				cm.SetName("test-cm")
-				cm.Data["test"] = "hello test world!"
+			It("createOrUpdateConfigMap() should update the compressed ConfigMap if it already exists", func() {
+				cm := rp.cmWriter.newConfigMap("test-cm")
+				cm.BinaryData["test"] = compress("hello test world!")
 				Expect(rp.cfg.Client.Create(context.TODO(), cm)).Should(Succeed())
-				cm.Data["test"] = "hello changed world!"
+				cm.BinaryData["test"] = compress("hello changed world!")
 				cm.SetResourceVersion("2")
 
 				Expect(rp.createOrUpdateConfigMap(cm)).Should(Succeed())
@@ -234,17 +239,36 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(testCm).Should(BeEquivalentTo(cm))
 			})
 
-			It("createConfigMaps() should create a single ConfigMap", func() {
-				rp.FBCContent = testYaml
-				expectedYaml := ""
-				for i, yaml := range strings.Split(testYaml, "---")[1:] {
-					if i != 0 {
-						expectedYaml += "\n---\n"
-					}
-
-					expectedYaml += yaml
+			It("createOrUpdateConfigMap() should update the uncompressed-old ConfigMap if it already exists", func() {
+				origCM := &corev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: corev1.SchemeGroupVersion.String(),
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: rp.cfg.Namespace,
+						Name:      "test-cm",
+					},
+					Data: map[string]string{"test": "hello test world!"},
 				}
 
+				Expect(rp.cfg.Client.Create(context.TODO(), origCM)).Should(Succeed())
+				cm := rp.cmWriter.newConfigMap("test-cm")
+				cm.BinaryData["test"] = compress("hello changed world!")
+				cm.SetResourceVersion("2")
+
+				Expect(rp.createOrUpdateConfigMap(cm)).Should(Succeed())
+
+				testCm := &corev1.ConfigMap{}
+				Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: cm.GetName()}, testCm)).Should(Succeed())
+				Expect(cm.Data).Should(BeNil())
+				Expect(testCm.BinaryData).Should(BeEquivalentTo(cm.BinaryData))
+			})
+
+			It("createConfigMaps() should create a single compressed ConfigMap", func() {
+				rp.FBCContent = testYaml
+
+				expectedYaml := strings.TrimPrefix(strings.TrimSpace(testYaml), "---\n")
 				expectedName := fmt.Sprintf("%s-configmap-partition-1", cs.GetName())
 
 				cms, err := rp.createConfigMaps(cs)
@@ -252,45 +276,52 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(cms).Should(HaveLen(1))
 				Expect(cms[0].GetNamespace()).Should(Equal(rp.cfg.Namespace))
 				Expect(cms[0].GetName()).Should(Equal(expectedName))
-				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
-				Expect(cms[0].Data["extraFBC"]).Should(Equal(expectedYaml))
+				Expect(cms[0].Data).Should(BeNil())
+				Expect(cms[0].BinaryData).Should(HaveKey("extraFBC"))
+				uncompressed := decompressCM(cms[0])
+				Expect(uncompressed).Should(Equal(expectedYaml))
 
 				testCm := &corev1.ConfigMap{}
 				Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: expectedName}, testCm)).Should(Succeed())
-				Expect(testCm.Data).Should(HaveKey("extraFBC"))
-				Expect(testCm.Data["extraFBC"]).Should(Equal(expectedYaml))
+				Expect(testCm.BinaryData).Should(HaveKey("extraFBC"))
+				Expect(testCm.Data).Should(BeNil())
+				uncompressed = decompressCM(testCm)
+				Expect(uncompressed).Should(Equal(expectedYaml))
 				Expect(testCm.OwnerReferences).Should(HaveLen(1))
 			})
 
-			It("createConfigMaps() should create multiple ConfigMaps", func() {
-				largeYaml := ""
-				for i := len([]byte(largeYaml)); i < maxConfigMapSize; {
-					largeYaml += testYaml
-					i = len([]byte(largeYaml))
-				}
-				rp.FBCContent = largeYaml
-
-				cms, err := rp.createConfigMaps(cs)
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(cms).Should(HaveLen(2))
-
-				for i, cm := range cms {
-					expectedName := fmt.Sprintf("%s-configmap-partition-%d", cs.GetName(), i+1)
-					Expect(cm.Data).Should(HaveKey("extraFBC"))
-					Expect(cm.Data["extraFBC"]).ShouldNot(BeEmpty())
-					Expect(cm.GetNamespace()).Should(Equal(rp.cfg.Namespace))
-					Expect(cm.GetName()).Should(Equal(expectedName))
-
-					testCm := &corev1.ConfigMap{}
-					Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: expectedName}, testCm)).Should(Succeed())
-					Expect(testCm.Data).Should(HaveKey("extraFBC"))
-					Expect(testCm.Data["extraFBC"]).Should(Equal(cm.Data["extraFBC"]))
-					Expect(testCm.OwnerReferences).Should(HaveLen(1))
-				}
+			It("should create the compressed FBCRegistryPod successfully", func() {
+				expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
+				Expect(rp).NotTo(BeNil())
+				Expect(rp.pod.Name).To(Equal(expectedPodName))
+				Expect(rp.pod.Namespace).To(Equal(rp.cfg.Namespace))
+				Expect(rp.pod.Spec.Containers[0].Name).To(Equal(defaultContainerName))
+				Expect(rp.pod.Spec.Containers).Should(HaveLen(1))
+				Expect(rp.pod.Spec.Containers[0].Ports).Should(HaveLen(1))
+				Expect(rp.pod.Spec.Containers[0].Ports[0].ContainerPort).To(Equal(rp.GRPCPort))
+				Expect(rp.pod.Spec.Containers[0].Command).Should(HaveLen(3))
+				Expect(rp.pod.Spec.Containers[0].Command).Should(ContainElements("sh", "-c", containerCommandFor(rp.FBCIndexRootDir, rp.GRPCPort)))
+				Expect(rp.pod.Spec.InitContainers).Should(HaveLen(1))
+				Expect(rp.pod.Spec.InitContainers[0].VolumeMounts).Should(HaveLen(2))
 			})
 		})
 	})
 })
+
+func decompressCM(cm *corev1.ConfigMap) string {
+	actualBinaryData := cm.BinaryData["extraFBC"]
+	ExpectWithOffset(1, len(actualBinaryData)).Should(BeNumerically("<", maxConfigMapSize))
+	By("uncompress the BinaryData")
+	compressed := bytes.NewBuffer(actualBinaryData)
+	reader, err := gzip.NewReader(compressed)
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	var uncompressed bytes.Buffer
+	ExpectWithOffset(1, reader.Close()).Should(Succeed())
+	_, err = io.Copy(&uncompressed, reader)
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+
+	return uncompressed.String()
+}
 
 // containerCommandFor returns the expected container command for a db path and set of bundle items.
 func containerCommandFor(indexRootDir string, grpcPort int32) string { //nolint:unparam
@@ -332,3 +363,54 @@ address:
     postcode: '89393'
     country: 'French Southern Territories'
 `
+const charTbl = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_+=*&^%$#@!,.;~/\\|"
+
+var rnd = rand.New(rand.NewSource(time.Now().UnixMilli()))
+
+func randField() string {
+
+	fieldNameLength := rnd.Intn(15) + 5
+	fieldName := make([]byte, fieldNameLength)
+	for i := 0; i < fieldNameLength; i++ {
+		fieldName[i] = charTbl[rnd.Intn('z'-'a'+1)]
+	}
+
+	// random field name between 5 and 45
+	size := rnd.Intn(40) + 5
+
+	value := make([]byte, size)
+	for i := 0; i < size; i++ {
+		value[i] = charTbl[rnd.Intn(len(charTbl))]
+	}
+	return fmt.Sprintf("%s: %q\n", fieldName, value)
+}
+
+func generateRandYaml() string {
+	numLines := rnd.Intn(45) + 5
+
+	b := strings.Builder{}
+	b.WriteString("---\n")
+	for i := 0; i < numLines; i++ {
+		b.WriteString(randField())
+	}
+	return b.String()
+}
+
+var (
+	compressBuff = &bytes.Buffer{}
+	compressor   = gzip.NewWriter(compressBuff)
+)
+
+func compress(s string) []byte {
+	compressBuff.Reset()
+	compressor.Reset(compressBuff)
+
+	input := bytes.NewBufferString(s)
+	_, err := io.Copy(compressor, input)
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+
+	Expect(compressor.Flush()).Should(Succeed())
+	Expect(compressor.Close()).Should(Succeed())
+
+	return compressBuff.Bytes()
+}
