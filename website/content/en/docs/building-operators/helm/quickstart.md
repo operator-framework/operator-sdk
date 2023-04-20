@@ -39,7 +39,7 @@ This guide walks through an example of building a simple nginx-operator powered 
   ```sh
   make docker-build docker-push IMG="example.com/nginx-operator:v0.0.1"
   ```
-
+Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`.
 
 ### OLM deployment
 

@@ -43,6 +43,8 @@ plugin which provides support for this platform by adding to the init subCommand
   make docker-build docker-push IMG="example.com/memcached-operator:v0.0.1"
   ```
 
+Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`.
+
 ### OLM deployment
 
 1. Install [OLM][doc-olm]:

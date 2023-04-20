@@ -392,6 +392,8 @@ Note that:
 - `operator-sdk generate crds` is replaced with `make manifests`, which generates CRDs and RBAC rules.
 - `operator-sdk build` is replaced with `make docker-build IMG=<some-registry>/<project-name>:<tag>`.
 
+`IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`.
+
 In this way, run:
 
 ```sh

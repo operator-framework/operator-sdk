@@ -40,6 +40,8 @@ This guide walks through an example of building a simple memcached-operator powe
   make docker-build docker-push IMG="example.com/memcached-operator:v0.0.1"
   ```
 
+  Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`.
+
 ### OLM deployment
 
 1. Install [OLM][doc-olm]:

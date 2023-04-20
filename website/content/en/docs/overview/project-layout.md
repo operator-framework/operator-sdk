@@ -15,7 +15,7 @@ The common structure contains the following items:
 
 | File/Directory | Description | 
 | ------ | ----- |
-| `Dockerfile` | The Dockerfile of your operator project, used to build the image with `make docker-build`. |
+| `Dockerfile` | The Dockerfile of your operator project, used to build the image with `make docker-build`. Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`. |
 | `Makefile` | Build file with helper targets to help you work with your project. |
 | `PROJECT` | This file represents the project's configuration and is used to track useful information for the CLI and plugins. |
 | `bin/` | This directory contains useful binaries such as the `manager` which is used to run your project locally and  the `kustomize` utility used for the project configuration. For other language types, it might have other binaries useful for developing your operator. |

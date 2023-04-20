@@ -188,7 +188,7 @@ build and push an operator image tagged as `example.com/nginx-operator:v0.0.1` t
 ```console
 make docker-build docker-push
 ```
-
+Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`.
 
 ## Run the operator
 

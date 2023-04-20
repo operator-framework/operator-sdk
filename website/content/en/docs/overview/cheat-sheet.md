@@ -16,8 +16,8 @@ Below you will find a cheat sheet with options and helpers for projects, which a
 | `operator-sdk init --plugins=<plugin-key>`          | To initialize an operator project in the current directory using a specific plugin. To check the available plugins you can run `operator-sdk --help`. E.g (`operator-sdk init --plugins=helm`).|
 | `operator-sdk create api [flags]`          | Lets you create your own APIs with its [GKV][gkvs] by [Extending the Kubernetes API with CustomResourceDefinitions][extend-k8s-api], or lets you use external/core-types. Also generates their respective [controllers][controllers-k8s-doc].|
 | `operator-sdk create webhook [flags]`          | To scaffold [Webhooks][webhooks-k8s-doc] for the APIs declared in the project. Currently, only the Go-based project supports this option. |
-| `make docker-build IMG=<some-registry>/<project-name>:<tag>`          | Build the operator image.      |
-| `make docker-build docker-push IMG=<some-registry>/<project-name>:<tag>`      | Build and push the operator image for your registry.  |
+| `make docker-build IMG=<some-registry>/<project-name>:<tag>`          | Build the operator image. Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`.     |
+| `make docker-build docker-push IMG=<some-registry>/<project-name>:<tag>`      | Build and push the operator image for your registry. Note: `IMAGE_BUILDER` can be used here to specify your container engine. default is `docker`. |
 | `make install`         | Install the CRDs into the cluster. |
 | `make uninstall`         | Uninstall the CRDs into the cluster. |
 | `make run`         | Run your controller locally and outside of the cluster. Note that this will run in the foreground, so switch to a new terminal if you want to leave it running. |

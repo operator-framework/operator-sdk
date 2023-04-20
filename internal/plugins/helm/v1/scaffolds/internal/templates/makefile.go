@@ -68,6 +68,8 @@ const makefileTemplate = `
 # Image URL to use all building/pushing image targets
 IMG ?= {{ .Image }}
 
+IMAGE_BUILDER ?= docker
+
 .PHONY: all
 all: docker-build
 
@@ -96,11 +98,11 @@ run: helm-operator ## Run against the configured Kubernetes cluster in ~/.kube/c
 
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	docker build -t ${IMG} .
+	${IMAGE_BUILDER} build -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+	${IMAGE_BUILDER} push ${IMG}
 
 # PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:

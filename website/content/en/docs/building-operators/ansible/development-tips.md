@@ -304,6 +304,8 @@ To build the `memcached-operator` image and push it to a registry:
 make docker-build docker-push IMG=example.com/memcached-operator:v0.0.1
 ```
 
+Note: `IMAGE_BUILDER` can be used here to specify your container engine. Default is `docker`.
+
 Deploy the memcached-operator:
 
 ```sh
