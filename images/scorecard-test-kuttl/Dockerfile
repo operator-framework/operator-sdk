@@ -18,8 +18,8 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/scorecard-test-kuttl
 
 # Final image.
-#FROM kudobuilder/kuttl@sha256:924a709a1d2c6bede8815415ea5d5be640b506ec5aeaddc68acb443ae8ee7926
-FROM kudobuilder/kuttl:v0.12.1
+#FROM kudobuilder/kuttl@sha256:8d4dad161521450db95f88fe0e62487cc6587c5818df2a4e750fb9e54c082170
+FROM kudobuilder/kuttl:v0.15.0
 
 ENV HOME=/opt/scorecard-test-kuttl \
     USER_NAME=scorecard-test-kuttl \
@@ -29,6 +29,8 @@ ENV HOME=/opt/scorecard-test-kuttl \
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd
 
 WORKDIR ${HOME}
+# kuttl writes a kubeconfig file in the current working directory
+RUN chmod g+w "${HOME}"
 
 COPY --from=builder /workspace/build/scorecard-test-kuttl /usr/local/bin/scorecard-test-kuttl
 COPY --from=builder /workspace/images/scorecard-test-kuttl/entrypoint /usr/local/bin/entrypoint
