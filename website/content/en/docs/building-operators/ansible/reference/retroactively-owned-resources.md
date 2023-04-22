@@ -183,7 +183,7 @@ This file can be used as-is without user adjustments.
         ownerReferences: "{{ (to_be_owned.metadata.ownerReferences | default([])) + [owner_reference] }}"
 
 - name: Patch resource with owner annotation
-  when: to_be_owned.namespace is not defined or to_be_owned.namespace != owning_resource.namespace
+  when: to_be_owned.metadata.namespace is not defined or to_be_owned.metadata.namespace != owning_resource.namespace
   kubernetes.core.k8s:
     state: present
     resource_definition:
