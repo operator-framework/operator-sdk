@@ -330,7 +330,7 @@ func getAnsibleDebugLog() bool {
 	return val
 }
 
-// getAnsibleDebugLog return the integer value of the log level set in the flag
+// getAnsibleEventsToLog return the integer value of the log level set in the flag
 func getAnsibleEventsToLog(f *flags.Flags) events.LogLevel {
 	if strings.ToLower(f.AnsibleLogEvents) == "everything" {
 		return events.Everything

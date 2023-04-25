@@ -16,7 +16,7 @@
       type: Successful
       status: "True"
   register: reconciliation_test
-- name: Retreive the number of iterations on the ConfigMap
+- name: Retrieve the number of iterations on the ConfigMap
   debug: var=cm.data.iterations
   retries: 20
   delay: 2

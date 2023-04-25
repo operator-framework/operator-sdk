@@ -22,7 +22,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// getTestResult fetches the test pod log and converts it into
+// getTestStatus fetches the test pod log and converts it into
 // Test format
 func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod) (output *v1alpha3.TestStatus) {
 	logBytes, err := getPodLog(ctx, r.Client, p)

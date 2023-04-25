@@ -233,7 +233,7 @@ func (mh *Memcached) uncommentDefaultKustomizationV3() {
 	pkg.CheckError("uncommented certificate CR", err)
 }
 
-// uncommentDefaultKustomizationV3 will uncomment code in config/default/kustomization.yaml
+// uncommentDefaultKustomizationV4 will uncomment code in config/default/kustomization.yaml
 func (mh *Memcached) uncommentDefaultKustomizationV4() {
 	var err error
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")

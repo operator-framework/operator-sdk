@@ -52,7 +52,7 @@ type initSubcommand struct {
 	kind    string
 }
 
-// UpdateContext injects documentation for the command
+// UpdateMetadata injects documentation for the command
 func (p *initSubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdMeta *plugin.SubcommandMetadata) {
 	subcmdMeta.Description = `
 Initialize a new Ansible-based operator project.
