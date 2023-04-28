@@ -28,9 +28,9 @@ operator-sdk scorecard [flags]
   -l, --selector string          label selector to determine which tests are run
   -s, --service-account string   Service account to use for tests (default "default")
   -x, --skip-cleanup             Disable resource cleanup after tests are run
-  -b, --storage-image string     Storage image to be used by the Scorecard pod (default "quay.io/operator-framework/scorecard-storage:latest")
+  -b, --storage-image string     Storage image to be used by the Scorecard pod (default "quay.io/operator-framework/scorecard-storage@sha256:f7bd62664a0b91034acb977a8bb4ebb76bc98a6e8bdb943eb84c8e364828f056")
   -t, --test-output string       Test output directory. (default "test-output")
-  -u, --untar-image string       Untar image to be used by the Scorecard pod (default "quay.io/operator-framework/scorecard-untar:latest")
+  -u, --untar-image string       Untar image to be used by the Scorecard pod (default "quay.io/operator-framework/scorecard-untar@sha256:56c88afd4f20718dcd4d4384b8ff0b790f95aa4737f89f3b105b5dfc1bdb60c3")
   -w, --wait-time duration       seconds to wait for tests to complete. Example: 35s (default 30s)
 ```
 
