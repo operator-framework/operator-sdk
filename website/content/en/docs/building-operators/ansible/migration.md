@@ -301,7 +301,7 @@ For further steps regarding the deployment of the operator, creation of custom r
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [marker]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
-[molecule]: https://molecule.readthedocs.io/en/latest/#
+[molecule]: https://molecule.readthedocs.io/
 [testing-guide]: /docs/building-operators/ansible/testing-guide
 [migration-doc]: /docs/upgrading-sdk-version/
 [tutorial-deploy]: /docs/building-operators/ansible/tutorial/#run-the-operator

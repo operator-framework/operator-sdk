@@ -53,7 +53,7 @@ To implement application-specific tests, the SDK's test harness, [scorecard][sco
 [gomega]: https://onsi.github.io/gomega/
 [kuttl]: https://kuttl.dev/
 [sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
-[molecule]: https://molecule.readthedocs.io/en/latest/
+[molecule]: https://molecule.readthedocs.io/
 [molecule-tests]: /docs/building-operators/ansible/testing-guide
 [helm-chart-tests]: https://helm.sh/docs/topics/chart_tests/
 [go-legacy-shell]: https://github.com/operator-framework/operator-sdk/blob/v1.0.0/hack/tests/e2e-go.sh

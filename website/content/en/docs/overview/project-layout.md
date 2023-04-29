@@ -84,7 +84,7 @@ Now, let's look at the files and directories specific to Helm-based operators.
 [olm-manifests]: https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format  
 [olm-metadata]: https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#bundle-manifest-format
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
-[molecule]: https://molecule.readthedocs.io/en/latest/
+[molecule]: https://molecule.readthedocs.io/
 [ansible-watches]: /docs/building-operators/ansible/reference/watches
 [ansible-test-guide]: /docs/building-operators/ansible/testing-guide
 [helm-watches]: /docs/building-operators/helm/reference/watches

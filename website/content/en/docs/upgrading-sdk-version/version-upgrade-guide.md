@@ -1288,7 +1288,7 @@ which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube
 The Molecule version for Ansible based-operators was upgraded from `2.22` to `3.0.2`. The following changes are required in the default scaffold files.
 
 - Remove the `scenario.name` from `molecule.yaml` and then, ensure that any condition with will look for the folder name which determines the scenario name from now on
-- Replace the lint with newer syntax from [documentation](https://molecule.readthedocs.io/en/latest/contributing/#linting). See:
+- Replace the lint with newer syntax from [documentation](https://molecule.readthedocs.io/contributing/#linting). See:
 
 Replace:
 
