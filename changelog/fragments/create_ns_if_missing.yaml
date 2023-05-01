@@ -1,0 +1,10 @@
+entries:
+  - description: >
+      When running `operator-sdk run bundle` with a specific namespace,
+      if the namespace is missing, the operator-sdk now creates it instead of 
+      exiting with error.
+
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false

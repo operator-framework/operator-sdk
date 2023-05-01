@@ -28,6 +28,10 @@ import (
 	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Install struct {
@@ -143,6 +147,33 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
+	if i.cfg.Namespace != "" {
+		ns := &corev1.Namespace{}
+
+		// check that the namespace exists
+		err = i.cfg.Client.Get(ctx, client.ObjectKey{Name: i.cfg.Namespace}, ns)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				log.Infof("the %q namespace does not exist. creating it...", i.cfg.Namespace)
+				// Can't find the namespace. Create it
+				ns = &corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: i.cfg.Namespace,
+					},
+				}
+
+				err = i.cfg.Client.Create(ctx, ns)
+				if err != nil {
+					return fmt.Errorf("failed to create the %q namespace: %w", i.cfg.Namespace, err)
+				}
+				log.Infof("the %q namespace was created successfully", i.cfg.Namespace)
+			} else {
+				return fmt.Errorf("failed to get the %q namespace: %w", i.cfg.Namespace, err)
+			}
+		} else {
+			log.Infof("the %q namespace found", i.cfg.Namespace)
+		}
+	}
 	return nil
 }
 
