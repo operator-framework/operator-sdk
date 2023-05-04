@@ -16,6 +16,7 @@ package k8sutil
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 type MarshalFunc func(interface{}) ([]byte, error)
@@ -52,4 +53,12 @@ func deleteKeyFromUnstructured(u map[string]interface{}, key string) {
 			}
 		}
 	}
+}
+
+func GetObjectFromBytes(b []byte, obj interface{}) error {
+	var u map[string]interface{}
+	if err := yaml.Unmarshal(b, &u); err != nil {
+		return err
+	}
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(u, obj)
 }

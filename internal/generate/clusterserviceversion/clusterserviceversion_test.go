@@ -27,6 +27,7 @@ import (
 	"github.com/onsi/gomega/format"
 	operatorversion "github.com/operator-framework/api/pkg/lib/version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/yaml"
@@ -139,6 +140,56 @@ var _ = Describe("Testing CRDs with single version", func() {
 					outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
 					Expect(outputFile).To(BeAnExistingFile())
 					Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVUIMetaStr))
+				})
+				It("should not update createdAt to ClusterServiceVersion manifest to a bundle file if it's the only change", func() {
+					g = Generator{
+						OperatorName: operatorName,
+						Version:      zeroZeroOne,
+						Collector:    col,
+					}
+					opts := []Option{
+						WithBundleWriter(tmp),
+					}
+					Expect(g.Generate(opts...)).ToNot(HaveOccurred())
+					outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
+					Expect(outputFile).To(BeAnExistingFile())
+					Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVUIMetaStr))
+					var initiallyWrittenCSV operatorsv1alpha1.ClusterServiceVersion
+					r, err := bundleReader(tmp, makeCSVFileName(operatorName))
+					Expect(err).ToNot(HaveOccurred())
+					err = genutil.ReadObject(r, &initiallyWrittenCSV)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(initiallyWrittenCSV.ObjectMeta.Annotations).ToNot(BeNil())
+					Expect(initiallyWrittenCSV.ObjectMeta.Annotations["createdAt"]).ToNot(Equal(""))
+					g = Generator{
+						OperatorName: operatorName,
+						Version:      zeroZeroOne,
+						Collector:    col,
+					}
+					opts = []Option{
+						WithBundleWriter(tmp),
+						WithBundleReader(tmp),
+						WithIgnoreIfOnlyCreatedAt(),
+					}
+					time.Sleep(1*time.Second + 1*time.Millisecond) // sleep to ensure createdAt is different if not for ignore option
+					Expect(g.Generate(opts...)).ToNot(HaveOccurred())
+					Expect(outputFile).To(BeAnExistingFile())
+					// This should fail if createdAt changed.
+					Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVUIMetaStr))
+					// now try without ignore option
+					g = Generator{
+						OperatorName: operatorName,
+						Version:      zeroZeroOne,
+						Collector:    col,
+					}
+					opts = []Option{
+						WithBundleWriter(tmp),
+						WithBundleReader(tmp),
+					}
+					Expect(g.Generate(opts...)).ToNot(HaveOccurred())
+					Expect(outputFile).To(BeAnExistingFile())
+					// This should NOT fail if createdAt changed.
+					Expect(readFileHelper(outputFile)).ToNot(MatchYAML(newCSVUIMetaStr))
 				})
 				It("should write a ClusterServiceVersion manifest to a package file", func() {
 					g = Generator{

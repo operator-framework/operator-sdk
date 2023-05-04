@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/blang/semver/v4"
@@ -61,6 +62,10 @@ type Generator struct {
 
 	// Func that returns the writer the generated CSV's bytes are written to.
 	getWriter func() (io.Writer, error)
+	// Func that returns the reader the previous CSV's bytes are read from.
+	getReader func() (io.Reader, error)
+
+	ignoreIfOnlyCreatedAt bool
 }
 
 // Option is a function that modifies a Generator.
@@ -88,6 +93,22 @@ func WithBundleWriter(dir string) Option {
 	}
 }
 
+// WithBundleGetter sets a Generator's getter to a bundle CSV file under
+// <dir>/manifests.
+func WithBundleReader(dir string) Option {
+	return func(g *Generator) error {
+		fileName := makeCSVFileName(g.OperatorName)
+		g.getReader = func() (io.Reader, error) {
+			return bundleReader(dir, fileName)
+		}
+		return nil
+	}
+}
+
+func bundleReader(dir, fileName string) (io.Reader, error) {
+	return genutil.Open(filepath.Join(dir, bundle.ManifestsDir), fileName)
+}
+
 // WithPackageWriter sets a Generator's writer to a package CSV file under
 // <dir>/<version>.
 func WithPackageWriter(dir string) Option {
@@ -96,6 +117,13 @@ func WithPackageWriter(dir string) Option {
 		g.getWriter = func() (io.Writer, error) {
 			return genutil.Open(filepath.Join(dir, g.Version), fileName)
 		}
+		return nil
+	}
+}
+
+func WithIgnoreIfOnlyCreatedAt() Option {
+	return func(g *Generator) error {
+		g.ignoreIfOnlyCreatedAt = true
 		return nil
 	}
 }
@@ -119,7 +147,33 @@ func (g *Generator) Generate(opts ...Option) (err error) {
 
 	// Add extra annotations to csv
 	g.setAnnotations(csv)
-
+	// If a reader is set, and there is a flag to not update createdAt, then
+	// set the CSV's createdAt to the previous CSV's createdAt if its the only change.
+	if g.ignoreIfOnlyCreatedAt && g.getReader != nil {
+		r, err := g.getReader()
+		if err != nil {
+			return err
+		}
+		var prevCSV operatorsv1alpha1.ClusterServiceVersion
+		err = genutil.ReadObject(r, &prevCSV)
+		if err != nil {
+			return err
+		}
+		if prevCSV.ObjectMeta.Annotations != nil && prevCSV.ObjectMeta.Annotations["createdAt"] != "" {
+			csvWithoutCreatedAtChange := csv.DeepCopy()
+			// Set WebhookDefinitions if nil to avoid diffing on it
+			if prevCSV.Spec.WebhookDefinitions == nil {
+				prevCSV.Spec.WebhookDefinitions = []operatorsv1alpha1.WebhookDescription{}
+			}
+			if csvWithoutCreatedAtChange.ObjectMeta.Annotations == nil {
+				csvWithoutCreatedAtChange.ObjectMeta.Annotations = map[string]string{}
+			}
+			csvWithoutCreatedAtChange.ObjectMeta.Annotations["createdAt"] = prevCSV.ObjectMeta.Annotations["createdAt"]
+			if reflect.DeepEqual(csvWithoutCreatedAtChange, &prevCSV) {
+				csv = csvWithoutCreatedAtChange
+			}
+		}
+	}
 	w, err := g.getWriter()
 	if err != nil {
 		return err

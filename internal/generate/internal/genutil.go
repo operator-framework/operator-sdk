@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -110,4 +111,12 @@ func IsNotExist(path string) bool {
 	}
 	_, err := os.Stat(path)
 	return err != nil && errors.Is(err, os.ErrNotExist)
+}
+
+func ReadObject(r io.Reader, obj client.Object) error {
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(r); err != nil {
+		return err
+	}
+	return k8sutil.GetObjectFromBytes(buf.Bytes(), obj)
 }
