@@ -45,7 +45,7 @@ var _ = Describe("Labels", func() {
 				expPath = defaultPath
 				writeMetadataHelper(fs, expPath, annotationsStringValidV1)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidV1))
 			})
@@ -53,7 +53,7 @@ var _ = Describe("Labels", func() {
 				expPath = "/bundle/metadata/my-metadata.yaml"
 				writeMetadataHelper(fs, expPath, annotationsStringValidV1)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidV1))
 			})
@@ -61,7 +61,7 @@ var _ = Describe("Labels", func() {
 				expPath = "/bundle/my-dir/my-metadata.yaml"
 				writeMetadataHelper(fs, expPath, annotationsStringValidV1)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidV1))
 			})
@@ -69,7 +69,7 @@ var _ = Describe("Labels", func() {
 				expPath = "/bundle/my-parent-dir/my-dir/annotations.yaml"
 				writeMetadataHelper(fs, expPath, annotationsStringValidV1)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidV1))
 			})
@@ -78,7 +78,7 @@ var _ = Describe("Labels", func() {
 				writeMetadataHelper(fs, expPath, annotationsStringValidV1)
 				writeMetadataHelper(fs, "/bundle/other-metadata/annotations.yaml", annotationsStringValidNoRegLabels)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidV1))
 			})
@@ -87,7 +87,7 @@ var _ = Describe("Labels", func() {
 				writeMetadataHelper(fs, expPath, annotationsStringValidV1)
 				writeMetadataHelper(fs, "/bundle/custom2/annotations.yaml", annotationsStringValidNoRegLabels)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidV1))
 			})
@@ -97,7 +97,7 @@ var _ = Describe("Labels", func() {
 				expPath = defaultPath
 				writeMetadataHelper(fs, defaultPath, annotationsStringValidNoRegLabels)
 				metadata, path, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal(expPath))
 				Expect(metadata).To(BeEquivalentTo(annotationsValidNoRegLabels))
 			})

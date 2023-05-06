@@ -70,9 +70,7 @@ var _ = Describe("Configmap", func() {
 				},
 			}
 			expected := cs.DeepCopy()
-			err := ctlog.updateCatalogSource(context.TODO(), cs)
-
-			Expect(err).Should(BeNil())
+			Expect(ctlog.updateCatalogSource(context.TODO(), cs)).Should(Succeed())
 			Expect(expected.Spec.Address).ShouldNot(Equal(cs.Spec.Address))
 			Expect(expected.Spec.SourceType).ShouldNot(Equal(cs.Spec.SourceType))
 		})

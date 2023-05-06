@@ -93,14 +93,14 @@ var _ = Describe("SQLiteRegistryPod", func() {
 
 			It("should return a valid container command for one image", func() {
 				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, false, rp.SkipTLSVerify, false)))
 			})
 
 			It("should return a container command with --ca-file", func() {
 				rp.CASecretName = caSecretName
 				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true, rp.SkipTLSVerify, false)))
 			})
 
@@ -110,7 +110,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 					rp.BundleItems = bundles
 					rp.SkipTLSVerify = true
 					output, err := rp.getContainerCmd()
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, rp.SkipTLSVerify, false)))
 				}
 			})
@@ -137,20 +137,20 @@ var _ = Describe("SQLiteRegistryPod", func() {
 					SkipTLSVerify: true,
 				}
 				output, err := rp2.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false, rp2.SkipTLSVerify, false)))
 			})
 
 			It("should return a valid container command for one image", func() {
 				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, false, false, rp.UseHTTP)))
 			})
 
 			It("should return a container command with --ca-file", func() {
 				rp.CASecretName = caSecretName
 				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true, false, rp.UseHTTP)))
 			})
 
@@ -160,7 +160,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 					rp.BundleItems = bundles
 					rp.UseHTTP = true
 					output, err := rp.getContainerCmd()
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, false, rp.UseHTTP)))
 				}
 			})
@@ -187,7 +187,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 					UseHTTP:     true,
 				}
 				output, err := rp2.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false, false, rp2.UseHTTP)))
 			})
 
@@ -196,9 +196,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 					return true, nil
 				})
 
-				err := rp.checkPodStatus(context.Background(), mockGoodPodCheck)
-
-				Expect(err).To(BeNil())
+				Expect(rp.checkPodStatus(context.Background(), mockGoodPodCheck)).To(Succeed())
 			})
 
 			It("adds secrets and a service account to the pod", func() {
@@ -244,7 +242,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 				expectedErr := "bundle image set cannot be empty"
 				rp := &SQLiteRegistryPod{}
 				err := rp.init(cfg)
-				Expect(err).NotTo(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 
@@ -254,7 +252,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 					BundleItems: []BundleItem{{ImageTag: "quay.io/example/example-operator-bundle:0.2.0", AddMode: "invalid"}},
 				}
 				err := rp.init(cfg)
-				Expect(err).NotTo(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 
@@ -275,7 +273,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 				cancel()
 
 				err := rp.checkPodStatus(ctx, mockBadPodCheck)
-				Expect(err).NotTo(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 		})

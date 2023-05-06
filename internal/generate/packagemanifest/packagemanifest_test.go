@@ -195,7 +195,7 @@ packageName: memcached-operator
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pm).NotTo(BeNil())
 			Expect(pm.PackageName).To(Equal("memcached-operator"))
-			Expect(len(pm.Channels)).To(Equal(1))
+			Expect(pm.Channels).To(HaveLen(1))
 			Expect(pm.Channels[0].Name).To(Equal("alpha"))
 			Expect(pm.Channels[0].CurrentCSVName).To(Equal("memcached-operator.v0.0.1"))
 			Expect(pm.DefaultChannelName).To(Equal("alpha"))

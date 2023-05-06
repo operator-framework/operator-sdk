@@ -95,8 +95,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
 
-			err := handler.SetOwnerAnnotations(podOwner, repl)
-			Expect(err).To(BeNil())
+			Expect(handler.SetOwnerAnnotations(podOwner, repl)).To(Succeed())
 
 			evt := event.CreateEvent{
 				Object: repl,
@@ -280,8 +279,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			newPod.Name = pod.Name + "2"
 			newPod.Namespace = pod.Namespace + "2"
 
-			err := handler.SetOwnerAnnotations(podOwner, pod)
-			Expect(err).To(BeNil())
+			Expect(handler.SetOwnerAnnotations(podOwner, pod)).To(Succeed())
 
 			evt := event.UpdateEvent{
 				ObjectOld: pod,
@@ -395,8 +393,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			newPod.Name = pod.Name + "2"
 			newPod.Namespace = pod.Namespace + "2"
 
-			err := handler.SetOwnerAnnotations(podOwner, pod)
-			Expect(err).To(BeNil())
+			Expect(handler.SetOwnerAnnotations(podOwner, pod)).To(Succeed())
 
 			var podOwner2 = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
@@ -406,8 +403,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 			podOwner2.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Kind: "Pod"})
 
-			err = handler.SetOwnerAnnotations(podOwner2, newPod)
-			Expect(err).To(BeNil())
+			Expect(handler.SetOwnerAnnotations(podOwner2, newPod)).To(Succeed())
 
 			evt := event.UpdateEvent{
 				ObjectOld: pod,

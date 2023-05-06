@@ -46,7 +46,7 @@ var _ = Describe("External", func() {
 		It("should return false", func() {
 			entrypoints, hasExternal := GetExternalValidatorEntrypoints("")
 			Expect(hasExternal).To(BeFalse())
-			Expect(entrypoints).To(HaveLen(0))
+			Expect(entrypoints).To(BeEmpty())
 		})
 	})
 
@@ -58,7 +58,7 @@ var _ = Describe("External", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(results).To(HaveLen(1))
 			Expect(results[0].Name).To(Equal("passes-bundle"))
-			Expect(results[0].Errors).To(HaveLen(0))
+			Expect(results[0].Errors).To(BeEmpty())
 		})
 	})
 
@@ -85,7 +85,7 @@ var _ = Describe("External", func() {
 			results, err := RunExternalValidators(ctx, entrypoints, "foo/bar")
 			Expect(err).To(HaveOccurred())
 			Expect(stderrBuf.String()).To(Equal("validator runtime error"))
-			Expect(results).To(HaveLen(0))
+			Expect(results).To(BeEmpty())
 		})
 	})
 

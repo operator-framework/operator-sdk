@@ -28,7 +28,7 @@ var _ = Describe("Running an olm command", func() {
 			Expect(cmd.Short).NotTo(BeNil())
 
 			subcommands := cmd.Commands()
-			Expect(len(subcommands)).To(Equal(3))
+			Expect(subcommands).To(HaveLen(3))
 			Expect(subcommands[0].Use).To(Equal("install"))
 			Expect(subcommands[1].Use).To(Equal("status"))
 			Expect(subcommands[2].Use).To(Equal("uninstall"))

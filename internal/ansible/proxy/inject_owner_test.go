@@ -112,7 +112,7 @@ var _ = Describe("injectOwnerReferenceHandler", func() {
 			}
 			ownerRefs := modifiedCM.ObjectMeta.OwnerReferences
 
-			Expect(len(ownerRefs)).To(Equal(1))
+			Expect(ownerRefs).To(HaveLen(1))
 
 			ownerRef := ownerRefs[0]
 

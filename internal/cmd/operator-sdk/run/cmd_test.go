@@ -29,7 +29,7 @@ var _ = Describe("Running a run command", func() {
 			Expect(cmd.Long).NotTo(BeNil())
 
 			subcommands := cmd.Commands()
-			Expect(len(subcommands)).To(Equal(3))
+			Expect(subcommands).To(HaveLen(3))
 			Expect(subcommands[0].Use).To(Equal("bundle <bundle-image>"))
 			Expect(subcommands[1].Use).To(Equal("bundle-upgrade <bundle-image>"))
 			Expect(subcommands[2].Use).To(Equal("packagemanifests [packagemanifests-root-dir]"))

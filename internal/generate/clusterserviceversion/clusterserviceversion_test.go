@@ -259,7 +259,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 					}
 					// Update the input's and expected CSV's Deployment image.
 					collectManifestsFromFileHelper(g.Collector, goBasicOperatorPath)
-					Expect(len(g.Collector.Deployments)).To(BeNumerically(">=", 1))
+					Expect(g.Collector.Deployments).ToNot(BeEmpty())
 					imageTag := "controller:v" + g.Version
 					modifyDepImageHelper(&g.Collector.Deployments[0].Spec, imageTag)
 					updatedCSV := updateCSV(newCSVUIMeta, modifyCSVDepImageHelper(imageTag))
@@ -269,7 +269,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 					Expect(csv).To(Equal(updatedCSV))
 
 					// verify if conversion webhooks are added
-					Expect(len(csv.Spec.WebhookDefinitions)).NotTo(Equal(0))
+					Expect(csv.Spec.WebhookDefinitions).NotTo(BeEmpty())
 					Expect(containsConversionWebhookDefinition(csv.Spec.WebhookDefinitions)).To(BeTrue())
 				})
 			})
@@ -424,14 +424,14 @@ func readFileHelper(path string) string {
 func modifyCSVDepImageHelper(tag string) func(csv *v1alpha1.ClusterServiceVersion) {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		depSpecs := csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
-		ExpectWithOffset(2, len(depSpecs)).To(BeNumerically(">=", 1))
+		ExpectWithOffset(2, depSpecs).ToNot(BeEmpty())
 		modifyDepImageHelper(&depSpecs[0].Spec, tag)
 	}
 }
 
 func modifyDepImageHelper(depSpec *appsv1.DeploymentSpec, tag string) {
 	containers := depSpec.Template.Spec.Containers
-	ExpectWithOffset(1, len(containers)).To(BeNumerically(">=", 1))
+	ExpectWithOffset(1, containers).ToNot(BeEmpty())
 	containers[0].Image = tag
 }
 
