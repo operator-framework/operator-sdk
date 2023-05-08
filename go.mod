@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.7.0
 	github.com/onsi/gomega v1.24.2
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
-	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230307164205-6e30bde28688
+	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230413193425-4632388adc61
 	github.com/operator-framework/java-operator-plugins v0.7.1-0.20230306190439-0eed476d2b75
 	github.com/operator-framework/operator-lib v0.11.1-0.20230306195046-28cadc6b6055
 	github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230227155221-caa8b9e1ab12
