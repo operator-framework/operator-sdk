@@ -23,7 +23,6 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
@@ -58,14 +57,14 @@ type Generator struct {
 	// {Cluster}Roles to include in a CSV via their Bindings.
 	ExtraServiceAccounts []string
 	// RelatedImages are additional images used by the operator.
-	RelatedImages []operatorsv1alpha1.RelatedImage
+	RelatedImages []v1alpha1.RelatedImage
 
 	// Func that returns the writer the generated CSV's bytes are written to.
 	getWriter func() (io.Writer, error)
 	// Func that returns the reader the previous CSV's bytes are read from.
 	getReader func() (io.Reader, error)
 
-	ignoreIfOnlyCreatedAt bool
+	ignoreIfOnlyCreatedAtChanged bool
 }
 
 // Option is a function that modifies a Generator.
@@ -121,9 +120,9 @@ func WithPackageWriter(dir string) Option {
 	}
 }
 
-func WithIgnoreIfOnlyCreatedAt() Option {
+func WithIgnoreIfOnlyCreatedAtChanged() Option {
 	return func(g *Generator) error {
-		g.ignoreIfOnlyCreatedAt = true
+		g.ignoreIfOnlyCreatedAtChanged = true
 		return nil
 	}
 }
@@ -149,12 +148,12 @@ func (g *Generator) Generate(opts ...Option) (err error) {
 	g.setAnnotations(csv)
 	// If a reader is set, and there is a flag to not update createdAt, then
 	// set the CSV's createdAt to the previous CSV's createdAt if its the only change.
-	if g.ignoreIfOnlyCreatedAt && g.getReader != nil {
+	if g.ignoreIfOnlyCreatedAtChanged && g.getReader != nil {
 		r, err := g.getReader()
 		if err != nil {
 			return err
 		}
-		var prevCSV operatorsv1alpha1.ClusterServiceVersion
+		var prevCSV v1alpha1.ClusterServiceVersion
 		err = genutil.ReadObject(r, &prevCSV)
 		if err != nil {
 			return err
@@ -163,7 +162,7 @@ func (g *Generator) Generate(opts ...Option) (err error) {
 			csvWithoutCreatedAtChange := csv.DeepCopy()
 			// Set WebhookDefinitions if nil to avoid diffing on it
 			if prevCSV.Spec.WebhookDefinitions == nil {
-				prevCSV.Spec.WebhookDefinitions = []operatorsv1alpha1.WebhookDescription{}
+				prevCSV.Spec.WebhookDefinitions = []v1alpha1.WebhookDescription{}
 			}
 			if csvWithoutCreatedAtChange.ObjectMeta.Annotations == nil {
 				csvWithoutCreatedAtChange.ObjectMeta.Annotations = map[string]string{}
@@ -194,7 +193,7 @@ func (g Generator) setAnnotations(csv *v1alpha1.ClusterServiceVersion) {
 }
 
 // generate runs a configured Generator.
-func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, err error) {
+func (g *Generator) generate() (base *v1alpha1.ClusterServiceVersion, err error) {
 	if g.Collector == nil {
 		return nil, fmt.Errorf("cannot generate CSV without a manifests collection")
 	}

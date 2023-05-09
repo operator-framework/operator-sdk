@@ -201,9 +201,9 @@ func (c bundleCmd) runManifests() (err error) {
 		opts = append(opts, gencsv.WithWriter(stdout))
 	} else {
 		opts = append(opts, gencsv.WithBundleWriter(c.outputDir))
-		if c.ignoreIfOnlyCreatedAt && genutil.IsExist(c.outputDir) {
+		if c.ignoreIfOnlyCreatedAtChanged && genutil.IsExist(c.outputDir) {
 			opts = append(opts, gencsv.WithBundleReader(c.outputDir))
-			opts = append(opts, gencsv.WithIgnoreIfOnlyCreatedAt())
+			opts = append(opts, gencsv.WithIgnoreIfOnlyCreatedAtChanged())
 		}
 	}
 

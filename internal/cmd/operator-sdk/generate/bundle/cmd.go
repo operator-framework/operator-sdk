@@ -45,7 +45,7 @@ type bundleCmd struct {
 	channels              string
 	defaultChannel        string
 	overwrite             bool
-	ignoreIfOnlyCreatedAt bool
+	ignoreIfOnlyCreatedAtChanged bool
 
 	// These are set if a PROJECT config is not present.
 	layout      string
@@ -139,7 +139,7 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"Names of service accounts, outside of the operator's Deployment account, "+
 			"that have bindings to {Cluster}Roles that should be added to the CSV")
 	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
-	fs.BoolVar(&c.ignoreIfOnlyCreatedAt, "ignore-if-only-createdAt", false, "Ignore if only createdAt is changed")
+	fs.BoolVar(&c.ignoreIfOnlyCreatedAtChanged, "ignore-if-only-created-at-changed", false, "Ignore if only createdAt is changed")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 	fs.BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
 

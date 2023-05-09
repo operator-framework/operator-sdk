@@ -27,7 +27,6 @@ import (
 	"github.com/onsi/gomega/format"
 	operatorversion "github.com/operator-framework/api/pkg/lib/version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/yaml"
@@ -154,7 +153,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 					outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
 					Expect(outputFile).To(BeAnExistingFile())
 					Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVUIMetaStr))
-					var initiallyWrittenCSV operatorsv1alpha1.ClusterServiceVersion
+					var initiallyWrittenCSV v1alpha1.ClusterServiceVersion
 					r, err := bundleReader(tmp, makeCSVFileName(operatorName))
 					Expect(err).ToNot(HaveOccurred())
 					err = genutil.ReadObject(r, &initiallyWrittenCSV)
@@ -169,7 +168,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 					opts = []Option{
 						WithBundleWriter(tmp),
 						WithBundleReader(tmp),
-						WithIgnoreIfOnlyCreatedAt(),
+						WithIgnoreIfOnlyCreatedAtChanged(),
 					}
 					time.Sleep(1*time.Second + 1*time.Millisecond) // sleep to ensure createdAt is different if not for ignore option
 					Expect(g.Generate(opts...)).ToNot(HaveOccurred())
