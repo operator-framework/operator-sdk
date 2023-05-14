@@ -37,6 +37,8 @@ type Flags struct {
 	ProbeAddr               string
 	LeaderElectionID        string
 	LeaderElectionNamespace string
+	LeaseDuration           time.Duration
+	RenewDeadline           time.Duration
 	GracefulShutdownTimeout time.Duration
 	AnsibleArgs             string
 	AnsibleLogEvents        string
@@ -158,6 +160,18 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 			" holding the leader lock (required if running locally with leader"+
 			" election enabled).",
 	)
+	flagSet.DurationVar(&f.LeaseDuration,
+		"--leader-elect-lease-duration",
+		15*time.Second,
+		"LeaseDuration is the duration that non-leader candidates will wait"+
+			" to force acquire leadership. This is measured against time of last observed ack. Default is 15 seconds.",
+	)
+	flagSet.DurationVar(&f.RenewDeadline,
+		"--leader-elect-renew-deadline",
+		10*time.Second,
+		"RenewDeadline is the duration that the acting controlplane will retry"+
+			" refreshing leadership before giving up. Default is 10 seconds.",
+	)
 	flagSet.DurationVar(&f.GracefulShutdownTimeout,
 		"graceful-shutdown-timeout",
 		30*time.Second,
@@ -205,6 +219,12 @@ func (f *Flags) ToManagerOptions(options manager.Options) manager.Options {
 	}
 	if changed("leader-election-namespace") || options.LeaderElectionNamespace == "" {
 		options.LeaderElectionNamespace = f.LeaderElectionNamespace
+	}
+	if changed("leader-elect-lease-duration") || options.LeaseDuration == nil {
+		options.LeaseDuration = &f.LeaseDuration
+	}
+	if changed("leader-elect-renew-deadline") || options.RenewDeadline == nil {
+		options.RenewDeadline = &f.RenewDeadline
 	}
 	if options.LeaderElectionResourceLock == "" {
 		options.LeaderElectionResourceLock = resourcelock.ConfigMapsLeasesResourceLock
