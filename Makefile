@@ -35,7 +35,7 @@ export PATH := $(PWD)/$(BUILD_DIR):$(PWD)/$(TOOLS_DIR):$(PATH)
 ##@ Development
 
 .PHONY: generate
-generate: build # Generate CLI docs and samples
+generate: build update-scorecard-images # Generate CLI docs and samples
 	rm -rf testdata
 	go run ./hack/generate/cncf-maintainers/main.go
 	go run ./hack/generate/cli-doc/gen-cli-doc.go
@@ -204,6 +204,16 @@ test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 test-e2e-integration:: ## Run integration tests
 	go test ./test/integration -v -ginkgo.v
 	./hack/tests/subcommand-olm-install.sh
+
+.PHONY: build-digester
+build-digester:
+	cd tools/digester && \
+	go mod tidy && \
+	go build -o ../bin/digester .
+
+.PHONY: update-scorecard-images
+update-scorecard-images: build-digester
+	hack/generate/update-scorecard-images.sh
 
 .DEFAULT_GOAL := help
 .PHONY: help
