@@ -1,0 +1,58 @@
+name: Auto-Update Scorecard Image Digests
+on:
+  schedule:
+    - cron:  '0 4/4 * * *'
+  workflow_dispatch:
+jobs:
+  build:
+    name: operator-sdk Update Scorecard Image Digests Job
+    if: (github.repository == 'operator-framework/operator-sdk')
+    runs-on: ubuntu-latest
+    steps:
+      - name: check for existing PR
+        run: |-
+          if curl -s -L  https://api.github.com/repos/operator-framework/operator-sdk/pulls | jq .[].title | grep -q "Update Scorecard Image Digests"; then
+            echo "There is an existing PR with name 'Update Scorecard Image Digests'; skipping; To run again, close the existing PR"
+          else
+            echo "NEW_PR=true" >> $GITHUB_ENV
+          fi
+
+      - uses: actions/checkout@v3
+        if: ${{ env.NEW_PR }}
+        with:
+          ref: main
+
+      - uses: actions/setup-go@v4
+        if: ${{ env.NEW_PR }}
+        with:
+          go-version: '1.19' # The Go version to download (if necessary) and use.
+
+      - name: update the scorecard image digests
+        if: ${{ env.NEW_PR }}
+        run: |
+          make update-scorecard-images
+          if ! git diff --quiet --exit-code; then
+            echo "CHANGED=true" >> $GITHUB_ENV
+            echo "found new scorecard image digests. open a PR to update them"
+          fi
+
+      - name: Regenerate # to update the CLI docs, with the new digests
+        if: ${{ env.CHANGED }}
+        run: make generate
+
+      - uses: peter-evans/create-pull-request@v3
+        if: ${{ env.CHANGED }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            Update Scorecard Image Digests
+
+            Signed-off-by: operator-sdk Bump Bot <noreply@github.com>
+          committer: operator-sdk Bump Bot <noreply@github.com>
+          title: "Update Scorecard Image Digests"
+          body: |
+            Update Scorecard Image Digests
+            Executed by operator-sdk Update Image Digest Bot.
+          team-reviewers: reviewers, approvers
+          branch: update-scorecard-image-digests
+          delete-branch: true
