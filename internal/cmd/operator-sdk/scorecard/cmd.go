@@ -94,11 +94,11 @@ If the argument holds an image tag, it must be present remotely.`,
 	// it is necessary to refer to storage-image and untar-image using their digests instead of tags.
 	// If you need to make changes to these images, please ensure that you always use the digests.
 	scorecardCmd.Flags().StringVarP(&c.storageImage, "storage-image", "b",
-		"quay.io/operator-framework/scorecard-storage@sha256:f7bd62664a0b91034acb977a8bb4ebb76bc98a6e8bdb943eb84c8e364828f056",
+		"quay.io/operator-framework/scorecard-storage@sha256:5f9640f6eb6a6976676f2936b9eb4cd7170c5eebbc7536cc2891ec6cba74f0dd",
 		"Storage image to be used by the Scorecard pod")
 	// Use the digest of the latest scorecard-untar image
 	scorecardCmd.Flags().StringVarP(&c.untarImage, "untar-image", "u",
-		"quay.io/operator-framework/scorecard-untar@sha256:56c88afd4f20718dcd4d4384b8ff0b790f95aa4737f89f3b105b5dfc1bdb60c3",
+		"quay.io/operator-framework/scorecard-untar@sha256:e7b0222764d1d1c16614009f38e7fe9bc643ef9e2b88559712ec3fd439b796c8",
 		"Untar image to be used by the Scorecard pod")
 	scorecardCmd.Flags().StringVarP(&c.testOutput, "test-output", "t", "test-output",
 		"Test output directory.")
