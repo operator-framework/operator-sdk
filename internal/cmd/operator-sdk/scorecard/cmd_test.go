@@ -70,13 +70,13 @@ var _ = Describe("Running the scorecard command", func() {
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("b"))
 			// Use the digest of the latest scorecard-storage image
-			Expect(flag.DefValue).To(Equal("quay.io/operator-framework/scorecard-storage@sha256:f7bd62664a0b91034acb977a8bb4ebb76bc98a6e8bdb943eb84c8e364828f056"))
+			Expect(flag.DefValue).To(Equal("quay.io/operator-framework/scorecard-storage@sha256:a3bfda71281393c7794cabdd39c563fb050d3020fd0b642ea164646bdd39a0e2"))
 
 			flag = cmd.Flags().Lookup("untar-image")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("u"))
 			// Use the digest of the latest scorecard-untar image
-			Expect(flag.DefValue).To(Equal("quay.io/operator-framework/scorecard-untar@sha256:56c88afd4f20718dcd4d4384b8ff0b790f95aa4737f89f3b105b5dfc1bdb60c3"))
+			Expect(flag.DefValue).To(Equal("quay.io/operator-framework/scorecard-untar@sha256:2e728c5e67a7f4dec0df157a322dd5671212e8ae60f69137463bd4fdfbff8747"))
 		})
 	})
 
