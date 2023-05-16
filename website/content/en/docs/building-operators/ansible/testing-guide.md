@@ -48,7 +48,7 @@ Our molecule scenarios have the following basic structure:
 └── verify.yml
 ```
 
-- `molecule.yml` is a configuration file for molecule. It defines what driver to use to stand up an environment and the associated configuration, linting rules, and a variety of other configuration options. For full documentation on the options available here, see the [molecule configuration documentation](https://molecule.readthedocs.io/en/latest/configuration)
+- `molecule.yml` is a configuration file for molecule. It defines what driver to use to stand up an environment and the associated configuration, linting rules, and a variety of other configuration options. For full documentation on the options available here, see the [molecule configuration documentation](https://molecule.readthedocs.io/configuration/)
 
 - `prepare.yml` is an Ansible playbook that is run once during the set up of a scenario. You can put any arbitrary Ansible in this playbook. It is used for one-time configuration of your test environment, for example, creating the cluster-wide `CustomResourceDefinition` that your Operator will watch.
 

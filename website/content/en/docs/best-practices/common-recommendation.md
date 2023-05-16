@@ -97,7 +97,7 @@ spec:
 [operator-best-practices]: /docs/best-practices/best-practices
 [kb-gkv]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [operator-pattern]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
-[molecule]: https://molecule.readthedocs.io/en/latest/
+[molecule]: https://molecule.readthedocs.io/
 [molecule-tests]: /docs/building-operators/ansible/testing-guide
 [helm-chart-tests]: https://helm.sh/docs/topics/chart_tests/
 [envtest]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest
