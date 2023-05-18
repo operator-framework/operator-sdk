@@ -137,7 +137,7 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 			token, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64Token))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(token)).To(BeNumerically(">", 0))
+			Expect(token).ToNot(BeEmpty())
 
 			By("creating a curl pod")
 			cmdOpts := []string{

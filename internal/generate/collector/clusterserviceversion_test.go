@@ -37,16 +37,16 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 	It("returns empty lists for an empty Manifests", func() {
 		c.Roles = []rbacv1.Role{}
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
-		Expect(inPerm).To(HaveLen(0))
-		Expect(inCPerm).To(HaveLen(0))
-		Expect(out).To(HaveLen(0))
+		Expect(inPerm).To(BeEmpty())
+		Expect(inCPerm).To(BeEmpty())
+		Expect(out).To(BeEmpty())
 	})
 
 	It("splitting 1 Role no RoleBinding", func() {
 		c.Roles = []rbacv1.Role{newRole("my-role")}
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
-		Expect(inPerm).To(HaveLen(0))
-		Expect(inCPerm).To(HaveLen(0))
+		Expect(inPerm).To(BeEmpty())
+		Expect(inCPerm).To(BeEmpty())
 		Expect(out).To(HaveLen(1))
 		Expect(getRoleNames(out)).To(Equal([]string{"my-role"}))
 	})
@@ -58,8 +58,8 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 			newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
 		}
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
-		Expect(inPerm).To(HaveLen(0))
-		Expect(inCPerm).To(HaveLen(0))
+		Expect(inPerm).To(BeEmpty())
+		Expect(inCPerm).To(BeEmpty())
 		Expect(out).To(HaveLen(2))
 		Expect(getRoleNames(out)).To(Equal([]string{"my-role"}))
 		Expect(getRoleBindingNames(out)).To(Equal([]string{"my-role-binding"}))
@@ -72,8 +72,8 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 			newRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
 		}
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
-		Expect(inPerm).To(HaveLen(0))
-		Expect(inCPerm).To(HaveLen(0))
+		Expect(inPerm).To(BeEmpty())
+		Expect(inCPerm).To(BeEmpty())
 		Expect(out).To(HaveLen(2))
 		Expect(getClusterRoleNames(out)).To(Equal([]string{"my-role"}))
 		Expect(getRoleBindingNames(out)).To(Equal([]string{"my-role-binding"}))
@@ -88,8 +88,8 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 			newRoleBinding("my-role-binding-2", newClusterRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
 		}
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
-		Expect(inPerm).To(HaveLen(0))
-		Expect(inCPerm).To(HaveLen(0))
+		Expect(inPerm).To(BeEmpty())
+		Expect(inCPerm).To(BeEmpty())
 		Expect(out).To(HaveLen(4))
 		Expect(getRoleNames(out)).To(Equal([]string{"my-role"}))
 		Expect(getClusterRoleNames(out)).To(Equal([]string{"my-role"}))
@@ -105,8 +105,8 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
 		Expect(inPerm).To(HaveLen(1))
 		Expect(getRoleNames(inPerm)).To(Equal([]string{"my-role"}))
-		Expect(inCPerm).To(HaveLen(0))
-		Expect(out).To(HaveLen(0))
+		Expect(inCPerm).To(BeEmpty())
+		Expect(out).To(BeEmpty())
 	})
 
 	It("splitting 1 ClusterRole 1 RoleBinding with 1 Subject containing a Deployment serviceAccountName", func() {
@@ -118,8 +118,8 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
 		Expect(inPerm).To(HaveLen(1))
 		Expect(getClusterRoleNames(inPerm)).To(Equal([]string{"my-role"}))
-		Expect(inCPerm).To(HaveLen(0))
-		Expect(out).To(HaveLen(0))
+		Expect(inCPerm).To(BeEmpty())
+		Expect(out).To(BeEmpty())
 	})
 
 	It("splitting 1 Role 1 ClusterRole 1 RoleBinding with 1 Subject containing a Deployment serviceAccountName", func() {
@@ -134,8 +134,8 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 		Expect(inPerm).To(HaveLen(2))
 		Expect(getRoleNames(inPerm)).To(Equal([]string{"my-role"}))
 		Expect(getClusterRoleNames(inPerm)).To(Equal([]string{"my-role"}))
-		Expect(inCPerm).To(HaveLen(0))
-		Expect(out).To(HaveLen(0))
+		Expect(inCPerm).To(BeEmpty())
+		Expect(out).To(BeEmpty())
 	})
 
 	It("splitting 1 Role 1 ClusterRole 1 RoleBinding with 2 Subjects containing a Deployment serviceAccountName", func() {
@@ -219,7 +219,7 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 			Expect(getClusterRoleNames(inPerm)).To(Equal([]string{roleName1}))
 			Expect(inCPerm).To(HaveLen(2))
 			Expect(getClusterRoleNames(inCPerm)).To(Equal([]string{roleName1, roleName2}))
-			Expect(out).To(HaveLen(0))
+			Expect(out).To(BeEmpty())
 		})
 	})
 })

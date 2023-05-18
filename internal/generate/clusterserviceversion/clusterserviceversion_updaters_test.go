@@ -53,7 +53,7 @@ var _ = Describe("apply functions", func() {
 
 				c.Deployments = []appsv1.Deployment{newDeploymentWithLabels(depName, labels)}
 				applyDeployments(c, strategy)
-				Expect(len(strategy.DeploymentSpecs)).To(Equal(1))
+				Expect(strategy.DeploymentSpecs).To(HaveLen(1))
 				Expect(strategy.DeploymentSpecs[0].Label).To(Equal(labels))
 			})
 		})

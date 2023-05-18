@@ -104,7 +104,7 @@ var _ = Describe("FBCRegistryPod", func() {
 
 			It("should return a valid container command for one image", func() {
 				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(rp.FBCIndexRootDir, rp.GRPCPort)))
 			})
 
@@ -128,7 +128,7 @@ var _ = Describe("FBCRegistryPod", func() {
 					BundleItems: bundleItems,
 				}
 				output, err := rp2.getContainerCmd()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).Should(Equal(containerCommandFor(rp2.FBCIndexRootDir, rp2.GRPCPort)))
 			})
 		})
@@ -138,7 +138,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				expectedErr := "bundle image set cannot be empty"
 				rp := &FBCRegistryPod{}
 				err := rp.init(cfg, cs)
-				Expect(err).NotTo(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 
@@ -159,7 +159,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				cancel()
 
 				err := rp.checkPodStatus(ctx, mockBadPodCheck)
-				Expect(err).NotTo(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 		})
@@ -170,7 +170,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(cm.GetObjectKind().GroupVersionKind()).Should(Equal(corev1.SchemeGroupVersion.WithKind("ConfigMap")))
 				Expect(cm.GetNamespace()).Should(Equal(cfg.Namespace))
 				Expect(cm.Data).ShouldNot(BeNil())
-				Expect(len(cm.Data)).Should(Equal(0))
+				Expect(cm.Data).Should(BeEmpty())
 			})
 
 			It("partitionedConfigMaps() should return a single ConfigMap", func() {
@@ -184,7 +184,7 @@ var _ = Describe("FBCRegistryPod", func() {
 					expectedYaml += yaml
 				}
 				cms := rp.partitionedConfigMaps()
-				Expect(len(cms)).Should(Equal(1))
+				Expect(cms).Should(HaveLen(1))
 				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
 				Expect(cms[0].Data["extraFBC"]).Should(Equal(expectedYaml))
 			})
@@ -200,7 +200,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				rp.FBCContent = largeYaml
 
 				cms := rp.partitionedConfigMaps()
-				Expect(len(cms)).Should(Equal(2))
+				Expect(cms).Should(HaveLen(2))
 				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
 				Expect(cms[0].Data["extraFBC"]).ShouldNot(BeEmpty())
 				Expect(cms[1].Data).Should(HaveKey("extraFBC"))
@@ -249,7 +249,7 @@ var _ = Describe("FBCRegistryPod", func() {
 
 				cms, err := rp.createConfigMaps(cs)
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(len(cms)).Should(Equal(1))
+				Expect(cms).Should(HaveLen(1))
 				Expect(cms[0].GetNamespace()).Should(Equal(rp.cfg.Namespace))
 				Expect(cms[0].GetName()).Should(Equal(expectedName))
 				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
@@ -259,7 +259,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: expectedName}, testCm)).Should(Succeed())
 				Expect(testCm.Data).Should(HaveKey("extraFBC"))
 				Expect(testCm.Data["extraFBC"]).Should(Equal(expectedYaml))
-				Expect(len(testCm.OwnerReferences)).Should(Equal(1))
+				Expect(testCm.OwnerReferences).Should(HaveLen(1))
 			})
 
 			It("createConfigMaps() should create multiple ConfigMaps", func() {
@@ -272,7 +272,7 @@ var _ = Describe("FBCRegistryPod", func() {
 
 				cms, err := rp.createConfigMaps(cs)
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(len(cms)).Should(Equal(2))
+				Expect(cms).Should(HaveLen(2))
 
 				for i, cm := range cms {
 					expectedName := fmt.Sprintf("%s-configmap-partition-%d", cs.GetName(), i+1)
@@ -285,7 +285,7 @@ var _ = Describe("FBCRegistryPod", func() {
 					Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: expectedName}, testCm)).Should(Succeed())
 					Expect(testCm.Data).Should(HaveKey("extraFBC"))
 					Expect(testCm.Data["extraFBC"]).Should(Equal(cm.Data["extraFBC"]))
-					Expect(len(testCm.OwnerReferences)).Should(Equal(1))
+					Expect(testCm.OwnerReferences).Should(HaveLen(1))
 				}
 			})
 		})

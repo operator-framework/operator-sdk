@@ -76,7 +76,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 			// verify metrics
 			gauges, err := metrics.Registry.Gather()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(gauges)).To(Equal(1))
+			Expect(gauges).To(HaveLen(1))
 			assertMetrics(gauges[0], 1, []*corev1.Pod{pod})
 		})
 	})
@@ -119,7 +119,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 				// verify metrics
 				gauges, err := metrics.Registry.Gather()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(gauges)).To(Equal(0))
+				Expect(gauges).To(BeEmpty())
 			})
 		})
 		Context("when a gauge does not exist", func() {
@@ -148,7 +148,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 				// verify metrics
 				gauges, err := metrics.Registry.Gather()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(gauges)).To(Equal(0))
+				Expect(gauges).To(BeEmpty())
 			})
 		})
 
@@ -187,36 +187,31 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 			// verify metrics
 			gauges, err := metrics.Registry.Gather()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(gauges)).To(Equal(1))
+			Expect(gauges).To(HaveLen(1))
 			assertMetrics(gauges[0], 2, []*corev1.Pod{newpod, pod})
 		})
 	})
 })
 
 func assertMetrics(gauge *dto.MetricFamily, count int, pods []*corev1.Pod) {
-	// need variables to compare the pointers
-	name := "name"
-	namespace := "namespace"
-	g := "group"
-	v := "version"
-	k := "kind"
-
-	Expect(len(gauge.Metric)).To(Equal(count))
+	Expect(gauge.Metric).To(HaveLen(count))
 	for i := 0; i < count; i++ {
 		Expect(*gauge.Metric[i].Gauge.Value).To(Equal(float64(pods[i].GetObjectMeta().GetCreationTimestamp().UTC().Unix())))
 
 		for _, l := range gauge.Metric[i].Label {
-			switch l.Name {
-			case &name:
-				Expect(l.Value).To(Equal(pods[i].GetObjectMeta().GetName()))
-			case &namespace:
-				Expect(l.Value).To(Equal(pods[i].GetObjectMeta().GetNamespace()))
-			case &g:
-				Expect(l.Value).To(Equal(pods[i].GetObjectKind().GroupVersionKind().Group))
-			case &v:
-				Expect(l.Value).To(Equal(pods[i].GetObjectKind().GroupVersionKind().Version))
-			case &k:
-				Expect(l.Value).To(Equal(pods[i].GetObjectKind().GroupVersionKind().Kind))
+			if l.Name != nil {
+				switch *l.Name {
+				case "name":
+					Expect(l.Value).To(HaveValue(Equal(pods[i].GetObjectMeta().GetName())))
+				case "namespace":
+					Expect(l.Value).To(HaveValue(Equal(pods[i].GetObjectMeta().GetNamespace())))
+				case "group":
+					Expect(l.Value).To(HaveValue(Equal(pods[i].GetObjectKind().GroupVersionKind().Group)))
+				case "version":
+					Expect(l.Value).To(HaveValue(Equal(pods[i].GetObjectKind().GroupVersionKind().Version)))
+				case "kind":
+					Expect(l.Value).To(HaveValue(Equal(pods[i].GetObjectKind().GroupVersionKind().Kind)))
+				}
 			}
 		}
 	}

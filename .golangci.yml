@@ -5,6 +5,7 @@ linters:
     - nakedret
     - misspell
     - ineffassign
+    - ginkgolinter
     - goconst
     - goimports
     - errcheck

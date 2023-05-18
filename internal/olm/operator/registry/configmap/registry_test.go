@@ -105,13 +105,12 @@ var _ = Describe("Registry", func() {
 				},
 			}
 			dep := appsv1.Deployment{}
-			err := rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: getRegistryServerName("pkgName"), Namespace: "testns"}, &dep)
-			Expect(err).Should(BeNil())
+			Expect(
+				rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: getRegistryServerName("pkgName"), Namespace: "testns"}, &dep),
+			).Should(Succeed())
+			Expect(rr.DeletePackageManifestsRegistry(context.TODO(), "testns")).Should(Succeed())
 
-			err = rr.DeletePackageManifestsRegistry(context.TODO(), "testns")
-			Expect(err).Should(BeNil())
-
-			err = rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: "testns"}, &dep)
+			err := rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: "testns"}, &dep)
 			Expect(apierrors.IsNotFound(err)).Should(BeTrue())
 		})
 	})
@@ -170,7 +169,7 @@ var _ = Describe("Registry", func() {
 
 		It("should return true if a deployment exitsts in the registry", func() {
 			temp, err := rr.IsRegistryExist(context.TODO(), testns)
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeTrue())
 		})
 
@@ -180,11 +179,10 @@ var _ = Describe("Registry", func() {
 				temp bool
 			)
 
-			err = rr.DeletePackageManifestsRegistry(context.TODO(), testns)
-			Expect(err).Should(BeNil())
+			Expect(rr.DeletePackageManifestsRegistry(context.TODO(), testns)).Should(Succeed())
 
 			temp, err = rr.IsRegistryExist(context.TODO(), testns)
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeFalse())
 		})
 	})
@@ -254,14 +252,14 @@ var _ = Describe("Registry", func() {
 			rr.Client.KubeClient = fake.NewClientBuilder().Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if the configmap does not exist", func() {
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeTrue())
 		})
 
@@ -286,7 +284,7 @@ var _ = Describe("Registry", func() {
 			).Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeTrue())
 		})
 
@@ -319,7 +317,7 @@ var _ = Describe("Registry", func() {
 			).Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeTrue())
 		})
 
@@ -353,7 +351,7 @@ var _ = Describe("Registry", func() {
 			).Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(temp).Should(BeTrue())
 		})
 	})

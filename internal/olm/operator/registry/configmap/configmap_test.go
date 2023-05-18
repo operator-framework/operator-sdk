@@ -100,10 +100,10 @@ var _ = Describe("ConfigMap", func() {
 
 			binaryData := make(map[string][]byte)
 			expected, err := yaml.Marshal(obj)
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			binaryData[makeObjectFileName(expected, userInput...)] = expected
 			// Test and verify function
-			Expect(addObjectToBinaryData(b, obj, userInput...)).Should(BeNil())
+			Expect(addObjectToBinaryData(b, obj, userInput...)).Should(Succeed())
 			Expect(b).Should(Equal(binaryData))
 		})
 
@@ -122,10 +122,9 @@ var _ = Describe("ConfigMap", func() {
 
 			userInput := []string{"userInput", "userInput2"}
 			b, e := makeObjectBinaryData(obj, userInput...)
-			Expect(e).Should(BeNil())
+			Expect(e).ShouldNot(HaveOccurred())
 			// Test and verify function
-			e = addObjectToBinaryData(binaryData, obj, userInput...)
-			Expect(e).Should(BeNil())
+			Expect(addObjectToBinaryData(binaryData, obj, userInput...)).Should(Succeed())
 			Expect(b).Should(Equal(binaryData))
 
 		})
@@ -133,7 +132,6 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("makeBundleBinaryData", func() {
 		It("should serialize bundle to binary data", func() {
-			var e error
 			b := apimanifests.Bundle{
 				Name: "testbundle",
 				Objects: []*unstructured.Unstructured{
@@ -147,11 +145,10 @@ var _ = Describe("ConfigMap", func() {
 			}
 
 			binaryData, err := makeBundleBinaryData(&b)
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			val := make(map[string][]byte)
 			for _, obj := range b.Objects {
-				e = addObjectToBinaryData(val, obj, obj.GetName(), obj.GetKind())
-				Expect(e).Should(BeNil())
+				Expect(addObjectToBinaryData(val, obj, obj.GetName(), obj.GetKind())).Should(Succeed())
 			}
 
 			Expect(binaryData).Should(Equal(val))
@@ -218,17 +215,17 @@ var _ = Describe("ConfigMap", func() {
 		})
 		It("should serialize packagemanifest to binary data", func() {
 			binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(&p, b)
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 
 			val := make(map[string]map[string][]byte)
 			cmName := getRegistryConfigMapName(p.PackageName) + "-package"
 			val[cmName], err = makeObjectBinaryData(p)
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			for _, bundle := range b {
 				version := bundle.CSV.Spec.Version.String()
 				cmName := getRegistryConfigMapName(p.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
 				val[cmName], e = makeBundleBinaryData(bundle)
-				Expect(e).Should(BeNil())
+				Expect(e).ShouldNot(HaveOccurred())
 			}
 
 			Expect(binaryDataByConfigMap).Should(Equal(val))
@@ -240,7 +237,6 @@ var _ = Describe("ConfigMap", func() {
 		var (
 			rr   RegistryResources
 			list corev1.ConfigMapList
-			e    error
 		)
 		BeforeEach(func() {
 			fakeclient := fake.NewClientBuilder().WithObjects(
@@ -274,10 +270,9 @@ var _ = Describe("ConfigMap", func() {
 				client_cr.MatchingLabels(makeRegistryLabels(rr.Pkg.PackageName)),
 				client_cr.InNamespace("testns"),
 			}
-			e = rr.Client.KubeClient.List(context.TODO(), &list, opts...)
-			Expect(e).Should(BeNil())
+			Expect(rr.Client.KubeClient.List(context.TODO(), &list, opts...)).Should(Succeed())
 			configmaps, err := rr.getRegistryConfigMaps(context.TODO(), "testns")
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(configmaps).Should(Equal(list.Items))
 		})

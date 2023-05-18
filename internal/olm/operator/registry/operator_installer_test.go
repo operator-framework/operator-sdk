@@ -196,7 +196,7 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ip.Name).To(Equal(name))
 			Expect(ip.Namespace).To(Equal(namespace))
-			Expect(ip.Spec.Approved).To(Equal(true))
+			Expect(ip.Spec.Approved).To(BeTrue())
 		})
 		It("should return an error if the install plan does not exist.", func() {
 			oi.cfg.Client = fake.NewClientBuilder().WithScheme(sch).Build()
@@ -356,11 +356,10 @@ var _ = Describe("OperatorInstaller", func() {
 				It("should create one with the given target namespaces", func() {
 					_ = oi.InstallMode.Set(string(v1alpha1.InstallModeTypeSingleNamespace))
 					oi.InstallMode.TargetNamespaces = []string{"anotherns"}
-					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(oi.ensureOperatorGroup(context.TODO())).To(Succeed())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og).ToNot(BeNil())
 					Expect(og.Name).To(Equal("operator-sdk-og"))
@@ -371,34 +370,32 @@ var _ = Describe("OperatorInstaller", func() {
 					_ = oi.InstallMode.Set(string(v1alpha1.InstallModeTypeSingleNamespace))
 					oi.InstallMode.TargetNamespaces = []string{"testns"}
 					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).ToNot(BeNil())
+					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).Should(ContainSubstring("use install mode \"OwnNamespace\""))
 				})
 			})
 			Context("given OwnNamespace", func() {
 				It("should create one with the given target namespaces", func() {
 					_ = oi.InstallMode.Set(string(v1alpha1.InstallModeTypeOwnNamespace))
-					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(oi.ensureOperatorGroup(context.TODO())).To(Succeed())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og).ToNot(BeNil())
 					Expect(og.Name).To(Equal("operator-sdk-og"))
 					Expect(og.Namespace).To(Equal("testns"))
-					Expect(len(og.Spec.TargetNamespaces)).To(Equal(1))
+					Expect(og.Spec.TargetNamespaces).To(HaveLen(1))
 				})
 			})
 			Context("given MultiNamespaces", func() {
 				It("should create one with the given target namespaces", func() {
 					_ = oi.InstallMode.Set(string(v1alpha1.InstallModeTypeMultiNamespace))
 					oi.InstallMode.TargetNamespaces = []string{"anotherns1", "anotherns2"}
-					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(oi.ensureOperatorGroup(context.TODO())).To(Succeed())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og).ToNot(BeNil())
 					Expect(og.Name).To(Equal("operator-sdk-og"))
@@ -409,16 +406,15 @@ var _ = Describe("OperatorInstaller", func() {
 			Context("given AllNamespaces", func() {
 				It("should create one with the given target namespaces", func() {
 					_ = oi.InstallMode.Set(string(v1alpha1.InstallModeTypeAllNamespaces))
-					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(oi.ensureOperatorGroup(context.TODO())).To(Succeed())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og).ToNot(BeNil())
 					Expect(og.Name).To(Equal("operator-sdk-og"))
 					Expect(og.Namespace).To(Equal("testns"))
-					Expect(len(og.Spec.TargetNamespaces)).To(Equal(0))
+					Expect(og.Spec.TargetNamespaces).To(BeEmpty())
 				})
 			})
 		})
@@ -430,11 +426,10 @@ var _ = Describe("OperatorInstaller", func() {
 				It("should return nil for AllNamespaces with empty targets", func() {
 					// context, client, name, ns, targets
 					oog := createOperatorGroupHelper(context.TODO(), client, "existing-og", "testns")
-					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(oi.ensureOperatorGroup(context.TODO())).To(Succeed())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og.Name).To(Equal(oog.Name))
 					Expect(og.Namespace).To(Equal(oog.Namespace))
@@ -444,7 +439,7 @@ var _ = Describe("OperatorInstaller", func() {
 					_ = createOperatorGroupHelper(context.TODO(), client, "existing-og",
 						"testns", "incompatiblens")
 					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).ShouldNot(BeNil())
+					Expect(err).Should(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("is not compatible"))
 				})
 			})
@@ -456,10 +451,10 @@ var _ = Describe("OperatorInstaller", func() {
 					oog := createOperatorGroupHelper(context.TODO(), client, "existing-og",
 						"testns", "testns")
 					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og.Name).To(Equal(oog.Name))
 					Expect(og.Namespace).To(Equal(oog.Namespace))
@@ -468,7 +463,7 @@ var _ = Describe("OperatorInstaller", func() {
 					_ = createOperatorGroupHelper(context.TODO(), client, "existing-og",
 						"testns", "incompatiblens")
 					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).ShouldNot(BeNil())
+					Expect(err).Should(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("is not compatible"))
 				})
 			})
@@ -480,11 +475,10 @@ var _ = Describe("OperatorInstaller", func() {
 					oi.InstallMode.TargetNamespaces = []string{"anotherns"}
 					oog := createOperatorGroupHelper(context.TODO(), client, "existing-og",
 						"testns", "anotherns")
-					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(oi.ensureOperatorGroup(context.TODO())).To(Succeed())
 
 					og, found, err := oi.getOperatorGroup(context.TODO())
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 					Expect(found).To(BeTrue())
 					Expect(og.Name).To(Equal(oog.Name))
 					Expect(og.Namespace).To(Equal(oog.Namespace))
@@ -494,7 +488,7 @@ var _ = Describe("OperatorInstaller", func() {
 					_ = createOperatorGroupHelper(context.TODO(), client, "existing-og",
 						"testns", "testns")
 					err := oi.ensureOperatorGroup(context.TODO())
-					Expect(err).ShouldNot(BeNil())
+					Expect(err).Should(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("use install mode \"OwnNamespace\""))
 				})
 			})
@@ -530,7 +524,7 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(og).ShouldNot(BeNil())
 			Expect(og.Name).To(Equal(operator.SDKOperatorGroupName))
 			Expect(og.Namespace).To(Equal("testnamespace"))
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 
@@ -550,15 +544,14 @@ var _ = Describe("OperatorInstaller", func() {
 			}
 
 			err := oi.isOperatorGroupCompatible(og, oi.InstallMode.TargetNamespaces)
-			Expect(err).ShouldNot(BeNil())
+			Expect(err).Should(HaveOccurred())
 			Expect(err.Error()).Should(ContainSubstring("is not compatible"))
 		})
 		It("should return nil if no installmode is empty", func() {
 			// empty install mode
 			oi.InstallMode = operator.InstallMode{}
 			Expect(oi.InstallMode.IsEmpty()).To(BeTrue())
-			err := oi.isOperatorGroupCompatible(og, oi.InstallMode.TargetNamespaces)
-			Expect(err).Should(BeNil())
+			Expect(oi.isOperatorGroupCompatible(og, oi.InstallMode.TargetNamespaces)).Should(Succeed())
 		})
 		It("should return nil if namespaces match", func() {
 			oi.InstallMode = operator.InstallMode{
@@ -566,8 +559,7 @@ var _ = Describe("OperatorInstaller", func() {
 				TargetNamespaces: []string{"matchingns"},
 			}
 			aog := createOperatorGroupHelper(context.TODO(), nil, "existing-og", "testns", "matchingns")
-			err := oi.isOperatorGroupCompatible(aog, oi.InstallMode.TargetNamespaces)
-			Expect(err).Should(BeNil())
+			Expect(oi.isOperatorGroupCompatible(aog, oi.InstallMode.TargetNamespaces)).Should(Succeed())
 		})
 	})
 
@@ -601,7 +593,7 @@ var _ = Describe("OperatorInstaller", func() {
 			grp, found, err := oi.getOperatorGroup(context.TODO())
 			Expect(grp).To(BeNil())
 			Expect(found).To(BeFalse())
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 		It("should return an error when more than OperatorGroup found", func() {
 			_ = createOperatorGroupHelper(context.TODO(), client, "og1", "atestns")
@@ -618,7 +610,7 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(grp.Name).To(Equal(og.Name))
 			Expect(grp.Namespace).To(Equal(og.Namespace))
 			Expect(found).To(BeTrue())
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 
@@ -643,15 +635,15 @@ var _ = Describe("OperatorInstaller", func() {
 			supported.Insert(string(v1alpha1.InstallModeTypeAllNamespaces))
 			target, err := oi.getTargetNamespaces(supported)
 			Expect(target).To(BeNil())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return operator's namespace when OwnNamespace is supported", func() {
 			oi.cfg.Namespace = "test-ns"
 			supported.Insert(string(v1alpha1.InstallModeTypeOwnNamespace))
 			target, err := oi.getTargetNamespaces(supported)
-			Expect(len(target)).To(Equal(1))
+			Expect(target).To(HaveLen(1))
 			Expect(target[0]).To(Equal("test-ns"))
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return configured namespace when SingleNamespace is passed in", func() {
 
@@ -662,9 +654,9 @@ var _ = Describe("OperatorInstaller", func() {
 
 			supported.Insert(string(v1alpha1.InstallModeTypeSingleNamespace))
 			target, err := oi.getTargetNamespaces(supported)
-			Expect(len(target)).To(Equal(1))
+			Expect(target).To(HaveLen(1))
 			Expect(target[0]).To(Equal("test-ns"))
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return configured namespace when MultiNamespace is passed in", func() {
 
@@ -675,9 +667,9 @@ var _ = Describe("OperatorInstaller", func() {
 
 			supported.Insert(string(v1alpha1.InstallModeTypeMultiNamespace))
 			target, err := oi.getTargetNamespaces(supported)
-			Expect(len(target)).To(Equal(2))
+			Expect(target).To(HaveLen(2))
 			Expect(target).To(Equal([]string{"test-ns1", "test-ns2"}))
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

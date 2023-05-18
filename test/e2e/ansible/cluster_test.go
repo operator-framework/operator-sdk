@@ -280,7 +280,7 @@ var _ = Describe("Running ansible projects", func() {
 			Expect(err).NotTo(HaveOccurred())
 			token, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64Token))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(token)).To(BeNumerically(">", 0))
+			Expect(token).ToNot(BeEmpty())
 
 			By("creating a curl pod")
 			cmdOpts := []string{
@@ -322,7 +322,7 @@ var _ = Describe("Running ansible projects", func() {
 				fmt.Sprintf("%s-sample", strings.ToLower(tc.Kind)),
 				"-o=jsonpath={..metadata.namespace}")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(crNamespace).NotTo(HaveLen(0))
+			Expect(crNamespace).NotTo(BeEmpty())
 
 			By("ensuring the operator metrics contains a `resource_created_at` metric for the Memcached CR")
 			metricExportedMemcachedCR := fmt.Sprintf("resource_created_at_seconds{group=\"%s\","+

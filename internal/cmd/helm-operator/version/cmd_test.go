@@ -48,7 +48,7 @@ var _ = Describe("Running a version command", func() {
 				w.Close()
 			}()
 			stdout, err := io.ReadAll(r)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			stdoutString := string(stdout)
 			version := ver.GitVersion
 			if version == "unknown" {

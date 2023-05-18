@@ -43,7 +43,7 @@ var _ = Describe("Tarring a bundle", func() {
 		BeforeEach(func() {
 			r = PodTestRunner{}
 			expTarball, err = os.ReadFile(expTarPath)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		Context("with a valid on-disk bundle", func() {
@@ -54,9 +54,9 @@ var _ = Describe("Tarring a bundle", func() {
 			It("creates a tarball successfully", func() {
 				r.BundlePath = validBundlePath
 				r.BundleMetadata, _, err = registry.FindBundleMetadata(validBundlePath)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				tarredBundleData, err := r.getBundleData()
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				cmpTarFilesHelper(expTarball, tarredBundleData)
 			})
 		})
@@ -64,7 +64,7 @@ var _ = Describe("Tarring a bundle", func() {
 		Context("with an invalid on-disk bundle", func() {
 			It("returns an error", func() {
 				_, err = r.getBundleData()
-				Expect(err).NotTo(BeNil())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
@@ -76,9 +76,9 @@ var _ = Describe("Tarring a bundle", func() {
 func cmpTarFilesHelper(c1, c2 []byte) {
 	r1, r2 := bytes.NewBuffer(c1), bytes.NewBuffer(c2)
 	set1, err := untarToFileSet(r1)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	set2, err := untarToFileSet(r2)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 	for fileName, contents1 := range set1 {
 		contents2, hasFileName := set2[fileName]
@@ -87,7 +87,7 @@ func cmpTarFilesHelper(c1, c2 []byte) {
 			"contents of file %s differ in first and second tarballs", fileName)
 		delete(set2, fileName)
 	}
-	ExpectWithOffset(1, set2).To(HaveLen(0), "second tarball has files not in the first")
+	ExpectWithOffset(1, set2).To(BeEmpty(), "second tarball has files not in the first")
 }
 
 // untarToFileSet reads a gizpped tarball from r and writes each object's bytes to a set, keyed by header name.

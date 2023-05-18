@@ -43,7 +43,7 @@ var _ = Describe("getTypedDescriptors", func() {
 
 	It("handles an empty set of marked fields", func() {
 		out = getTypedDescriptors(markedFields, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
-		Expect(out).To(HaveLen(0))
+		Expect(out).To(BeEmpty())
 	})
 	It("returns one spec descriptor for one spec marker on a field", func() {
 		markedFields[crd.TypeIdent{}] = []*fieldInfo{
@@ -79,7 +79,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			},
 		}
 		out = getTypedDescriptors(markedFields, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
-		Expect(out).To(HaveLen(0))
+		Expect(out).To(BeEmpty())
 	})
 	It("returns one status descriptor for one status marker on a field", func() {
 		markedFields[crd.TypeIdent{}] = []*fieldInfo{
