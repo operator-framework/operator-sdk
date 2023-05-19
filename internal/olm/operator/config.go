@@ -68,6 +68,10 @@ func (c *Configuration) Load() error {
 	if c.overrides == nil {
 		c.overrides = &clientcmd.ConfigOverrides{}
 	}
+	if c.overrides.Timeout == "" && c.Timeout > 0 {
+		c.overrides.Timeout = c.Timeout.String()
+	}
+
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	loadingRules.ExplicitPath = c.KubeconfigPath
 	mergedConfig, err := loadingRules.Load()
