@@ -1,0 +1,11 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add a Parameter to the Makefile to allow modifying the
+      'operator-sdk' binary before running any commands. If
+      necessary, a specific version of the SDK can be downloaded
+      for cases when the project has yet to upgrade to a later or
+      latest version.
+    kind: addition
+    breaking: false

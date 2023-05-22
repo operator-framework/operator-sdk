@@ -44,9 +44,9 @@ PKG_MAN_OPTS ?= $(PKG_FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
 packagemanifests: kustomize %s
-	operator-sdk generate kustomize manifests -q --interactive=false
+	$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 `
 
 // AddPackagemanifestsTarget will append the packagemanifests target to the makefile
@@ -78,7 +78,7 @@ func (tc TestContext) AddPackagemanifestsTarget(operatorType projutil.OperatorTy
 func (tc TestContext) DisableManifestsInteractiveMode() error {
 	// Todo: check if we cannot improve it since the replace/content will exists in the
 	// pkgmanifest target if it be scaffolded before this call
-	content := "operator-sdk generate kustomize manifests"
+	content := "$(OPERATOR_SDK) generate kustomize manifests"
 	replace := content + " --interactive=false"
 	return ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), content, replace)
 }
