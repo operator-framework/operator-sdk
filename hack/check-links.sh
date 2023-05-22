@@ -16,4 +16,4 @@ docker run --rm -v sdk-html:/target klakegg/html-proofer:3.18.8 /target \
   --http-status-ignore 429 \
   --allow_hash_href \
   --typhoeus '{"followlocation":true,"connecttimeout":600,"timeout":600}' \
-  --url-ignore "/github.com\/operator-framework\/operator-sdk\/edit\/master\//,https://docs.github.com/en/get-started/quickstart/fork-a-repo"
+  --url-ignore "/github.com\/operator-framework\/operator-sdk\/edit\/master\//,https://docs.github.com/en/get-started/quickstart/fork-a-repo,https://github.com/operator-framework/operator-sdk/settings/access"
