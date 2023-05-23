@@ -48,10 +48,12 @@ jobs:
         with:
           fetch-depth: 0
       - run: sudo rm -rf /usr/local/bin/kustomize
-      - run: |
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Run test e2e ansible molecule
+        run: |
           env
-          export PATH=/opt/python/3.8.12/bin:${PATH}
-          sudo apt-get install python3 python3-pip
-          sudo pip3 install --upgrade setuptools pip
-          sudo pip3 install ansible~=2.9.13
+          pip3 install --user --upgrade setuptools pip
+          pip3 install --user ansible~=2.9.13
           make test-e2e-ansible-molecule
