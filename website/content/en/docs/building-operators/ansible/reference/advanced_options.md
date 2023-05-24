@@ -268,7 +268,7 @@ If you want more control over the logs that are outputted, consider using the [Z
 ## `ansible.sdk.operatorframework.io/reconcile-period` Custom Resource Annotation
 
 You can specify the reconcile period for an Ansible Operator by adding the ansible.sdk.operatorframework.io/reconcile-period key to the custom resource annotations.
-This feature specifies the maximum interval in which a cluster will get reconciled. If changes are detected in the desired state, the cluster may be reconciled sooner than the specified interval.
+This feature specifies the maximum interval in which a cluster will get reconciled, and defaults to 10 hours if not manually set. If changes are detected in the desired state, the cluster may be reconciled sooner than the specified interval.
 
 The reconcile period can be specified in the custom resource's annotations in the following manner: 
 
