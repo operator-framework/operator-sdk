@@ -190,6 +190,23 @@ For this example replace the generated controller file `controllers/memcached_co
 **Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered.
 If you'd like to skip this section, head to the [deploy](#run-the-operator) section to see how to run the operator.
 
+### Setup a Recorder
+
+First, add a recorder when you initialize the Memcached reconciler in `main.go`. 
+
+```Go
+if err = (&controllers.MemcachedReconciler{
+	Client:   mgr.GetClient(),
+	Scheme:   mgr.GetScheme(),
+	Recorder: mgr.GetEventRecorderFor("memcached-controller"),
+}).SetupWithManager(mgr); err != nil {
+	setupLog.Error(err, "unable to create controller", "controller", "Memcached")
+	os.Exit(1)
+}
+```
+
+This recorder will be used within the reconcile method of the controller to emit events.
+
 ### Resources watched by the Controller
 
 The `SetupWithManager()` function in `controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
@@ -490,56 +507,56 @@ Next, check out the following:
 1. The [advanced topics][advanced-topics] doc for more use cases and under-the-hood details.
 
 
-[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
-[migration-guide]:/docs/building-operators/golang/migration
-[install-guide]:/docs/building-operators/golang/installation
-[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
-[enqueue_requests_from_map_func]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
-[event_handler_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
-[event_filtering]:/docs/building-operators/golang/references/event-filtering/
-[controller_options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller#Options
-[controller_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller
-[operator_scope]:/docs/building-operators/golang/operator-scope/
-[kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
-[go_mod_wiki]: https://github.com/golang/go/wiki/Modules
-[doc_client_api]:/docs/building-operators/golang/references/client/
-[manager_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
-[request-go-doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile#Request
-[result_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile#Result
-[multi-namespaced-cache-builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
-[kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
-[api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
-[kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
-[kb_api_doc]: https://book.kubebuilder.io/cronjob-tutorial/new-api.html
-[controller_tools]: https://sigs.k8s.io/controller-tools
-[doc-validation-schema]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
-[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
-[markers]: https://book.kubebuilder.io/reference/markers.html
-[crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/latest/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
-[builder_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/builder#example-Builder
+[API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced-topics]: /docs/building-operators/golang/advanced-topics/
-[create_a_webhook]: /docs/building-operators/golang/webhook
-[status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
-[status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
-[API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
-[legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
-[role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
-[multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
-[doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
-[tutorial-bundle]:/docs/olm-integration/tutorial-bundle
-[quickstart-bundle]:/docs/olm-integration/quickstart-bundle
-[doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
+[api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[builder_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/builder#example-Builder
 [conditionals]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+[controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
+[controller_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller
+[controller_options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller#Options
+[controller_tools]: https://sigs.k8s.io/controller-tools
+[crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
+[create_a_webhook]: /docs/building-operators/golang/webhook
+[deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html
+[doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
+[doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
+[doc-validation-schema]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
+[doc_client_api]:/docs/building-operators/golang/references/client/
+[enqueue_requests_from_map_func]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
+[event_filtering]:/docs/building-operators/golang/references/event-filtering/
+[event_handler_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[go_mod_wiki]: https://github.com/golang/go/wiki/Modules
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
+[install-guide]:/docs/building-operators/golang/installation
+[k8s-doc-deleting-cascade]: https://kubernetes.io/docs/concepts/architecture/garbage-collection/#cascading-deletion
+[k8s-doc-owner-ref]: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
+[kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[kb_api_doc]: https://book.kubebuilder.io/cronjob-tutorial/new-api.html
+[kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
+[kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
+[kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [kubernetes-extend-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
-[reconcile-godoc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile
-[rbac-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
+[legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli
+[manager_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
+[markers]: https://book.kubebuilder.io/reference/markers.html
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/latest/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
+[migration-guide]:/docs/building-operators/golang/migration
+[multi-namespaced-cache-builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+[multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
 [olm-integration]: /docs/olm-integration
 [openapi-validation]: /docs/building-operators/golang/references/openapi-validation
-[controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
-[kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[operator_scope]:/docs/building-operators/golang/operator-scope/
+[quickstart-bundle]:/docs/olm-integration/quickstart-bundle
+[rbac-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
-[k8s-doc-owner-ref]: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
-[k8s-doc-deleting-cascade]: https://kubernetes.io/docs/concepts/architecture/garbage-collection/#cascading-deletion
-[deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html
+[reconcile-godoc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile
+[request-go-doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile#Request
+[result_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile#Result
+[role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
+[status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
+[status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
+[tutorial-bundle]:/docs/olm-integration/tutorial-bundle

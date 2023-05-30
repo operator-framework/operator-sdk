@@ -144,6 +144,8 @@ func (mh *Memcached) Run() {
 		mh.uncommentManifestsKustomizationv3()
 	}
 
+	mh.customizingMain()
+
 	mh.implementingE2ETests()
 
 	cmd := exec.Command("go", "mod", "tidy")
@@ -480,7 +482,7 @@ func (mh *Memcached) implementingMonitoring() {
 	mh.customizingController()
 
 	log.Infof("customizing Main")
-	mh.customizingMain()
+	mh.customizingMainMonitoring()
 
 	log.Infof("customizing Dockerfile")
 	mh.customizingDockerfile()
@@ -784,8 +786,24 @@ func (mh *Memcached) customizingController() {
 	pkg.CheckError("adding metric incrementation", err)
 }
 
-// customizingMain will customize main.go to register metrics
+// customizingMain will add comments to main
 func (mh *Memcached) customizingMain() {
+	var mainPath string
+
+	if mh.isV3() {
+		mainPath = filepath.Join(mh.ctx.Dir, "main.go")
+	} else {
+		mainPath = filepath.Join(mh.ctx.Dir, "cmd", "main.go")
+	}
+
+	err := kbutil.InsertCode(mainPath,
+		"Scheme:   mgr.GetScheme(),",
+		mainRecorderFragment)
+	pkg.CheckError("adding recorder fragment", err)
+}
+
+// customizingMainMonitoring will customize main.go to register metrics
+func (mh *Memcached) customizingMainMonitoring() {
 	var mainPath string
 
 	marker := "\"github.com/example/memcached-operator/"
@@ -1384,6 +1402,10 @@ const controllerPrometheusRuleFragment = `
 	// is applied on the cluster if not we return nil to stop the reconciliation
 	memcached := &cachev1alpha1.Memcached{}
 	err = r.Get(ctx, req.NamespacedName, memcached)`
+
+const mainRecorderFragment = `
+// Add a Recorder to the reconciler.
+// This allows the operator author to emit events during reconcilliation.`
 
 const monitoringv1ImportFragment = `
 
