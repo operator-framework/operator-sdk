@@ -9,7 +9,7 @@ weight: 1
 ### Prerequisites
 
 - [git][git-tool]
-- [go][go-tool] version 1.18
+- [go][go-tool] version 1.19
 
 ### Download Operator SDK
 
