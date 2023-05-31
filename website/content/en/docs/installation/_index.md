@@ -36,7 +36,7 @@ export OS=$(uname | awk '{print tolower($0)}')
 Download the binary for your platform:
 
 ```sh
-export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.28.0
+export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.29.0
 curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 ```
 

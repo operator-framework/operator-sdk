@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Bump the golang base image version in the ansible-operator Dockerfiles from 1.18 to 1.19
-    kind: "change"
-    breaking: false
