@@ -53,6 +53,7 @@ type HelmOperatorReconciler struct {
 	ReconcilePeriod time.Duration
 	OverrideValues  map[string]string
 	releaseHook     ReleaseHookFunc
+	VerboseOverride bool
 }
 
 const (
@@ -230,9 +231,11 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	status.RemoveCondition(types.ConditionIrreconcilable)
 
 	if !manager.IsInstalled() {
-		for k, v := range r.OverrideValues {
-			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
-				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
+		if r.VerboseOverride {
+			for k, v := range r.OverrideValues {
+				r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
+					"Chart value %q overridden to %q by operator's watches.yaml", k, v)
+			}
 		}
 		installedRelease, err := manager.InstallRelease(ctx)
 		if err != nil {
@@ -299,9 +302,11 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	}
 
 	if manager.IsUpgradeRequired() {
-		for k, v := range r.OverrideValues {
-			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
-				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
+		if r.VerboseOverride {
+			for k, v := range r.OverrideValues {
+				r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
+					"Chart value %q overridden to %q by operator's watches.yaml", k, v)
+			}
 		}
 		force := hasAnnotation(helmUpgradeForceAnnotation, o)
 		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
