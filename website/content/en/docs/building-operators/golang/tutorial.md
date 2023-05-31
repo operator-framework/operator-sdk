@@ -293,7 +293,7 @@ The following are a few possible return options for a Reconciler:
   ```
 - Reconcile again after X time:
   ```go
-   return ctrl.Result{RequeueAfter: nextRun.Sub(r.Now())}, nil
+   return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
    ```
 
 For more details, check the Reconcile and its [Reconcile godoc][reconcile-godoc].
