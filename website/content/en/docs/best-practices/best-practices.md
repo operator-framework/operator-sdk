@@ -11,7 +11,7 @@ Considerations for Operator developers:
 
 - An Operator should manage a single type of application, essentially following the UNIX principle: do one thing and do it well.
 
-- If an application consists of multiple tiers or components, multiple Operators should be written one for each of them. For example, if the application consists of Redis, AMQ and MySQL, there should be 3 Operators, not one.
+- If an application consists of multiple tiers or components, multiple Operators should be written one for each of them. For example, if the application consists of Redis, AMQ, and MySQL, there should be 3 Operators, not one.
 
 - If there is significant orchestration and sequencing involved, an Operator should be written that represents the entire stack, in turn delegating to other Operators for orchestrating their part of it.
 
