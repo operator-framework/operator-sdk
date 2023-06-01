@@ -18,7 +18,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "addition"
+    kind: ""
 
     # Is this a breaking change?
     breaking: false
