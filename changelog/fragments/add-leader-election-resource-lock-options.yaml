@@ -5,7 +5,7 @@ entries:
       Currently, the operator SDK for the Ansible operator lacks options to customize the leader election resource lock behavior. This limits the flexibility of the operator and prevents users from adjusting lease duration and renew deadline according to their specific needs.
 
       Changes:
-      Implemented enhancements to the operator SDK to include additional flags for configuring leader election resource lock options. These changes provide users with the ability to specify the type of resource object used for locking during leader election and customize the lease duration and renew deadline.
+      I made enhancements to the operator SDK to include additional flags for configuring leader election resource lock options. These changes provide users with the ability to specify the type of resource object used for locking during leader election and customize the lease duration and renew deadline.
 
       Introduced --leader-elect-lease-duration flag to allow users to define the duration that non-leader candidates will wait to force acquire leadership. The default duration is set to 15 seconds.
 
