@@ -19,30 +19,30 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // Flags - Options to be used by an ansible operator
 type Flags struct {
-	ReconcilePeriod         time.Duration
-	WatchesFile             string
-	InjectOwnerRef          bool
-	LeaderElection          bool
-	MaxConcurrentReconciles int
-	AnsibleVerbosity        int
-	AnsibleRolesPath        string
-	AnsibleCollectionsPath  string
-	MetricsBindAddress      string
-	ProbeAddr               string
-	LeaderElectionID        string
-	LeaderElectionNamespace string
-	LeaseDuration           time.Duration
-	RenewDeadline           time.Duration
-	GracefulShutdownTimeout time.Duration
-	AnsibleArgs             string
-	AnsibleLogEvents        string
-	ProxyPort               int
+	ReconcilePeriod            time.Duration
+	WatchesFile                string
+	InjectOwnerRef             bool
+	LeaderElection             bool
+	MaxConcurrentReconciles    int
+	AnsibleVerbosity           int
+	AnsibleRolesPath           string
+	AnsibleCollectionsPath     string
+	MetricsBindAddress         string
+	ProbeAddr                  string
+	LeaderElectionResourceLock string
+	LeaderElectionID           string
+	LeaderElectionNamespace    string
+	LeaseDuration              time.Duration
+	RenewDeadline              time.Duration
+	GracefulShutdownTimeout    time.Duration
+	AnsibleArgs                string
+	AnsibleLogEvents           string
+	ProxyPort                  int
 
 	// Path to a controller-runtime componentconfig file.
 	// If this is empty, use default values.
@@ -160,14 +160,20 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 			" holding the leader lock (required if running locally with leader"+
 			" election enabled).",
 	)
+	flagSet.StringVar(&f.LeaderElectionResourceLock,
+		"leader-elect-resource-lock",
+		"leases",
+		"The type of resource object that is used for locking during leader election."+
+			" Supported options are 'leases', 'endpointsleases' and 'configmapsleases'. Default is configmapsleases.",
+	)
 	flagSet.DurationVar(&f.LeaseDuration,
-		"--leader-elect-lease-duration",
+		"leader-elect-lease-duration",
 		15*time.Second,
 		"LeaseDuration is the duration that non-leader candidates will wait"+
 			" to force acquire leadership. This is measured against time of last observed ack. Default is 15 seconds.",
 	)
 	flagSet.DurationVar(&f.RenewDeadline,
-		"--leader-elect-renew-deadline",
+		"leader-elect-renew-deadline",
 		10*time.Second,
 		"RenewDeadline is the duration that the acting controlplane will retry"+
 			" refreshing leadership before giving up. Default is 10 seconds.",
@@ -226,8 +232,8 @@ func (f *Flags) ToManagerOptions(options manager.Options) manager.Options {
 	if changed("leader-elect-renew-deadline") || options.RenewDeadline == nil {
 		options.RenewDeadline = &f.RenewDeadline
 	}
-	if options.LeaderElectionResourceLock == "" {
-		options.LeaderElectionResourceLock = resourcelock.ConfigMapsLeasesResourceLock
+	if changed("leader-elect-resource-lock") || options.LeaderElectionResourceLock == "" {
+		options.LeaderElectionResourceLock = f.LeaderElectionResourceLock
 	}
 	if changed("graceful-shutdown-timeout") || options.GracefulShutdownTimeout == nil {
 		options.GracefulShutdownTimeout = &f.GracefulShutdownTimeout
