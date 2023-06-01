@@ -162,7 +162,7 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	)
 	flagSet.StringVar(&f.LeaderElectionResourceLock,
 		"leader-elect-resource-lock",
-		"leases",
+		"configmapsleases",
 		"The type of resource object that is used for locking during leader election."+
 			" Supported options are 'leases', 'endpointsleases' and 'configmapsleases'. Default is configmapsleases.",
 	)
