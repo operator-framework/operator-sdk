@@ -10,7 +10,7 @@ ipaddress = "==1.0.23"
 openshift = "~=0.13.0"
 ansible = "~=2.9.15"
 jmespath = "==0.10.0"
-cryptography = "==3.3.2"
+cryptography = "==41.0.0"
 oauthlib = "==3.2.1"
 
 [dev-packages]
