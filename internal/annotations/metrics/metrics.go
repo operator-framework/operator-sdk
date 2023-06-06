@@ -49,7 +49,7 @@ func MakeBundleMetadataLabels(layout string) map[string]string {
 	}
 }
 
-// MakeObjectAnnotations returns the SDK metric annotations which will be added
+// MakeBundleObjectAnnotations returns the SDK metric annotations which will be added
 // to CustomResourceDefinitions and ClusterServiceVersions.
 func MakeBundleObjectAnnotations(layout string) map[string]string {
 	return map[string]string{
