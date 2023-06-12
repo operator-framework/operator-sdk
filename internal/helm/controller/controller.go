@@ -52,6 +52,7 @@ type WatchOptions struct {
 	ReconcilePeriod         time.Duration
 	WatchDependentResources bool
 	OverrideValues          map[string]string
+	VerboseOverride         bool
 	MaxConcurrentReconciles int
 	Selector                metav1.LabelSelector
 }
@@ -67,6 +68,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 		ManagerFactory:  options.ManagerFactory,
 		ReconcilePeriod: options.ReconcilePeriod,
 		OverrideValues:  options.OverrideValues,
+		VerboseOverride: options.VerboseOverride,
 	}
 
 	// Register the GVK with the schema
