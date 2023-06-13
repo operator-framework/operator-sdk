@@ -16,7 +16,7 @@ require (
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
 	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230413193425-4632388adc61
 	github.com/operator-framework/java-operator-plugins v0.7.1-0.20230306190439-0eed476d2b75
-	github.com/operator-framework/operator-lib v0.11.1-0.20230306195046-28cadc6b6055
+	github.com/operator-framework/operator-lib v0.11.1-0.20230607132417-ecb9be488378
 	github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230227155221-caa8b9e1ab12
 	github.com/operator-framework/operator-registry v1.28.0
 	github.com/prometheus/client_golang v1.15.1
@@ -119,7 +119,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-containerregistry v0.8.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
+	github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect

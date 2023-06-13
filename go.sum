@@ -463,6 +463,7 @@ github.com/google/pprof v0.0.0-20210601050228-01bbb1931b22/go.mod h1:kpwsk12EmLe
 github.com/google/pprof v0.0.0-20210609004039-a478d1d731e9/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 h1:K6RDEckDVWvDI9JAJYCmNdQXq6neHJOYx3V6jnqNEec=
 github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
+github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3/go.mod h1:79YE0hCXdHag9sBkw2o+N/YnZtTkXi0UT9Nnixa5eYk=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
@@ -765,6 +766,8 @@ github.com/operator-framework/java-operator-plugins v0.7.1-0.20230306190439-0eed
 github.com/operator-framework/java-operator-plugins v0.7.1-0.20230306190439-0eed476d2b75/go.mod h1:oQTt35EEUrDY8ca/kRWYz5omWsVhk9Sj78vKlHFqxjM=
 github.com/operator-framework/operator-lib v0.11.1-0.20230306195046-28cadc6b6055 h1:G9N8wEf9qDZ/4Fj5cbIejKUoFOYta0v72Yg8tPAdvc0=
 github.com/operator-framework/operator-lib v0.11.1-0.20230306195046-28cadc6b6055/go.mod h1:A7xcxZPfdepC14FA5YyA+jpbAeD7q4awtT7mSAZntuU=
+github.com/operator-framework/operator-lib v0.11.1-0.20230607132417-ecb9be488378 h1:g7JRKMQt/VAzVGUYbiAXwL6YCdQQkGI4nIfMVG6kU6c=
+github.com/operator-framework/operator-lib v0.11.1-0.20230607132417-ecb9be488378/go.mod h1:johXYPNOI2CfP3DyNcZRU/4byiQ27rBsAcMSTDE99vs=
 github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230227155221-caa8b9e1ab12 h1:PXejNY6ZFU6CutIkowf/ECsuT/xcLAIgmXQxG43SHnY=
 github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230227155221-caa8b9e1ab12/go.mod h1:5OAMYmIkFCiiHfS1r3HcIYu3F/sum38pofSoLZy7Cbw=
 github.com/operator-framework/operator-registry v1.28.0 h1:vtmd2WgJxkx7vuuOxW4k5Le/oo0SfonSeJVMU3rKIfk=
