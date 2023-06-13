@@ -14,6 +14,8 @@
 package handler
 
 import (
+	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/util/workqueue"
@@ -31,25 +33,25 @@ type LoggingEnqueueRequestForOwner struct {
 }
 
 // Create implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForOwner) Create(e event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForOwner) Create(c context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Create", e.Object, nil)
 	h.EnqueueRequestForOwner.Create(e, q)
 }
 
 // Update implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForOwner) Update(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForOwner) Update(c context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Update", e.ObjectOld, e.ObjectNew)
 	h.EnqueueRequestForOwner.Update(e, q)
 }
 
 // Delete implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForOwner) Delete(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForOwner) Delete(c context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Delete", e.Object, nil)
 	h.EnqueueRequestForOwner.Delete(e, q)
 }
 
 // Generic implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForOwner) Generic(e event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForOwner) Generic(c context.Context, e event.GenericEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Generic", e.Object, nil)
 	h.EnqueueRequestForOwner.Generic(e, q)
 }

@@ -23,6 +23,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -55,24 +56,24 @@ func (r *Memcached) Default() {
 var _ webhook.Validator = &Memcached{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateCreate() error {
+func (r *Memcached) ValidateCreate() (warnings admission.Warnings, err error) {
 	memcachedlog.Info("validate create", "name", r.Name)
 
-	return validateOdd(r.Spec.Size)
+	return nil, validateOdd(r.Spec.Size)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateUpdate(old runtime.Object) error {
+func (r *Memcached) ValidateUpdate(old runtime.Object) (warnings admission.Warnings, err error) {
 	memcachedlog.Info("validate update", "name", r.Name)
 
-	return validateOdd(r.Spec.Size)
+	return nil, validateOdd(r.Spec.Size)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateDelete() error {
+func (r *Memcached) ValidateDelete() (warnings admission.Warnings, err error) {
 	memcachedlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 func validateOdd(n int32) error {
 	if n%2 == 0 {
