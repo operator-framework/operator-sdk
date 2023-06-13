@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/stage"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
-	kustomizev2Alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2-alpha"
+	kustomizev2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
 	deployimagev1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1"
@@ -90,7 +90,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		scorecardv2.Plugin{},
 	)
 	gov4AlphaBundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: 4, Stage: stage.Alpha},
-		kustomizev2Alpha.Plugin{},
+		kustomizev2.Plugin{},
 		// # TODO(rashmigottipati): make v4 stable with the next release of KB
 		// as `go/v3` is getting deprecated by KB hence Operator SDK would also be migrating to v4 soon.
 		golangv4.Plugin{},
@@ -98,19 +98,19 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		scorecardv2.Plugin{},
 	)
 	ansibleBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
-		kustomizev2Alpha.Plugin{},
+		kustomizev2.Plugin{},
 		ansiblev1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	helmBundle, _ := plugin.NewBundle("helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
-		kustomizev2Alpha.Plugin{},
+		kustomizev2.Plugin{},
 		helmv1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	hybridBundle, _ := plugin.NewBundle("hybrid.helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
-		kustomizev2Alpha.Plugin{},
+		kustomizev2.Plugin{},
 		hybrid.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
