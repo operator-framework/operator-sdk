@@ -42,4 +42,4 @@ entries:
         span multiple lines.
 
         Using the YAML string '|' operator means that newlines in this string will
-        be honored and interpreted as newlines in the rendered markdown.
+        be honored and interpretted as newlines in the rendered markdown.
