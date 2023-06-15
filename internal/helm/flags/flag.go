@@ -123,7 +123,7 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	flagSet.BoolVar(&f.SuppressOverrideValues,
 		"suppress-override-values",
 		false,
-		"Manage log events about overriding template values",
+		"Silences the override-value for OverrideValuesInUse events",
 	)
 }
 

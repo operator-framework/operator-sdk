@@ -2,15 +2,27 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Description is the line that shows up in the CHANGELOG. This
-      should be formatted as markdown and be on a single line. Using
-      the YAML string '>' operator means you can write your entry
-      multiple lines and it will still be parsed as a single line.
+      Currently, when setting `overrideValues` in your `watches.yaml`, every entry is logged with its key and its value.
+      When working with confidential information such as credentials, logging those information would not be optimal nor
+      desirable. Therefore, there should be a way to silence/suppress these values.
+      
+      This feature introduces the `--suppress-override-values` boolean-flag for the `helm-operator`.
+      
+      When set to true, the value of the overrideValues entry is sanitized with this value "****".
+      
+      For example:
+      
+      This is a simple example of `overrideValues` of the `watches.yaml`
+      ```yaml
+      overrideValues:
+        x: y
+      ```
+      
+      The default-value of `--suppress-override-values` is `false` so therefore we would get this warning logged:
+      `Chart value x overridden to y by operator's watches.yaml`
 
-      If an operator type's plugin is being changed then prefix the description with
-      "(<operator language>/<plugin version>)", ex. "(go/v2)".
-      If an operator type's runtime is being changed, use then prefix the description
-      with "For <operator language>-based operators,", ex. "For Go-based operators".
+      When setting `--suppress-override-values` `true` the warning will be logged in the following manner:
+      `Chart value x overridden to **** by operator's watches.yaml`
 
     # kind is one of:
     # - addition
@@ -18,7 +30,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: ""
+    kind: "change"
 
     # Is this a breaking change?
     breaking: false
