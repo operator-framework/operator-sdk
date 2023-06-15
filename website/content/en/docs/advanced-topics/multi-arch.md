@@ -137,18 +137,18 @@ affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/arch
-              operator: In
-              values:
-                - amd64
-                - arm64
-                - ppc64le
-                - s390x
-            - key: kubernetes.io/os
-                operator: In
-                values:
-                  - linux
+      - matchExpressions:
+        - key: kubernetes.io/arch
+          operator: In
+          values:
+          - amd64
+          - arm64
+          - ppc64le
+          - s390x
+        - key: kubernetes.io/os
+            operator: In
+            values:
+              - linux
 ```
 
 ##### Setting Node Affinity in Golang
@@ -156,37 +156,37 @@ While **Ansible** and **Helm** operators will usually define their operators and
 
 ```go
 Template: corev1.PodTemplateSpec{
-...
-Spec: corev1.PodSpec{
-Affinity: &corev1.Affinity{
-NodeAffinity: &corev1.NodeAffinity{
-RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-NodeSelectorTerms: []corev1.NodeSelectorTerm{
-{
-MatchExpressions: []corev1.NodeSelectorRequirement{
-{
-Key:      "kubernetes.io/arch",
-Operator: "In",
-Values:   []string{"amd64"},
-},
-{
-Key:      "kubernetes.io/os",
-Operator: "In",
-Values:   []string{"linux"},
-},
-},
-},
-},
-},
-},
-},
-SecurityContext: &corev1.PodSecurityContext{
-...
-},
-Containers: []corev1.Container{{
-...
-}},
-},
+    ...
+    Spec: corev1.PodSpec{
+        Affinity: &corev1.Affinity{
+            NodeAffinity: &corev1.NodeAffinity{
+                RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+                    NodeSelectorTerms: []corev1.NodeSelectorTerm{
+                        {
+                            MatchExpressions: []corev1.NodeSelectorRequirement{
+                                {
+                                    Key:      "kubernetes.io/arch",
+                                    Operator: "In",
+                                    Values:   []string{"amd64"},
+                                },
+                                {
+                                    Key:      "kubernetes.io/os",
+                                    Operator: "In",
+                                    Values:   []string{"linux"},
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        SecurityContext: &corev1.PodSecurityContext{
+            ...
+        },
+        Containers: []corev1.Container{{
+            ...
+        }},
+    },
 ```
 
 ##### Updating Operator Lifecycle Manager Configurations for Multi-Architecture Compute Nodes

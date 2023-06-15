@@ -24,7 +24,7 @@ Example:
           spec:
             containers:
               - name: curl-example
-                image: registry.access.redhat.com/ubi8/ubi:8.4-209
+                image: registry.access.redhat.com/ubi8/ubi:8.8
                 command: ["curl"]
                 args: ["http://example.com/job-request"]
                 env:
