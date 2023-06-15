@@ -6,11 +6,8 @@ entries:
       When working with confidential information such as credentials, logging those information would not be optimal nor
       desirable. Therefore, there should be a way to silence/suppress these values.
       
-      This feature introduces the `--suppress-override-values` boolean-flag for the `helm-operator`.
-      
-      When set to true, the value of the overrideValues entry is sanitized with this value "****".
-      
-      For example:
+      This feature introduces the `--suppress-override-values` boolean-flag for the `helm-operator`. When set to true,
+      the value of the overrideValues entry is sanitized with this value "****".
       
       This is a simple example of `overrideValues` of the `watches.yaml`
       ```yaml
