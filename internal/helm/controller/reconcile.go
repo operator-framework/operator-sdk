@@ -46,13 +46,14 @@ type ReleaseHookFunc func(*rpb.Release) error
 
 // HelmOperatorReconciler reconciles custom resources as Helm releases.
 type HelmOperatorReconciler struct {
-	Client          client.Client
-	EventRecorder   record.EventRecorder
-	GVK             schema.GroupVersionKind
-	ManagerFactory  release.ManagerFactory
-	ReconcilePeriod time.Duration
-	OverrideValues  map[string]string
-	releaseHook     ReleaseHookFunc
+	Client                 client.Client
+	EventRecorder          record.EventRecorder
+	GVK                    schema.GroupVersionKind
+	ManagerFactory         release.ManagerFactory
+	ReconcilePeriod        time.Duration
+	OverrideValues         map[string]string
+	SuppressOverrideValues bool
+	releaseHook            ReleaseHookFunc
 }
 
 const (
@@ -231,6 +232,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 	if !manager.IsInstalled() {
 		for k, v := range r.OverrideValues {
+			if r.SuppressOverrideValues {
+				v = "****"
+			}
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
@@ -300,6 +304,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 	if manager.IsUpgradeRequired() {
 		for k, v := range r.OverrideValues {
+			if r.SuppressOverrideValues {
+				v = "****"
+			}
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}

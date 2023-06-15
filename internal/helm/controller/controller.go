@@ -52,6 +52,7 @@ type WatchOptions struct {
 	ReconcilePeriod         time.Duration
 	WatchDependentResources bool
 	OverrideValues          map[string]string
+	SuppressOverrideValues  bool
 	MaxConcurrentReconciles int
 	Selector                metav1.LabelSelector
 }
@@ -61,12 +62,13 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	controllerName := fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind))
 
 	r := &HelmOperatorReconciler{
-		Client:          mgr.GetClient(),
-		EventRecorder:   mgr.GetEventRecorderFor(controllerName),
-		GVK:             options.GVK,
-		ManagerFactory:  options.ManagerFactory,
-		ReconcilePeriod: options.ReconcilePeriod,
-		OverrideValues:  options.OverrideValues,
+		Client:                 mgr.GetClient(),
+		EventRecorder:          mgr.GetEventRecorderFor(controllerName),
+		GVK:                    options.GVK,
+		ManagerFactory:         options.ManagerFactory,
+		ReconcilePeriod:        options.ReconcilePeriod,
+		OverrideValues:         options.OverrideValues,
+		SuppressOverrideValues: options.SuppressOverrideValues,
 	}
 
 	// Register the GVK with the schema
