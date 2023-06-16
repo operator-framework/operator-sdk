@@ -213,6 +213,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			ReconcilePeriod:         reconcilePeriod,
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
+			SuppressOverrideValues:  f.SuppressOverrideValues,
 			MaxConcurrentReconciles: f.MaxConcurrentReconciles,
 			Selector:                w.Selector,
 		})

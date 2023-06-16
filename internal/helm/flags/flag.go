@@ -33,6 +33,7 @@ type Flags struct {
 	LeaderElectionNamespace string
 	MaxConcurrentReconciles int
 	ProbeAddr               string
+	SuppressOverrideValues  bool
 
 	// Path to a controller-runtime componentconfig file.
 	// If this is empty, use default values.
@@ -118,6 +119,11 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"Namespace in which to create the leader election configmap for"+
 			" holding the leader lock (required if running locally with leader"+
 			" election enabled).",
+	)
+	flagSet.BoolVar(&f.SuppressOverrideValues,
+		"suppress-override-values",
+		false,
+		"Silences the override-value for OverrideValuesInUse events",
 	)
 }
 
