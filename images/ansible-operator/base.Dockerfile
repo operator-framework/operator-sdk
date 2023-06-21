@@ -27,13 +27,14 @@ ENV PIP_NO_CACHE_DIR=1 \
 # Ensure fresh metadata rather than cached metadata, install system and pip python deps,
 # and remove those not needed at runtime.
 # pip3~=21.1 fixes a vulnerability described in https://github.com/pypa/pip/pull/9827.
+# TODO(everettraven): Revert all the CVE ignoring after the ansible version has been bumped.
 RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
   && pip3 install --upgrade pip~=21.1.0 \
   && pip3 install pipenv==2022.1.8 \
   && pipenv install --deploy \
-  && pipenv check  -i 42926 -i 42923 -i 45114 -i 53304 -i 53303 -i 53302 -i 53299 -i 53298 -i 53301 -i 53306 -i 53307 -i 53305 -i 53048 \
+  && pipenv check  -i 42926 -i 42923 -i 45114 -i 53304 -i 53303 -i 53302 -i 53299 -i 53298 -i 53301 -i 53306 -i 53307 -i 53305 -i 53048 -i 54230 -i 54229 -i 54219 -i 54564 -i 54468 -i 54466 -i 54467 -i 58755 \
   && yum remove -y gcc libffi-devel openssl-devel python38-devel \
   && yum clean all \
   && rm -rf /var/cache/yum
