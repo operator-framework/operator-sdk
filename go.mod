@@ -2,8 +2,6 @@ module github.com/operator-framework/operator-sdk
 
 go 1.19
 
-replace github.com/operator-framework/helm-operator-plugins => ../helm-operator-plugins
-
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/fatih/structtag v1.1.0
