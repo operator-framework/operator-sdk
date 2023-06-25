@@ -17,6 +17,7 @@ package fbcutil
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -134,7 +135,8 @@ func NullLogger() *log.Entry {
 // RenderRefs will invoke Operator Registry APIs and return a declarative config object representation
 // of the references that are passed in as a string array.
 func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
-	cacheDir := strings.ReplaceAll(strings.Join(refs, "_"), "/", "-")
+	cacheDir := dirNameFromRefs(refs)
+
 	if cacheDir == "" {
 		cacheDir = DefaultCacheDir
 	}
@@ -167,6 +169,14 @@ func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP 
 	}
 
 	return declcfg, nil
+}
+
+func dirNameFromRefs(refs []string) string {
+	dirNameBytes := []byte(strings.ReplaceAll(strings.Join(refs, "_"), "/", "-"))
+	hash := sha256.New()
+	hash.Write(dirNameBytes)
+	hashBytes := hash.Sum(nil)
+	return fmt.Sprintf("%x", hashBytes)
 }
 
 // IsFBC will determine if an index image uses the File-Based Catalog or SQLite index image format.

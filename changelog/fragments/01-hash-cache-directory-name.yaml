@@ -1,0 +1,6 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: In `run bundle-upgrade`, hash the cache directory name to avoid error of too long file name.
+    kind: "bugfix"
+    breaking: false
