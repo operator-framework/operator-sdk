@@ -13,7 +13,7 @@ To begin, you should have:
 - Docker installed and running
 - [Molecule](https://github.com/ansible/molecule) >= v3.0
 - [Ansible](https://github.com/ansible/ansible) >= v2.9
-- [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
+- [The Python Kubernetes client](https://github.com/kubernetes-client/python)
 - An initialized Ansible Operator project, with the molecule directory present.
 
 **NOTE**  If you initialized a project with a previous version of operator-sdk, you can generate a new dummy project and copy in the `molecule` directory. Just be sure to generate the dummy project with the same `api-version` and `kind`, or some of the generated files will not work without modification. Your top-level project structure should look like this:
