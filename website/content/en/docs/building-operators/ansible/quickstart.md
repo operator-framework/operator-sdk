@@ -52,7 +52,7 @@ This guide walks through an example of building a simple memcached-operator powe
 
   ```sh
   make bundle IMG="example.com/memcached-operator:v0.0.1"
-  make bundle-build bundle-push
+  make bundle-build bundle-push IMAGE_TAG_BASE="example.com/memcached-operator"
   ```
 
 1. Run your bundle. If your bundle image is hosted in a registry that is private and/or
