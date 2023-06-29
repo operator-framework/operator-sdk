@@ -4,15 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ansible-runner = "~=2.0.2"
+ansible-runner = "~=2.3.3"
 ansible-runner-http = "~=1.0.0"
-ipaddress = "==1.0.23"
-ansible = "~=2.9.15"
-jmespath = "==0.10.0"
-cryptography = "==3.3.2"
-oauthlib = "==3.2.1"
+ansible-core = "~=2.15.0"
+requests = "<2.29.0"
+kubernetes = "==26.1.0"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
