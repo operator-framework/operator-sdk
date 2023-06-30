@@ -6,9 +6,6 @@ on:
       ansible_operator_base_tag:
         description: ansible-operator-base image tag, ex. "6e1b47e6ca7c507b8ecf197a8edcd412dd64d85d"
         required: false
-      ansible_operator_base_tag_211:
-        description: ansible-operator-2.11-preview-base image tag, ex. "6e1b47e6ca7c507b8ecf197a8edcd412dd64d85d"
-        required: false
 
 jobs:
   # Build the ansible-operator-base image.
@@ -36,8 +33,8 @@ jobs:
         fetch-depth: 1
 
     # Copied this for 2.11 rather than use a matrix because eventually 2.11 will be default and this will be removed.
-    - name: create 2.9-base tag
-      id: base_tag_29
+    - name: create base tag
+      id: base_tag
       run: |
         set -e
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
@@ -48,84 +45,37 @@ jobs:
         fi
         echo "tag=${IMG}:${TAG}" >> $GITHUB_OUTPUT
         echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
-    
-    - name: create 2.11-base tag
-      id: base_tag_211
-      run: |
-        set -e
-        IMG=quay.io/${{ github.repository_owner }}/ansible-operator-2.11-preview-base
-        TAG="${{ github.event.inputs.ansible_operator_base_tag_211 }}"
-        GIT_COMMIT=$(git rev-parse HEAD)
-        if [[ "$TAG" == "" ]]; then
-          TAG="$(git branch --show-current)-${GIT_COMMIT}"
-        fi
-        echo "tag=${IMG}:${TAG}" >> $GITHUB_OUTPUT
-        echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
 
-    - name: build and push ansible 2.9 dep image
+    - name: build and push ansible dep image
       uses: docker/build-push-action@v3
       with:
         file: ./images/ansible-operator/base.Dockerfile
         context: ./images/ansible-operator
         platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
         push: true
-        tags: ${{ steps.base_tag_29.outputs.tag }}
+        tags: ${{ steps.base_tag.outputs.tag }}
         build-args: |
-          GIT_COMMIT=${{ steps.base_tag_29.outputs.git_commit }}
-
-    - name: build and push ansible 2.11 dep image
-      uses: docker/build-push-action@v3
-      with:
-        file: ./images/ansible-operator-2.11-preview/base.Dockerfile
-        context: ./images/ansible-operator-2.11-preview
-        platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
-        push: true
-        tags: ${{ steps.base_tag_211.outputs.tag }}
-        build-args: |
-          GIT_COMMIT=${{ steps.base_tag_211.outputs.git_commit }}
+          GIT_COMMIT=${{ steps.base_tag.outputs.git_commit }}
 
     # This change will be staged and committed in the PR pushed below.
     # The script below will fail if no change was made.
-    - name: update base of ansible-operator 2.9
-      id: update_29
+    - name: update base of ansible-operator
+      id: update
       run: |
         set -ex
-        sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-base:.+|FROM ${{ steps.base_tag_29.outputs.tag }}|g' images/ansible-operator/Dockerfile
+        sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-base:.+|FROM ${{ steps.base_tag.outputs.tag }}|g' images/ansible-operator/Dockerfile
         git diff --exit-code --quiet && echo "Failed to update images/ansible-operator/Dockerfile" && exit 1
         REF="${{ github.event.ref }}"
         echo "branch_name=${REF##*/}" >> $GITHUB_OUTPUT
 
-    - name: create PR for ansible-operator 2.9 Dockerfile
+    - name: create PR for ansible-operator Dockerfile
       uses: peter-evans/create-pull-request@v3
       with:
-        title: "[${{ steps.update_29.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag_29.outputs.tag }}"
+        title: "[${{ steps.update.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag.outputs.tag }}"
         commit-message: |
-          [${{ steps.update_29.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag_29.outputs.tag }}
+          [${{ steps.update.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag.outputs.tag }}
 
           Signed-off-by: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         body: "New ansible-operator-base image built by https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        delete-branch: true
-        branch-suffix: short-commit-hash
-
-    # This change will be staged and committed in the PR pushed below.
-    # The script below will fail if no change was made.
-    - name: update base of ansible-operator-2.11-preview
-      id: update_211
-      run: |
-        set -ex
-        sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-2.11-preview-base:.+|FROM ${{ steps.base_tag_211.outputs.tag }}|g' images/ansible-operator-2.11-preview/Dockerfile
-        git diff --exit-code --quiet && echo "Failed to update images/ansible-operator-11-preview-base/Dockerfile" && exit 1
-        REF="${{ github.event.ref }}"
-        echo "branch_name=${REF##*/}" >> $GITHUB_OUTPUT
-
-    - name: create PR for ansible-operator-2.11-preview Dockerfile
-      uses: peter-evans/create-pull-request@v3
-      with:
-        title: "[${{ steps.update_211.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.base_tag_211.outputs.tag }}"
-        commit-message: |
-          [${{ steps.update_211.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.base_tag_211.outputs.tag }}
-
-          Signed-off-by: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        body: "New ansible-operator-2.11-preview-base image built by https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         delete-branch: true
         branch-suffix: short-commit-hash
