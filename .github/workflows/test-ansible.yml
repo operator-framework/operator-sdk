@@ -50,10 +50,10 @@ jobs:
       - run: sudo rm -rf /usr/local/bin/kustomize
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Run test e2e ansible molecule
         run: |
           env
           pip3 install --user --upgrade setuptools pip
-          pip3 install --user ansible~=2.9.13
+          pip3 install --user ansible-core~=2.15.0
           make test-e2e-ansible-molecule
