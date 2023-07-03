@@ -1,0 +1,46 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (ansible): Update the `quay.io/operator-framework/ansible-operator` base image to now use Ansible 2.15.0. 
+      Removes pre-installed Python modules that are not required to build and run the `testdata/ansible/memcached-operator` sample.
+      Updates Python to 3.9 to work with Ansible 2.15.0
+    kind: "change"
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Updating an Ansible Operator to use the updated Ansible 2.15.0 image
+      body: |
+        1. Update the `FROM` directive in the `Dockerfile` to have a version tag > `v1.30.0`
+        2. Evaluate your dependency requirements. The change to Ansible 2.15.0 also included removal of some pre-installed Python modules. You may need to update your `Dockerfile` to `pip install` modules required by your operator. 
+  - description: >
+      (ansible/v1): Updates the `ansible/v1` plugin scaffolding to:
+      - Remove the `community.kubernetes` collection
+      - Update the `operator_sdk.util` collection from `v0.4.0` --> `v0.5.0`
+      - Update the `molecule.yaml` files to work with `molecule v5.1.0` 
+    kind: "change"
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Upgrading an Ansible Operator project to match the latest `ansible/v1` plugin changes
+      body: |
+        1. In the `requirements.yml` file:
+            - Remove the `community.kubernetes` collection entry
+            - Update the version of the `operator_sdk.util` collection entry to `v0.5.0`
+        2. In the `molecule/kind/molecule.yml` and `molecule/default/molecule.yml` files:
+            - Remove all instances of the `lint` field. For an example of the diff, see: https://github.com/operator-framework/operator-sdk/pull/6483/files#diff-f159b0d7ec17de90f5b5c297ce997254e6ea4001269167be25615c45c489539e
+  - description: >
+      (ansible): Remove the `quay.io/operator-framework/ansible-operator-2.11-preview` image. This image will no longer be built after Operator-SDK v1.30.0.
+    kind: "removal"
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Migrating away from the `quay.io/operator-framework/ansible-operator-2.11-preview` base image
+      body: |
+        1. Update the `FROM` directive in the `Dockerfile` to use the base image `quay.io/operator-framework/ansible-operator:vX.Y.Z` where `vX.Y.Z` is > `v1.30.0`
