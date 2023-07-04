@@ -22,7 +22,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 )
 
 // FindRelatedImages looks in the controller manager's environment for images used by the operator.
@@ -31,7 +31,7 @@ func FindRelatedImages(manifestCol *collector.Manifests) ([]operatorsv1alpha1.Re
 		relatedImages:           []*relatedImage{},
 		relatedImagesByName:     make(map[string][]*relatedImage),
 		relatedImagesByImageRef: make(map[string][]*relatedImage),
-		seenRelatedImages:       sets.Set[string]{},
+		seenRelatedImages:       set.Set[string]{},
 	}
 
 	for _, deployment := range manifestCol.Deployments {
@@ -65,7 +65,7 @@ type relatedImageCollector struct {
 	relatedImages           []*relatedImage
 	relatedImagesByName     map[string][]*relatedImage
 	relatedImagesByImageRef map[string][]*relatedImage
-	seenRelatedImages       sets.Set[string]
+	seenRelatedImages       set.Set[string]
 }
 
 func (c *relatedImageCollector) collectFromEnvironment(containerRef string, env []corev1.EnvVar) error {

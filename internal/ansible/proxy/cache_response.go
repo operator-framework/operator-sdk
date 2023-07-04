@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -58,8 +58,8 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	switch req.Method {
 	case http.MethodGet:
 		// GET request means we need to check the cache
-		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.Set[string]{"api": {}, "apis": {}},
-			GrouplessAPIPrefixes: sets.Set[string]{"api": {}}}
+		rf := k8sRequest.RequestInfoFactory{APIPrefixes: set.New("api", "apis"),
+			GrouplessAPIPrefixes: set.New("api")}
 		r, err := rf.NewRequestInfo(req)
 		if err != nil {
 			log.Error(err, "Failed to convert request")
