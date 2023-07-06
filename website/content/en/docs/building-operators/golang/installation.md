@@ -11,7 +11,7 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 ## Additional Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version 1.18
+- [go][go_tool] version 1.19
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] and access to a Kubernetes cluster of a [compatible version][k8s-version-compat].
 
