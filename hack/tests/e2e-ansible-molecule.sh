@@ -27,10 +27,10 @@ set +u; source "${ENVDIR}/bin/activate"; set -u
 TMPDIR="$(mktemp -d)"
 trap_add "rm -rf $TMPDIR" EXIT
 pip3 install pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.23
-pip3 install cryptography==3.3.2 molecule==3.6.0
+pip3 install cryptography molecule==5.1.0
 pip3 install ansible-lint yamllint
-pip3 install docker openshift==0.12.1 jmespath
-ansible-galaxy collection install 'kubernetes.core:==2.2.0'
+pip3 install docker kubernetes jmespath
+ansible-galaxy collection install 'kubernetes.core:==2.4.0'
 ansible-galaxy collection install 'operator_sdk.util:==0.4.0'
 ansible-galaxy collection install 'community.docker:==3.4.0'
 

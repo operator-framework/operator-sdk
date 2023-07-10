@@ -41,9 +41,6 @@ dependency:
   name: galaxy
 driver:
   name: delegated
-lint: |
-  set -e
-  yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
 platforms:
   - name: cluster
     groups:
@@ -53,9 +50,6 @@ provisioner:
   playbooks:
     prepare: ../default/prepare.yml
     verify: ../default/verify.yml
-  lint: |
-    set -e
-    ansible-lint
   inventory:
     group_vars:
       all:
@@ -75,7 +69,4 @@ provisioner:
     KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
 verifier:
   name: ansible
-  lint: |
-    set -e
-    ansible-lint
 `

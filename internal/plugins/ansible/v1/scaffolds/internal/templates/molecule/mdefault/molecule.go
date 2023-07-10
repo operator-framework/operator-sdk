@@ -41,18 +41,12 @@ dependency:
   name: galaxy
 driver:
   name: delegated
-lint: |
-  set -e
-  yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
 platforms:
   - name: cluster
     groups:
       - k8s
 provisioner:
   name: ansible
-  lint: |
-    set -e
-    ansible-lint
   inventory:
     group_vars:
       all:
@@ -69,7 +63,4 @@ provisioner:
     K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
 verifier:
   name: ansible
-  lint: |
-    set -e
-    ansible-lint
 `
