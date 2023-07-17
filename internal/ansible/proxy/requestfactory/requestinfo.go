@@ -29,7 +29,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -75,24 +75,24 @@ type RequestInfo struct {
 // actions that don't fall under the normal CRUDdy GET/POST/PUT/DELETE actions
 // on REST objects.  TODO: find a way to keep this up to date automatically.
 // Maybe dynamically populate list as handlers added to master's Mux.
-var specialVerbs = sets.NewString("proxy", "watch")
+var specialVerbs = set.New("proxy", "watch")
 
 // specialVerbsNoSubresources contains root verbs which do not allow
 // subresources
-var specialVerbsNoSubresources = sets.NewString("proxy")
+var specialVerbsNoSubresources = set.New("proxy")
 
 // namespaceSubresources contains subresources of namespace this list allows
 // the parser to distinguish between a namespace subresource, and a namespaced
 // resource
-var namespaceSubresources = sets.NewString("status", "finalize")
+var namespaceSubresources = set.New("status", "finalize")
 
 // NamespaceSubResourcesForTest exports namespaceSubresources for testing in
 // pkg/master/master_test.go, so we never drift
-var NamespaceSubResourcesForTest = sets.NewString(namespaceSubresources.List()...)
+var NamespaceSubResourcesForTest = set.New(namespaceSubresources.SortedList()...)
 
 type RequestInfoFactory struct {
-	APIPrefixes          sets.Set[string] // without leading and trailing slashes
-	GrouplessAPIPrefixes sets.Set[string] // without leading and trailing slashes
+	APIPrefixes          set.Set[string] // without leading and trailing slashes
+	GrouplessAPIPrefixes set.Set[string] // without leading and trailing slashes
 }
 
 // TODO write an integration test against the swagger doc to test the

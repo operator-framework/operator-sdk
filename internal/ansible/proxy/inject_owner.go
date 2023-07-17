@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	k8sRequest "github.com/operator-framework/operator-sdk/internal/ansible/proxy/requestfactory"
@@ -50,8 +50,8 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 	case http.MethodPost:
 		dump, _ := httputil.DumpRequest(req, false)
 		log.V(2).Info("Dumping request", "RequestDump", string(dump))
-		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.Set[string]{"api": {}, "apis": {}},
-			GrouplessAPIPrefixes: sets.Set[string]{"api": {}}}
+		rf := k8sRequest.RequestInfoFactory{APIPrefixes: set.New("api", "apis"),
+			GrouplessAPIPrefixes: set.New("api")}
 		r, err := rf.NewRequestInfo(req)
 		if err != nil {
 			m := "Could not convert request"

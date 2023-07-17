@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -617,13 +617,13 @@ var _ = Describe("OperatorInstaller", func() {
 	Describe("getTargetNamespaces", func() {
 		var (
 			oi        OperatorInstaller
-			supported sets.Set[string]
+			supported set.Set[string]
 		)
 		BeforeEach(func() {
 			oi = OperatorInstaller{
 				cfg: &operator.Configuration{},
 			}
-			supported = sets.New[string]()
+			supported = set.New[string]()
 		})
 		It("should return an error when nothing is supported", func() {
 			target, err := oi.getTargetNamespaces(supported)

@@ -24,9 +24,9 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
@@ -43,7 +43,7 @@ type OperatorInstaller struct {
 	InstallMode           operator.InstallMode
 	CatalogCreator        CatalogCreator
 	CatalogUpdater        CatalogUpdater
-	SupportedInstallModes sets.Set[string]
+	SupportedInstallModes set.Set[string]
 
 	cfg *operator.Configuration
 }
@@ -210,7 +210,7 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) error {
 			return fmt.Errorf("use install mode %q to watch operator's namespace %q", v1alpha1.InstallModeTypeOwnNamespace, o.cfg.Namespace)
 		}
 
-		supported = supported.Intersection(sets.New[string](string(o.InstallMode.InstallModeType)))
+		supported = supported.Intersection(set.New(string(o.InstallMode.InstallModeType)))
 		if supported.Len() == 0 {
 			return fmt.Errorf("operator %q does not support install mode %q", o.StartingCSV, o.InstallMode.InstallModeType)
 		}
@@ -248,8 +248,8 @@ func (o *OperatorInstaller) isOperatorGroupCompatible(og v1.OperatorGroup, targe
 	}
 
 	// otherwise, check that the target namespaces match
-	targets := sets.New[string](targetNamespaces...)
-	ogtargets := sets.New[string](og.Spec.TargetNamespaces...)
+	targets := set.New(targetNamespaces...)
+	ogtargets := set.New(og.Spec.TargetNamespaces...)
 	if !ogtargets.Equal(targets) {
 		return fmt.Errorf("existing operatorgroup %q is not compatible with install mode %q", og.Name, o.InstallMode)
 	}
@@ -369,7 +369,7 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 	return nil
 }
 
-func (o *OperatorInstaller) getTargetNamespaces(supported sets.Set[string]) ([]string, error) {
+func (o *OperatorInstaller) getTargetNamespaces(supported set.Set[string]) ([]string, error) {
 	switch {
 	case supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces)):
 		return nil, nil

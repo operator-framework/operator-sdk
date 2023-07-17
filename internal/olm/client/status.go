@@ -33,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	apiutilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -111,8 +111,8 @@ func (s Status) HasInstalledResources() (bool, error) {
 }
 
 // getCRDKindSet returns the set of all kinds specified by all CRDs in s.
-func (s Status) getCRDKindSet() (sets.Set[string], error) {
-	crdKindSet := sets.New[string]()
+func (s Status) getCRDKindSet() (set.Set[string], error) {
+	crdKindSet := set.New[string]()
 	for _, r := range s.Resources {
 		if r.GVK.Kind == "CustomResourceDefinition" {
 			u := &unstructured.Unstructured{}

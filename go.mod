@@ -40,7 +40,7 @@ require (
 	k8s.io/cli-runtime v0.26.2
 	k8s.io/client-go v0.26.2
 	k8s.io/kubectl v0.26.2
-	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
+	k8s.io/utils v0.0.0-20230711102312-30195339c3c7
 	sigs.k8s.io/controller-runtime v0.14.5
 	sigs.k8s.io/controller-tools v0.11.3
 	sigs.k8s.io/kubebuilder/v3 v3.9.1

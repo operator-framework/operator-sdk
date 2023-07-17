@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 	"sigs.k8s.io/yaml"
 )
 
@@ -33,9 +33,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	expandedOwners := make(map[string]sets.Set[string])
+	expandedOwners := make(map[string]set.Set[string])
 	for group, ownersAliases := range owners {
-		expandedOwners[group] = sets.New[string]()
+		expandedOwners[group] = set.New[string]()
 		for _, alias := range ownersAliases {
 			if members, ok := aliases.Aliases[alias]; ok {
 				expandedOwners[group].Insert(members...)
@@ -47,7 +47,7 @@ func main() {
 
 	outOwners := make(map[string][]string)
 	for g, m := range expandedOwners {
-		outOwners[g] = sets.List(m)
+		outOwners[g] = m.SortedList()
 	}
 
 	out, err := yaml.Marshal(outOwners)
