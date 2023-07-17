@@ -16,18 +16,20 @@ package client
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	fake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var _ = Describe("Client", func() {
@@ -258,4 +260,156 @@ var _ = Describe("Client", func() {
 			})
 		})
 	})
+
+	Describe("test DoCreate", func() {
+		var fakeClient client.Client
+
+		BeforeEach(func() {
+			fakeClient = &errClient{cli: fake.NewClientBuilder().Build()}
+		})
+
+		AfterEach(func() {
+			fakeClient.(*errClient).reset()
+		})
+
+		It("should create all the resources successfully", func() {
+			cli := Client{KubeClient: fakeClient}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			Expect(cli.DoCreate(ctx,
+				&corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-ns"},
+				},
+				&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-pod", Namespace: "test-ns"},
+				},
+			)).To(Succeed())
+
+			ns := &corev1.Namespace{}
+			Expect(fakeClient.Get(context.Background(), client.ObjectKey{Name: "test-ns"}, ns)).To(Succeed())
+
+			pod := &corev1.Pod{}
+			Expect(fakeClient.Get(context.Background(), client.ObjectKey{Namespace: "test-ns", Name: "test-pod"}, pod)).To(Succeed())
+		})
+
+		It("should eventually create all the resources successfully", func() {
+			cli := Client{KubeClient: fakeClient}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			Expect(cli.DoCreate(ctx,
+				&corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-ns"},
+				},
+				&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{Name: "eventually-match", Namespace: "test-ns"},
+				},
+			)).To(Succeed())
+
+			ns := &corev1.Namespace{}
+			Expect(fakeClient.Get(context.Background(), client.ObjectKey{Name: "test-ns"}, ns)).To(Succeed())
+
+			pod := &corev1.Pod{}
+			Expect(fakeClient.Get(context.Background(), client.ObjectKey{Namespace: "test-ns", Name: "eventually-match"}, pod)).To(Succeed())
+		})
+
+		It("should fail with no-match error", func() {
+			cli := Client{KubeClient: fakeClient}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			Expect(cli.DoCreate(ctx,
+				&corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-ns"},
+				},
+				&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{Name: "no-match", Namespace: "test-ns"},
+				},
+			)).ToNot(Succeed())
+		})
+
+		It("should fail with unknown-error error", func() {
+			cli := Client{KubeClient: fakeClient}
+
+			Expect(cli.DoCreate(context.Background(),
+				&corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-ns"},
+				},
+				&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{Name: "unknown-error", Namespace: "test-ns"},
+				},
+			)).ToNot(Succeed())
+		})
+	})
 })
+
+type errClient struct {
+	cli            client.Client
+	noMatchCounter int
+}
+
+func (c *errClient) reset() {
+	c.noMatchCounter = 0
+}
+
+func (c *errClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	return c.cli.Get(ctx, key, obj, opts...)
+}
+
+func (c *errClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return c.cli.List(ctx, list, opts...)
+}
+func (c *errClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	switch obj.GetName() {
+	case "no-match":
+		return &meta.NoResourceMatchError{}
+
+	case "eventually-match":
+		if c.noMatchCounter >= 4 {
+			return c.cli.Create(ctx, obj, opts...)
+		}
+		c.noMatchCounter++
+		return &meta.NoResourceMatchError{}
+
+	case "unknown-error":
+		return errors.New("fake error")
+
+	default:
+		return c.cli.Create(ctx, obj, opts...)
+	}
+}
+
+func (c *errClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	return c.cli.Delete(ctx, obj, opts...)
+}
+
+func (c *errClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+	return c.cli.Update(ctx, obj, opts...)
+}
+
+func (c *errClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+	return c.cli.Patch(ctx, obj, patch, opts...)
+}
+
+func (c *errClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+	return c.cli.DeleteAllOf(ctx, obj, opts...)
+}
+
+func (c *errClient) SubResource(subResource string) client.SubResourceClient {
+	return c.cli.SubResource(subResource)
+}
+
+func (c *errClient) Scheme() *runtime.Scheme {
+	return c.cli.Scheme()
+}
+
+func (c *errClient) RESTMapper() meta.RESTMapper {
+	return c.cli.RESTMapper()
+}
+
+func (c *errClient) Status() client.SubResourceWriter {
+	return c.cli.Status()
+}

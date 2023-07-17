@@ -30,7 +30,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -112,16 +111,48 @@ func NewClientForConfig(cfg *rest.Config) (*Client, error) {
 func (c Client) DoCreate(ctx context.Context, objs ...client.Object) error {
 	for _, obj := range objs {
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		log.Infof("  Creating %s %q", kind, getName(obj.GetNamespace(), obj.GetName()))
-		err := c.KubeClient.Create(ctx, obj)
-		if err != nil {
-			if !apierrors.IsAlreadyExists(err) {
-				return err
-			}
-			log.Infof("    %s %q already exists", kind, getName(obj.GetNamespace(), obj.GetName()))
+		resourceName := getName(obj.GetNamespace(), obj.GetName())
+
+		log.Infof("  Creating %s %q", kind, resourceName)
+
+		if err := c.safeCreateOneResource(ctx, obj, kind, resourceName); err != nil {
+			log.Infof("  failed to create %s %q; %v", kind, resourceName, err)
+			return err
 		}
 	}
 	return nil
+}
+
+// try to create 10 times before giving up
+func (c Client) safeCreateOneResource(ctx context.Context, obj client.Object, kind string, resourceName string) error {
+	backoff := wait.Backoff{
+		// retrying every one seconds. We're relaying on the timeout context, so the number of steps is very large, so
+		// we could use the timeout flag (or its default value), as it used to create the context.
+		Duration: time.Second,
+		Steps:    1000,
+		Factor:   1,
+	}
+
+	err := wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		err := c.KubeClient.Create(ctx, obj)
+		if err == nil || apierrors.IsAlreadyExists(err) {
+			log.Infof("  %s %q created", kind, resourceName)
+			return true, nil
+		}
+
+		if meta.IsNoMatchError(err) {
+			log.Infof("    Failed to create %s %q. CRD is not ready yet. Retrying...", kind, resourceName)
+			return false, nil
+		}
+
+		return false, err
+	})
+
+	if err != nil && errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("timeout")
+	}
+
+	return err
 }
 
 func (c Client) DoDelete(ctx context.Context, objs ...client.Object) error {
