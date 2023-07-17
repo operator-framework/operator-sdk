@@ -1,0 +1,15 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+     Updated Reference from " to_be_owned.namespace" to " to_be_owned.metadata.namespace " at line 186.
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+   
+    # Is this a breaking change?
+    breaking: false
