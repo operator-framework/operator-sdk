@@ -7,7 +7,7 @@
         </a>
     <nav class="of-nav-main nav-collapse">
       <ul class="of-nav-main__items menu-items">
-        <li class="of-nav-main__item"><a class="of-link-list__a {{ if eq .URL "/" }} of-m-active {{end}}" href="/">Home</a></li>
+        <li class="of-nav-main__item"><a class="of-link-list__a {{ if eq .Permalink "/" }} of-m-active {{end}}" href="/">Home</a></li>
         {{ $currentPage := . }}
         {{ range .Site.Menus.main }}
         <li class="of-nav-main__item"><a class="of-link-list__a{{if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }} of-m-active{{end}}" href="{{ .URL }}" title="{{ .Title }}">{{ .Name }}</a></li>
