@@ -376,7 +376,7 @@ You might need to port some customizations made in your old Dockerfile as well. 
 ```docker
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/base-debian11:nonroot
 ```
 
 With:

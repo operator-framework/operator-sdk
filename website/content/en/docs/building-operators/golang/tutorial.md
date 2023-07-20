@@ -328,7 +328,7 @@ NOTE: If you receive an error, please run the specified command in the error and
 All that remains is to build and push the operator image to the desired image registry.
 
 Before building the operator image, ensure the generated Dockerfile references
-the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
+the base image you want. You can change the default "runner" image `gcr.io/distroless/base-debian11:nonroot`
 by replacing its tag with another, for example `alpine:latest`, and removing
 the `USER 65532:65532` directive.
 
