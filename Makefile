@@ -29,7 +29,6 @@ GO_BUILD_ARGS = \
   " \
 
 export GO111MODULE = on
-export CGO_ENABLED = 0
 export PATH := $(PWD)/$(BUILD_DIR):$(PWD)/$(TOOLS_DIR):$(PATH)
 
 ##@ Development

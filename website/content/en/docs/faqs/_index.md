@@ -314,7 +314,7 @@ and push this image, which can be added to your operator's  `FROM`.
 
 ## Running `operator-sdk create api` results in an error with `/usr/local/go/src/net/cgo_linux.go:13:8: no such package located` in the error message
 
-By default Go will set the `CGO_ENABLED` environment variable to `1` which means that [cgo][cgo-docs] is enabled. Depending on the architecture and OS of your system you may run into an issue similar to this one: 
+Depending on the architecture and OS of your system you may run into an issue similar to this one: 
 
 ```sh
 /usr/local/go/src/net/cgo_linux.go:13:8: no such package located
@@ -327,7 +327,6 @@ Error: failed to create API: unable to run post-scaffold tasks of "base.go.kubeb
 Here are a couple workarounds to try to resolve the issue:
 
 - Ensure `gcc` is installed
-- Set the `CGO_ENABLED` environment variable to `0` to disable [cgo][cgo-docs]
 
 If neither of those solutions work for you, please [open an issue][open-issue]
 
