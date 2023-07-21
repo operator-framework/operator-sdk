@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - '**'
+    - '!dependabot/**'
     tags:
     - 'v*'
     - 'scorecard-kuttl/v*'
