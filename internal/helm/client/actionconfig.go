@@ -19,6 +19,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"k8s.io/client-go/kubernetes"
 
@@ -57,26 +58,42 @@ func NewActionConfigGetter(cfg *rest.Config, rm meta.RESTMapper, log logr.Logger
 	}
 
 	return &actionConfigGetter{
-		kubeClient:       kc,
-		kubeClientSet:    kcs,
-		debugLog:         debugLog,
-		restClientGetter: rcg.restClientGetter,
+		kubeClient:          kc,
+		kubeClientSet:       kcs,
+		debugLog:            debugLog,
+		restClientGetter:    rcg.restClientGetter,
+		watchedSecrets:      map[string]*WatchedSecrets{},
+		watchedSecretsMutex: &sync.Mutex{},
 	}, nil
 }
 
 var _ ActionConfigGetter = &actionConfigGetter{}
 
 type actionConfigGetter struct {
-	kubeClient       *kube.Client
-	kubeClientSet    kubernetes.Interface
-	debugLog         func(string, ...interface{})
-	restClientGetter *restClientGetter
+	kubeClient          *kube.Client
+	kubeClientSet       kubernetes.Interface
+	debugLog            func(string, ...interface{})
+	restClientGetter    *restClientGetter
+	watchedSecrets      map[string]*WatchedSecrets
+	watchedSecretsMutex *sync.Mutex
+}
+
+// Creates a new watcher for each namespace to not require cluster-wide secret access
+func (acg *actionConfigGetter) getWatchedSecretsForNamespace(namespace string) *WatchedSecrets {
+	acg.watchedSecretsMutex.Lock()
+	if _, found := acg.watchedSecrets[namespace]; !found {
+		acg.watchedSecrets[namespace] = NewWatchedSecrets(acg.kubeClientSet, namespace)
+		acg.watchedSecrets[namespace].Run()
+	}
+	acg.watchedSecretsMutex.Unlock()
+	return acg.watchedSecrets[namespace]
 }
 
 func (acg *actionConfigGetter) ActionConfigFor(obj client.Object) (*action.Configuration, error) {
+	watchedSecrets := acg.getWatchedSecretsForNamespace(obj.GetNamespace())
 	ownerRef := metav1.NewControllerRef(obj, obj.GetObjectKind().GroupVersionKind())
 	d := driver.NewSecrets(&ownerRefSecretClient{
-		SecretInterface: acg.kubeClientSet.CoreV1().Secrets(obj.GetNamespace()),
+		SecretInterface: watchedSecrets,
 		refs:            []metav1.OwnerReference{*ownerRef},
 	})
 
