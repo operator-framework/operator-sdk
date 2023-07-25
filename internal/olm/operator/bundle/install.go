@@ -164,7 +164,7 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
 		// since an index image is specified, the bundle image will be added to the index image.
 		// generateExtraFBC will ensure that the bundle is not already present in the index image and error out if it does.
-		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg, f.SkipTLSVerify, f.UseHTTP)
+		declcfg, err = generateFBC(ctx, indexImage, bundleDeclcfg, f.SkipTLSVerify, f.UseHTTP)
 		if err != nil {
 			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
 		}
@@ -181,9 +181,9 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	return content, nil
 }
 
-// generateExtraFBC verifies that a bundle is not already present on the index and if not, it renders the bundle contents into a
+// generateFBC verifies that a bundle is not already present on the index and if not, it renders the bundle contents into a
 // declarative config type.
-func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
+func generateFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q to verify if bundle %q is present", indexImage, bundleDeclConfig.Bundle.Name)
 
 	imageDeclConfig, err := fbcutil.RenderRefs(ctx, []string{indexImage}, skipTLSVerify, useHTTP)
@@ -212,12 +212,12 @@ func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig f
 	}
 
 	extraDeclConfig := &declarativeconfig.DeclarativeConfig{
-		Bundles:  []declarativeconfig.Bundle{bundleDeclConfig.Bundle},
-		Channels: []declarativeconfig.Channel{bundleDeclConfig.Channel},
+		Bundles:  append(imageDeclConfig.Bundles, bundleDeclConfig.Bundle),
+		Channels: append(imageDeclConfig.Channels, bundleDeclConfig.Channel),
 	}
 
 	if !isPackagePresent {
-		extraDeclConfig.Packages = []declarativeconfig.Package{bundleDeclConfig.Package}
+		extraDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Package)
 	}
 
 	log.Infof("Generated the extra FBC for the bundle image %q", bundleDeclConfig.Bundle.Name)
