@@ -37,25 +37,25 @@ type LoggingEnqueueRequestForAnnotation struct {
 // Create implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForAnnotation) Create(c context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Create", e.Object, nil)
-	h.EnqueueRequestForAnnotation.Create(e, q)
+	h.EnqueueRequestForAnnotation.Create(c, e, q)
 }
 
 // Update implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForAnnotation) Update(c context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Update", e.ObjectOld, e.ObjectNew)
-	h.EnqueueRequestForAnnotation.Update(e, q)
+	h.EnqueueRequestForAnnotation.Update(c, e, q)
 }
 
 // Delete implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForAnnotation) Delete(c context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Delete", e.Object, nil)
-	h.EnqueueRequestForAnnotation.Delete(e, q)
+	h.EnqueueRequestForAnnotation.Delete(c, e, q)
 }
 
 // Generic implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForAnnotation) Generic(c context.Context, e event.GenericEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Generic", e.Object, nil)
-	h.EnqueueRequestForAnnotation.Generic(e, q)
+	h.EnqueueRequestForAnnotation.Generic(c, e, q)
 }
 
 func (h LoggingEnqueueRequestForAnnotation) logEvent(eventType string, object, newObject client.Object) {

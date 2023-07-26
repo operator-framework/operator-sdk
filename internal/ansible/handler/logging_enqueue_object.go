@@ -36,19 +36,19 @@ type LoggingEnqueueRequestForObject struct {
 // Create implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForObject) Create(c context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Create", e.Object)
-	h.InstrumentedEnqueueRequestForObject.Create(e, q)
+	h.InstrumentedEnqueueRequestForObject.Create(c, e, q)
 }
 
 // Update implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForObject) Update(c context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Update", e.ObjectOld)
-	h.InstrumentedEnqueueRequestForObject.Update(e, q)
+	h.InstrumentedEnqueueRequestForObject.Update(c, e, q)
 }
 
 // Delete implements EventHandler, and emits a log message.
 func (h LoggingEnqueueRequestForObject) Delete(c context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Delete", e.Object)
-	h.InstrumentedEnqueueRequestForObject.Delete(e, q)
+	h.InstrumentedEnqueueRequestForObject.Delete(c, e, q)
 }
 
 // Generic implements EventHandler, and emits a log message.
