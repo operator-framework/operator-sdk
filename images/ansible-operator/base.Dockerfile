@@ -28,7 +28,7 @@ ENV PIP_NO_CACHE_DIR=1 \
 # pip3~=21.1 fixes a vulnerability described in https://github.com/pypa/pip/pull/9827.
 RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
-  && yum install -y libffi-devel openssl-devel python39-devel gcc python39-pip python39-setuptools \
+  && yum install -y libffi-devel openssl-devel python39-devel gcc python39-pip python39-setuptools python39-wheel \
   && pip3 install --upgrade pip~=23.1.2 \
   && pip3 install pipenv==2023.6.26 \
   && pipenv install --deploy \
