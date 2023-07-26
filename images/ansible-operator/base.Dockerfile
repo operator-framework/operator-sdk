@@ -9,6 +9,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN rustc --version
 
+# When cross-compiling the container, cargo uncontrollably consumes memory and
+# gets killed by the OOM Killer when it fetches dependencies. The workaround is
+# to use the git executable.
+# See https://github.com/rust-lang/cargo/issues/10583 for details.
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+
 # Copy python dependencies (including ansible) to be installed using Pipenv
 COPY Pipfile* ./
 # Instruct pip(env) not to keep a cache of installed packages,
