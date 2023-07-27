@@ -216,7 +216,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 
 	for _, oRef := range un.GetOwnerReferences() {
 		if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
-			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, true)
+			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, c.informerCache, true)
 			if err != nil {
 				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 				return
@@ -231,7 +231,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 			return
 		}
 		if typeString == fmt.Sprintf("%v.%v", ownerRef.Kind, ownerGV.Group) {
-			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, false)
+			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, c.informerCache, false)
 			if err != nil {
 				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 				return

@@ -15,6 +15,8 @@
 package handler
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/operator-lib/handler"
@@ -35,9 +37,11 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 	var instance LoggingEnqueueRequestForAnnotation
 	var pod *corev1.Pod
 	var podOwner *corev1.Pod
+	var ctx context.Context
 
 	BeforeEach(func() {
-		q = controllertest.Queue{Interface: workqueue.New()}
+		ctx = context.TODO()
+		q = &controllertest.Queue{Interface: workqueue.New()}
 		pod = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "biz",
@@ -70,7 +74,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Create.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName.*podOwnerNs`,
 			))
@@ -101,7 +105,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 				Object: repl,
 			}
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Create.*apps/v1.*ReplicaSet.*faz.*foo.*Pod.*podOwnerName.*podOwnerNs`,
 			))
@@ -129,7 +133,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
 			Expect(q.Len()).To(Equal(0))
 		})
@@ -150,7 +154,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
 			Expect(q.Len()).To(Equal(0))
 		})
@@ -172,7 +176,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
 			Expect(q.Len()).To(Equal(0))
 		})
@@ -194,7 +198,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Create.*apps/v1.*ReplicaSet.*faz.*foo.*Pod.*AppService`,
 			))
@@ -223,7 +227,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Create.*/v1.*Node.*node-1.*ReplicaSet.apps.*myapp.*`,
 			))
@@ -245,7 +249,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
 			Expect(q.Len()).To(Equal(0))
 		})
@@ -257,7 +261,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 				Object: pod,
 			}
 			logBuffer.Reset()
-			instance.Delete(evt, q)
+			instance.Delete(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Delete.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName.*podOwnerNs`,
 			))
@@ -287,7 +291,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Update(evt, q)
+			instance.Update(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Update.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName.*podOwnerNs`,
 			))
@@ -313,7 +317,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Update(evt, q)
+			instance.Update(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Update.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName.*podOwnerNs`,
 			))
@@ -348,7 +352,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
 			Expect(q.Len()).To(Equal(0))
 
@@ -374,7 +378,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			}
 
 			logBuffer.Reset()
-			instance2.Update(evt2, q)
+			instance2.Update(ctx, evt2, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Update.*apps/v1.*ReplicaSet.*faz.*foo.*ReplicaSet.apps.*faz.*foo`,
 			))
@@ -410,7 +414,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 				ObjectNew: newPod,
 			}
 			logBuffer.Reset()
-			instance.Update(evt, q)
+			instance.Update(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Update.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName.*podOwnerNs`,
 			))
@@ -424,7 +428,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 				Object: pod,
 			}
 			logBuffer.Reset()
-			instance.Generic(evt, q)
+			instance.Generic(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Generic.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName.*podOwnerNs`,
 			))

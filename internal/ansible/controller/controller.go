@@ -125,7 +125,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
-	err = c.Watch(&source.Kind{Type: u}, &handler.LoggingEnqueueRequestForObject{}, predicates...)
+	err = c.Watch(source.Kind(mgr.GetCache(), u), handler.LoggingEnqueueRequestForObject{}, predicates...)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)

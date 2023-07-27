@@ -89,7 +89,12 @@ type Client struct {
 }
 
 func NewClientForConfig(cfg *rest.Config) (*Client, error) {
-	rm, err := apiutil.NewDynamicRESTMapper(cfg)
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create httpclient from config: %v", err)
+	}
+
+	rm, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)
 	}
@@ -133,7 +138,7 @@ func (c Client) safeCreateOneResource(ctx context.Context, obj client.Object, ki
 		Factor:   1,
 	}
 
-	err := wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
 		err := c.KubeClient.Create(ctx, obj)
 		if err == nil || apierrors.IsAlreadyExists(err) {
 			log.Infof("  %s %q created", kind, resourceName)
