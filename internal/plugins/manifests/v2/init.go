@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2/templates/config/manifests"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -74,6 +75,14 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	// Append SDK recipes.
 	switch operatorType {
 	case projutil.OperatorTypeGo:
+		//(TODO): This removes `CGO_ENABLED=0` references from the go/v3 and go/v4-alpha scaffolds for FIPS compliance.
+		// This is a temporary workaround to remove CGO_ENABLED=0 references in the Go plugin chain from files scaffolded from upstream plugins.
+		// We would need to remove this when the fix is made in upstream Kubebuilder eventually.
+		err = util.ReplaceInFile("Dockerfile", "CGO_ENABLED=0", "")
+		if err != nil {
+			return err
+		}
+
 		makefileBytes = append(makefileBytes, []byte(makefileSDKFragmentGo)...)
 	default:
 		makefileBytes = append(makefileBytes, []byte(makefileSDKFragmentNonGo)...)
