@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN GOOS=linux GOARCH=$TARGETARCH make build/scorecard-test
+RUN GOOS=linux GOARCH=$TARGETARCH CGO_ENABLED=0 make build/scorecard-test
 
 # Final image.
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8
