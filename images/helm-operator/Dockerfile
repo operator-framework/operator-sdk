@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN GOOS=linux GOARCH=$TARGETARCH make build/helm-operator
+RUN GOOS=linux GOARCH=$TARGETARCH CGO_ENABLED=0 make build/helm-operator
 
 # Final image.
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8

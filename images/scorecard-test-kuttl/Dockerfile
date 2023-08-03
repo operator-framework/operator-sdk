@@ -15,7 +15,7 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN GOOS=linux GOARCH=$TARGETARCH make build/scorecard-test-kuttl
+RUN GOOS=linux GOARCH=$TARGETARCH CGO_ENABLED=0 make build/scorecard-test-kuttl
 
 # Final image.
 #FROM kudobuilder/kuttl@sha256:8d4dad161521450db95f88fe0e62487cc6587c5818df2a4e750fb9e54c082170
