@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN GOOS=linux GOARCH=$TARGETARCH make build/ansible-operator
+RUN GOOS=linux GOARCH=$TARGETARCH CGO_ENABLED=0 make build/ansible-operator
 
 # Final image.
 FROM quay.io/operator-framework/ansible-operator-base:master-b247ac8390699c2773625b321a55b2240c5ce3c0
