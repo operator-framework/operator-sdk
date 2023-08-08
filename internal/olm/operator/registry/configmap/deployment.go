@@ -26,7 +26,7 @@ import (
 
 const (
 	// The image operator-registry's initializer and registry-server binaries are run from.
-	// This iamge has been pinned to the latest version containing the initializer and registry-server
+	// This image has been pinned to the latest version containing the initializer and registry-server
 	// binaries, which were deprecated in https://github.com/operator-framework/operator-registry/pull/587.
 	registryBaseImage = "quay.io/operator-framework/upstream-registry-builder:v1.16.0"
 	// The port registry-server will listen on within a container.

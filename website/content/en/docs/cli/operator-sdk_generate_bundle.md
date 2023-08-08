@@ -104,6 +104,7 @@ operator-sdk generate bundle [flags]
   -q, --quiet                            Run in quiet mode
       --stdout                           Write bundle manifest to stdout
       --use-image-digests                Use SHA Digest for images
+      --insecure                         Allow insecure registries for images when inspecting digests
   -v, --version string                   Semantic version of the operator in the generated bundle. Only set if creating a new bundle or upgrading your operator
 ```
 

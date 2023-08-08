@@ -1,0 +1,10 @@
+entries:
+  - description: >
+      Add --insecure option to 'bundle generate' command which can be used
+      along with --use-image-digests to produce image digests from insecure
+      registries.
+
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false

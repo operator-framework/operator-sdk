@@ -313,6 +313,9 @@ func (c bundleCmd) pinImages(manifestPath string) error {
 	}
 	resolverArgs := make(map[string]string)
 	resolverArgs["usedefault"] = "true"
+	if c.insecure {
+		resolverArgs["insecure"] = "true"
+	}
 	resolver, err := imageresolver.GetResolver(imageresolver.ResolverCrane, resolverArgs)
 	if err != nil {
 		return err

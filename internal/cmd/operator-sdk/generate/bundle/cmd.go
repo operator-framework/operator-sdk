@@ -52,6 +52,8 @@ type bundleCmd struct {
 
 	// Use Image Digests flag to toggle using traditional Image tags vs SHA Digests
 	useImageDigests bool
+	// Allow insecure registries when inspecting image digests
+	insecure bool
 }
 
 // NewCmd returns the 'bundle' command configured for the new project layout.
@@ -144,6 +146,7 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.packageName, "package", "", "Bundle's package name")
 
 	fs.BoolVar(&c.useImageDigests, "use-image-digests", false, "Use SHA Digest for images")
+	fs.BoolVar(&c.insecure, "insecure", false, "Allow insecure registries for images when inspecting digests")
 }
 
 func (c bundleCmd) println(a ...interface{}) {
