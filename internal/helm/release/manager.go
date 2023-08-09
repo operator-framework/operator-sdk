@@ -77,7 +77,7 @@ type manager struct {
 }
 
 type InstallOption func(*action.Install) error
-type UpgradeOption func(*action.Upgrade) error
+type UpgradeOption func(UpgradeConfig) error
 type UninstallOption func(*action.Uninstall) error
 
 // ReleaseName returns the name of the release.
@@ -196,28 +196,44 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 }
 
 func ForceUpgrade(force bool) UpgradeOption {
-	return func(u *action.Upgrade) error {
-		u.Force = force
+	return func(u UpgradeConfig) error {
+		u.upgrade.Force = force
 		return nil
 	}
 }
 
+func ForceRollback(rollback bool) UpgradeOption {
+	return func(u UpgradeConfig) error {
+		u.rollback = rollback
+		return nil
+	}
+}
+
+type UpgradeConfig struct {
+	upgrade  *action.Upgrade
+	rollback bool
+}
+
 // UpgradeRelease performs a Helm release upgrade.
 func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
-	upgrade := action.NewUpgrade(m.actionConfig)
-	upgrade.Namespace = m.namespace
+	config := UpgradeConfig{
+		upgrade: action.NewUpgrade(m.actionConfig),
+	}
+	// upgrade := action.NewUpgrade(m.actionConfig)
+	config.upgrade.Namespace = m.namespace
+
 	for _, o := range opts {
-		if err := o(upgrade); err != nil {
+		if err := o(config); err != nil {
 			return nil, nil, fmt.Errorf("failed to apply upgrade option: %w", err)
 		}
 	}
 
-	upgradedRelease, err := upgrade.Run(m.releaseName, m.chart, m.values)
+	upgradedRelease, err := config.upgrade.Run(m.releaseName, m.chart, m.values)
 	if err != nil {
 		// Workaround for helm/helm#3338
 		if upgradedRelease != nil {
 			rollback := action.NewRollback(m.actionConfig)
-			rollback.Force = true
+			rollback.Force = config.rollback
 
 			// As of Helm 2.13, if UpgradeRelease returns a non-nil release, that
 			// means the release was also recorded in the release store.

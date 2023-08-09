@@ -63,6 +63,7 @@ const (
 	uninstallFinalizerLegacy = "uninstall-helm-release"
 
 	helmUpgradeForceAnnotation    = "helm.sdk.operatorframework.io/upgrade-force"
+	helmRollbackForceAnnotation   = "helm.sdk.operatorframework.io/rollback-force"
 	helmUninstallWaitAnnotation   = "helm.sdk.operatorframework.io/uninstall-wait"
 	helmReconcilePeriodAnnotation = "helm.sdk.operatorframework.io/reconcile-period"
 )
@@ -311,7 +312,28 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		force := hasAnnotation(helmUpgradeForceAnnotation, o)
-		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
+		upgradeOptions := []release.UpgradeOption{
+			release.ForceUpgrade(force),
+		}
+
+		// this function allows the user to set the value for the annotation,
+		// "helm.sdk.operatorframework.io/rollback-force" to false. However,
+		// it does keep the default set to true
+		forceRollback := func() bool {
+			val, ok := o.GetAnnotations()[helmRollbackForceAnnotation]
+			if !ok {
+				return true
+			}
+			r, err := strconv.ParseBool(val)
+			if err != nil {
+				return true
+			}
+
+			return r
+		}()
+		upgradeOptions = append(upgradeOptions, release.ForceRollback(forceRollback))
+
+		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, upgradeOptions...)
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
