@@ -97,7 +97,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 		preds = append(preds, p)
 	}
 
-	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}, preds...); err != nil {
+	if err := c.Watch(source.Kind(mgr.GetCache(), o), &libhandler.InstrumentedEnqueueRequestForObject{}, preds...); err != nil {
 		return err
 	}
 
@@ -166,13 +166,13 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 				}
 
 				if useOwnerRef { // Setup watch using owner references.
-					err = c.Watch(&source.Kind{Type: unstructuredObj}, &crthandler.EnqueueRequestForOwner{OwnerType: owner},
+					err = c.Watch(source.Kind(mgr.GetCache(), unstructuredObj), crthandler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), owner),
 						predicate.DependentPredicate{})
 					if err != nil {
 						return err
 					}
 				} else { // Setup watch using annotations.
-					err = c.Watch(&source.Kind{Type: unstructuredObj}, &libhandler.EnqueueRequestForAnnotation{Type: gvkDependent.GroupKind()},
+					err = c.Watch(source.Kind(mgr.GetCache(), unstructuredObj), &libhandler.EnqueueRequestForAnnotation{Type: gvkDependent.GroupKind()},
 						predicate.DependentPredicate{})
 					if err != nil {
 						return err
