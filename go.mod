@@ -14,8 +14,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
 	github.com/operator-framework/api v0.17.7-0.20230626210316-aa3e49803e7b
-	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230725153809-8c7e1e25baf8
-	github.com/operator-framework/java-operator-plugins v0.7.1-0.20230306190439-0eed476d2b75
+	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230803140404-caa0f13c4bfc
+	github.com/operator-framework/java-operator-plugins v0.7.1-0.20230716184505-726952750021
 	github.com/operator-framework/operator-lib v0.11.1-0.20230717184314-6efbe3a22f6f
 	github.com/operator-framework/operator-manifest-tools v0.3.0
 	github.com/operator-framework/operator-registry v1.28.1-0.20230724014113-82a91fa2bf80
@@ -41,8 +41,8 @@ require (
 	k8s.io/client-go v0.27.2
 	k8s.io/kubectl v0.27.2
 	k8s.io/utils v0.0.0-20230711102312-30195339c3c7
-	sigs.k8s.io/controller-runtime v0.15.0
-	sigs.k8s.io/controller-tools v0.11.3
+	sigs.k8s.io/controller-runtime v0.15.1
+	sigs.k8s.io/controller-tools v0.12.1
 	sigs.k8s.io/kubebuilder/v3 v3.11.1
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -90,7 +90,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
-	github.com/fatih/color v1.13.0 // indirect
+	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -245,6 +245,8 @@ replace (
 	github.com/containerd/containerd => github.com/containerd/containerd v1.4.11
 	// latest tag resolves to a very old version. this is only used for spinning up local test registries
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+	// required for helm's oras.land/oras-go
+	github.com/docker/docker => github.com/docker/docker v20.10.21+incompatible
 	// #TODO: Remove when bumping to k8s 1.28. Issue tracked by https://github.com/kubernetes/kube-openapi/issues/404
 	github.com/google/gnostic v0.6.9 => github.com/google/gnostic v0.5.7-v3refs
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0

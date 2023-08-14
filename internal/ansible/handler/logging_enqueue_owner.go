@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// Note: This can be removed in support of controller-runtime;s
+// Note: This can be removed in support of controller-runtime's
 // enqueue request for handler, when there is support for
 // wrapping handlers.
 var _ handler.EventHandler = &enqueueRequestForOwner{}
@@ -42,15 +42,15 @@ type empty struct{}
 // OwnerOption modifies an EnqueueRequestForOwner EventHandler.
 type OwnerOption func(e *enqueueRequestForOwner)
 
-// EnqueueRequestForOwner enqueues Requests for the Owners of an object.  E.g. the object that created
-// the object that was the source of the Event.
+// EnqueueRequestForOwnerWithLogging enqueues Requests for the Owners of an object.  E.g. the object that created
+// the object that was the source of the Event. It also logs the event with the owner of the object.
 //
 // If a ReplicaSet creates Pods, users may reconcile the ReplicaSet in response to Pod Events using:
 //
 // - a source.Kind Source with Type of Pod.
 //
 // - a handler.enqueueRequestForOwner EventHandler with an OwnerType of ReplicaSet and OnlyControllerOwner set to true.
-func EnqueueRequestForOwner(scheme *runtime.Scheme, mapper meta.RESTMapper, ownerType client.Object, opts ...OwnerOption) handler.EventHandler {
+func EnqueueRequestForOwnerWithLogging(scheme *runtime.Scheme, mapper meta.RESTMapper, ownerType client.Object, opts ...OwnerOption) handler.EventHandler {
 	e := &enqueueRequestForOwner{
 		ownerType: ownerType,
 		mapper:    mapper,

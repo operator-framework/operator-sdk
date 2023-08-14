@@ -32,11 +32,11 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	crHandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/handler"
@@ -79,6 +79,7 @@ type Options struct {
 	Port              int
 	Handler           HandlerChain
 	KubeConfig        *rest.Config
+	Scheme            *runtime.Scheme
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *controllermap.ControllerMap
@@ -154,6 +155,8 @@ func Run(done chan error, o Options) error {
 			next:              server.Handler,
 			cMap:              o.ControllerMap,
 			restMapper:        o.RESTMapper,
+			scheme:            o.Scheme,
+			cache:             o.Cache,
 			watchedNamespaces: watchedNamespaceMap,
 			apiResources:      resources,
 		}
@@ -170,6 +173,7 @@ func Run(done chan error, o Options) error {
 		}
 		server.Handler = &cacheResponseHandler{
 			next:              server.Handler,
+			scheme:            o.Scheme,
 			informerCache:     o.Cache,
 			restMapper:        o.RESTMapper,
 			watchedNamespaces: watchedNamespaceMap,
@@ -193,7 +197,7 @@ func Run(done chan error, o Options) error {
 
 // Helper function used by cache response and owner injection
 func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap,
-	resource *unstructured.Unstructured, restMapper meta.RESTMapper, cache cache.Cache, useOwnerRef bool) error {
+	resource *unstructured.Unstructured, restMapper meta.RESTMapper, cache cache.Cache, scheme *runtime.Scheme, useOwnerRef bool) error {
 	dataMapping, err := restMapper.RESTMapping(resource.GroupVersionKind().GroupKind(),
 		resource.GroupVersionKind().Version)
 	if err != nil {
@@ -241,11 +245,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			owMap.Store(resource.GroupVersionKind())
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_kind", u.GroupVersionKind())
-			err := contents.Controller.Watch(source.Kind(cache, resource))
-			err := contents.Controller.Watch(&source.Kind{Type: resource},
-				&handler.LoggingEnqueueRequestForOwner{
-					EnqueueRequestForOwner: crHandler.EnqueueRequestForOwner{OwnerType: u},
-				}, predicate.DependentPredicate{})
+			err := contents.Controller.Watch(source.Kind(cache, resource), handler.EnqueueRequestForOwnerWithLogging(scheme, restMapper, u), predicate.DependentPredicate{})
 			// Store watch in map
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
@@ -265,10 +265,9 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			}
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_annotation_type", ownerGK.String())
-			err = contents.Controller.Watch(&source.Kind{Type: resource},
-				&handler.LoggingEnqueueRequestForAnnotation{
-					EnqueueRequestForAnnotation: libhandler.EnqueueRequestForAnnotation{Type: ownerGK},
-				}, predicate.DependentPredicate{})
+			err = contents.Controller.Watch(source.Kind(cache, resource), &handler.LoggingEnqueueRequestForAnnotation{
+				EnqueueRequestForAnnotation: libhandler.EnqueueRequestForAnnotation{Type: ownerGK},
+			}, predicate.DependentPredicate{})
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
 					"kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())

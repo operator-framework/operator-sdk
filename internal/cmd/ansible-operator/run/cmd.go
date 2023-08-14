@@ -244,6 +244,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		Address:           "localhost",
 		Port:              f.ProxyPort,
 		KubeConfig:        mgr.GetConfig(),
+		Scheme:            mgr.GetScheme(),
 		Cache:             mgr.GetCache(),
 		RESTMapper:        mgr.GetRESTMapper(),
 		ControllerMap:     cMap,
