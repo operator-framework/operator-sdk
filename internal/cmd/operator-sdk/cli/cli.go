@@ -109,7 +109,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		plugin.WithVersion(plugin.Version{Number: 1, Stage: stage.Alpha}),
 		plugin.WithPlugins(kustomizev2.Plugin{}, hybrid.Plugin{}, manifestsv2.Plugin{}, scorecardv2.Plugin{}))
 
-	deployImageBundle, _ := plugin.NewBundleWithOptions(plugin.WithName("deploy-image."+plugins.DefaultNameQualifier),
+	deployImageBundle, _ := plugin.NewBundleWithOptions(plugin.WithName("deploy-image"+plugins.DefaultNameQualifier),
 		plugin.WithVersion(plugin.Version{Number: 1, Stage: stage.Alpha}),
 		plugin.WithPlugins(deployimagev1alpha.Plugin{}, manifestsv2.Plugin{}))
 

@@ -1,0 +1,111 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      - (go/v4-alpha) Bump go/v4 plugin from alpha to stable.
+    kind: "change"
+    breaking: true
+    migration:
+      header: (go/v4-alpha) Move go/v4 plugin from alpha to stable
+      body: |
+        The transition from Golang v2 and v3 plugins to the new Golang v4 plugin introduces significant changes. 
+        To gain insights into the reasoning behind these changes, you can refer to the explanation provided 
+        at https://book.kubebuilder.io/migration/v3vsv4#tldr-of-the-new-gov4-plugin.
+
+        For a comprehensive understanding of the migration process to the v4 plugin format, 
+        the Kubebuilder documentation outlines the necessary steps. Detailed instructions
+        can be found at https://book.kubebuilder.io/migration/manually_migration_guide_gov3_to_gov4.
+
+        This migration is designed to enhance your project's functionality and compatibility, 
+        reflecting the evolving landscape of Golang development.
+
+  - description: >
+      - (go/v3) Deprecate go/v3 plugin in support of go/v4. Refer `https://book.kubebuilder.io/migration/v3vsv4` for more details.
+    kind: "deprecation"
+    breaking: false
+  
+  - description: >
+      - (go/v2) Deprecate go/v2 plugin in support of go/v4.
+    kind:  "deprecation"
+    breaking: false
+
+  - description: >
+      - (go/v4) Bump Kubernetes dependencies to 1.27.
+    kind: "change"
+    breaking: true
+    migration:
+      header: (go/v4) Bump Kubernetes dependencies to 1.27
+      body: |
+        Bump the versions of controller-runtime, ginko. gomega and kubernetes dependencies to k8s 1.27 supported
+        versions. After migrating to the stable version in go/v4, ensure that the `go.mod` file looks as below:
+
+        ```
+	      github.com/onsi/ginkgo/v2 v2.9.5
+	      github.com/onsi/gomega v1.27.7
+	      k8s.io/api v0.27.2
+	      k8s.io/apimachinery v0.27.2
+	      k8s.io/client-go v0.27.2
+	      sigs.k8s.io/controller-runtime v0.15.0
+        ```
+  - description: >
+      - (ansible/v1, helm/v1) Remove multi-arch and node affinity patch from manager configurations.
+    kind: "change"
+    breaking: true
+    migration: 
+      header: (ansible/v1, helm/v1) Remove multi-arch and node affinity patch from manager configurations.
+      body: |
+        Multi-arch and node affinity configurations have been removed from the following files:
+        1. `config/default/manager_auth_proxy_path.yaml`.
+        2. If there is an OLM bundle in the project: `bundle/manifests/*.clusterserviceversion.yaml`
+
+        Remove the following from the `spec` section of the above mentioned files:
+        ```
+              affinity:
+         nodeAffinity:
+           requiredDuringSchedulingIgnoredDuringExecution:
+             nodeSelectorTerms:
+               - matchExpressions:
+                 - key: kubernetes.io/arch
+                   operator: In
+                   values:
+                     - amd64
+                     - arm64
+                     - ppc64le
+                     - s390x
+                 - key: kubernetes.io/os
+                   operator: In
+                   values:
+                     - linux
+          ```
+
+    - description: >
+        - (ansible/v1, helm/v1) Bump kube-rbac-proxy version from `0.13.1` to `0.14.1`
+      kind: "change"
+      breaking: true
+      migration:
+        header: (ansible/v1, helm/v1) Bump kube-rbac-proxy version
+        body: |
+          Bump the version of kube-rbac-proxy from `0.13.1` to `0.14.1`. In
+          `config/default/manager_auth_proxy_path.yaml`, ensure that `gcr.io/kubebuilder/kube-rbac-proxy`
+          has the right version:
+
+          ```
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+          ```
+    - description: >
+        - (ansible/v1, helm/v1) Use kustomize version `v5.0.1` in projects.
+      kind: "change"
+      breaking: true
+      migration: (ansible/v1, helm/v1) Use kustomize version `v5.0.1`
+      body: |
+        In `Makefile` replace the version in kustomize target. Replace:
+        
+        ```
+        curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.1/kustomize_v4.5.7_$(OS)_$(ARCH).tar.gz |
+        ``` 
+
+        with
+        ```
+        curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.1/kustomize_v5.0.1_$(OS)_$(ARCH).tar.gz |
+        ``` 
+    
