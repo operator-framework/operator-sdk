@@ -190,3 +190,64 @@ func annotations(m map[string]interface{}) *unstructured.Unstructured {
 		},
 	}
 }
+
+func Test_readBoolAnnotationWithDefault(t *testing.T) {
+	objBuilder := func(anno map[string]string) *unstructured.Unstructured {
+		object := &unstructured.Unstructured{}
+		object.SetAnnotations(anno)
+		return object
+	}
+
+	type args struct {
+		obj        *unstructured.Unstructured
+		annotation string
+		fallback   bool
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Should return value of annotation read",
+			args: args{
+				obj: objBuilder(map[string]string{
+					"helm.sdk.operatorframework.io/rollback-force": "false",
+				}),
+				annotation: "helm.sdk.operatorframework.io/rollback-force",
+				fallback:   true,
+			},
+			want: false,
+		},
+		{
+			name: "Should return fallback when annotation is not present",
+			args: args{
+				obj: objBuilder(map[string]string{
+					"helm.sdk.operatorframework.io/upgrade-force": "true",
+				}),
+				annotation: "helm.sdk.operatorframework.io/rollback-force",
+				fallback:   false,
+			},
+			want: false,
+		},
+		{
+			name: "Should return fallback when errors while parsing bool value",
+			args: args{
+				obj: objBuilder(map[string]string{
+					"helm.sdk.operatorframework.io/rollback-force": "force",
+				}),
+				annotation: "helm.sdk.operatorframework.io/rollback-force",
+				fallback:   true,
+			},
+			want: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := readBoolAnnotationWithDefault(tc.args.obj, tc.args.annotation, tc.args.fallback); got != tc.want {
+				assert.Equal(t, tc.want, got, "readBoolAnnotationWithDefault() function")
+			}
+		})
+	}
+}
