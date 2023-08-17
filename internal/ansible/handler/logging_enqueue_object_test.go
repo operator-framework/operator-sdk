@@ -35,11 +35,10 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 	var q workqueue.RateLimitingInterface
 	var instance LoggingEnqueueRequestForObject
 	var pod *corev1.Pod
-	var ctx context.Context
+	var ctx = context.TODO()
 
 	BeforeEach(func() {
 		logBuffer.Reset()
-		ctx = context.TODO()
 		q = &controllertest.Queue{Interface: workqueue.New()}
 		instance = LoggingEnqueueRequestForObject{}
 		pod = &corev1.Pod{

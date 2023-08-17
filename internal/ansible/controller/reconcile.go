@@ -76,7 +76,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-
 	ident := strconv.Itoa(rand.Int())
 	logger := logf.Log.WithName("reconciler").WithValues(
 		"job", ident,
