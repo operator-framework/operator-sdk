@@ -194,10 +194,13 @@ func TestReconcile(t *testing.T) {
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
 					"status": map[string]interface{}{
-						// (Tech Debt) Fake client does not update the status conditions through update and patch
-						// calls. Since "reconcile" unstructured obj, is not parsed by the tracker while adding
-						// client. Re-add status check after converting to envtest.
 						"conditions": []interface{}{
+							map[string]interface{}{
+								"status":  "False",
+								"type":    "Running",
+								"message": "Running reconciliation",
+								"reason":  "Running",
+							},
 							map[string]interface{}{
 								"status": "True",
 								"type":   "Failure",

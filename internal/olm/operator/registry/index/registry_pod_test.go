@@ -192,7 +192,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 			})
 
 			It("check pod status should return successfully when pod check is true", func() {
-				mockGoodPodCheck := wait.ConditionFunc(func() (done bool, err error) {
+				mockGoodPodCheck := wait.ConditionWithContextFunc(func(ctx context.Context) (done bool, err error) {
 					return true, nil
 				})
 
@@ -263,7 +263,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 				}
 				Expect(rp.init(cfg)).To(Succeed())
 
-				mockBadPodCheck := wait.ConditionFunc(func() (done bool, err error) {
+				mockBadPodCheck := wait.ConditionWithContextFunc(func(ctx context.Context) (done bool, err error) {
 					return false, fmt.Errorf("error waiting for registry pod")
 				})
 
