@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	apiutilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/client-go/discovery"
 	"k8s.io/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -65,13 +66,8 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...client.Object) Sta
 		}
 		u := unstructured.Unstructured{}
 		u.SetGroupVersionKind(gvk)
+
 		rs.Error = c.KubeClient.Get(ctx, nn, &u)
-
-		if rs.Error != nil {
-			fmt.Println("Name: ", nn.Name, "namespace", nn.Namespace, "GVK", gvk)
-			fmt.Println("error here", rs.Error)
-		}
-
 		if rs.Error == nil {
 			rs.Resource = &u
 		}
@@ -109,11 +105,27 @@ func (s Status) HasInstalledResources() (bool, error) {
 			// crdKindSet for existence of a resource's kind.
 			nkmerr := &meta.NoKindMatchError{}
 			if !errors.As(r.Error, &nkmerr) || !crdKindSet.Has(r.GVK.Kind) {
-				errs = append(errs, r.Error)
+				// For CRD objects, c-r now wraps and returns a doscovery failed error with a
+				// HTTP 404.
+				if !hasDiscoveryFailedError(r.Error) {
+					errs = append(errs, r.Error)
+				}
 			}
 		}
 	}
 	return false, apiutilerrors.NewAggregate(errs)
+}
+
+// hasDiscoveryFailedError unwraps and checks for GroupDiscoveryFailed error.
+func hasDiscoveryFailedError(err error) bool {
+	for err != nil {
+		if discovery.IsGroupDiscoveryFailedError(err) {
+			return true
+		}
+
+		err = errors.Unwrap(err)
+	}
+	return false
 }
 
 // getCRDKindSet returns the set of all kinds specified by all CRDs in s.

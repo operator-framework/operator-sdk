@@ -145,11 +145,10 @@ func (c Client) safeCreateOneResource(ctx context.Context, obj client.Object, ki
 			return true, nil
 		}
 
-		if meta.IsNoMatchError(err) {
+		if meta.IsNoMatchError(err) || hasDiscoveryFailedError(err) {
 			log.Infof("    Failed to create %s %q. CRD is not ready yet. Retrying...", kind, resourceName)
 			return false, nil
 		}
-
 		return false, err
 	})
 

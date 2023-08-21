@@ -129,7 +129,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			&quarkusv1.Plugin{},
 		),
 		cli.WithDefaultPlugins(cfgv2.Version, gov2Bundle),
-		cli.WithDefaultPlugins(cfgv3.Version, gov3Bundle),
+		cli.WithDefaultPlugins(cfgv3.Version, gov4Bundle),
 		cli.WithDefaultProjectVersion(cfgv3.Version),
 		cli.WithExtraCommands(commands...),
 		cli.WithExtraAlphaCommands(alphaCommands...),
