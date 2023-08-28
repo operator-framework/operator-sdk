@@ -40,7 +40,7 @@ For more specific help for the init command of a certain plugins and project ver
 configuration please run:
     operator-sdk init --help --plugins=<PLUGIN KEYS> [--project-version=<PROJECT VERSION>]
 
-Default plugin keys: "go.kubebuilder.io/v3"
+Default plugin keys: "go.kubebuilder.io/v4"
 Default project version: "3"
 
 ```

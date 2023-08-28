@@ -38,15 +38,14 @@ entries:
       body: |
         Bump the versions of controller-runtime, ginko. gomega and kubernetes dependencies to k8s 1.27 supported
         versions. After migrating to the stable version in go/v4, ensure that the `go.mod` file looks as below:
+        ```
+          github.com/onsi/ginkgo/v2 v2.9.5
+          github.com/onsi/gomega v1.27.7
+          k8s.io/api v0.27.2
+          k8s.io/apimachinery v0.27.2
+          k8s.io/client-go v0.27.2
+          sigs.k8s.io/controller-runtime v0.15.0 ```
 
-        ```
-	      github.com/onsi/ginkgo/v2 v2.9.5
-	      github.com/onsi/gomega v1.27.7
-	      k8s.io/api v0.27.2
-	      k8s.io/apimachinery v0.27.2
-	      k8s.io/client-go v0.27.2
-	      sigs.k8s.io/controller-runtime v0.15.0
-        ```
   - description: >
       - (ansible/v1, helm/v1) Remove multi-arch and node affinity patch from manager configurations.
     kind: "change"
@@ -77,29 +76,28 @@ entries:
                    values:
                      - linux
           ```
+  - description: >
+      - (ansible/v1, helm/v1) Bump kube-rbac-proxy version from `0.13.1` to `0.14.1`
+    kind: "change"
+    breaking: true
+    migration:
+      header: (ansible/v1, helm/v1) Bump kube-rbac-proxy version
+      body: |
+        Bump the version of kube-rbac-proxy from `0.13.1` to `0.14.1`. In
+        `config/default/manager_auth_proxy_path.yaml`, ensure that `gcr.io/kubebuilder/kube-rbac-proxy`
+        has the right version:
 
-    - description: >
-        - (ansible/v1, helm/v1) Bump kube-rbac-proxy version from `0.13.1` to `0.14.1`
-      kind: "change"
-      breaking: true
-      migration:
-        header: (ansible/v1, helm/v1) Bump kube-rbac-proxy version
-        body: |
-          Bump the version of kube-rbac-proxy from `0.13.1` to `0.14.1`. In
-          `config/default/manager_auth_proxy_path.yaml`, ensure that `gcr.io/kubebuilder/kube-rbac-proxy`
-          has the right version:
-
-          ```
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
-          ```
-    - description: >
-        - (ansible/v1, helm/v1) Use kustomize version `v5.0.1` in projects.
-      kind: "change"
-      breaking: true
-      migration: (ansible/v1, helm/v1) Use kustomize version `v5.0.1`
+        ```
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+        ```
+  - description: >
+      - (ansible/v1, helm/v1) Use kustomize version `v5.0.1` in projects.
+    kind: "change"
+    breaking: true
+    migration:
+      header: (ansible/v1, helm/v1) Use kustomize version `v5.0.1`
       body: |
         In `Makefile` replace the version in kustomize target. Replace:
-        
         ```
         curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.1/kustomize_v4.5.7_$(OS)_$(ARCH).tar.gz |
         ``` 
@@ -108,4 +106,3 @@ entries:
         ```
         curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.1/kustomize_v5.0.1_$(OS)_$(ARCH).tar.gz |
         ``` 
-    
