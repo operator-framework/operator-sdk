@@ -21,14 +21,17 @@ This is a rough outline of what a contributor's workflow looks like:
 
 - Create a topic branch from where to base the contribution. This is usually master.
 - Make commits of logical units.
-- Make sure commit messages are in the proper format (see below).
+- Make sure commit messages are in the proper [format](https://github.com/operator-framework/operator-sdk/blob/master/CONTRIBUTING.MD#format-of-the-commit-message) and [rules](https://github.com/operator-framework/operator-sdk/blob/master/CONTRIBUTING.MD#commit-rules).
 - Push changes in a topic branch to a personal fork of the repository.
 - Submit a pull request to operator-framework/operator-sdk.
 - The PR must receive a LGTM from two maintainers found in the MAINTAINERS file.
 
+
+
+
 Thanks for contributing!
 
-### Code style
+## Code style
 
 The coding style suggested by the Go community is used in operator-sdk. See the [style doc][golang-style-doc] for details.
 
@@ -59,6 +62,12 @@ The format can be described more formally as follows:
 ```
 
 The first line is the subject and should be no longer than 70 characters, the second line is always blank, and other lines should be wrapped at 80 characters. This allows the message to be easier to read on GitHub as well as in various git tools.
+### Commit Rules: 
+- 1. To contribute to this project, you must agree to the Developer Certificate of Origin (DCO) for each commit you make.
+- 2. ``git commit --signoff -m "<commit subject>"``
+                
+     or you could go with the shorter format for the same, as shown below.<br>
+     `` git commit -s -m "<commit subject>"``
 
 ## Documentation
 
