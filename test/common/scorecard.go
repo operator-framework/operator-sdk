@@ -44,7 +44,7 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 				"--wait-time", "2m")
 			outputBytes, err = tc.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+			Expect(json.Unmarshal(trimmedOutput(outputBytes), &output)).To(Succeed())
 
 			Expect(output.Items).To(HaveLen(1))
 			results := output.Items[0].Status.Results
@@ -63,7 +63,7 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 			if strings.ToLower(operatorType) != "go" {
 				Expect(err).To(HaveOccurred())
 			}
-			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+			Expect(json.Unmarshal(trimmedOutput(outputBytes), &output)).To(Succeed())
 
 			expected := map[string]v1alpha3.State{
 				// Basic suite.
@@ -110,7 +110,7 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 				"--wait-time", "4m")
 			outputBytes, err = tc.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+			Expect(json.Unmarshal(trimmedOutput(outputBytes), &output)).To(Succeed())
 
 			Expect(output.Items).To(HaveLen(1))
 			results := output.Items[0].Status.Results
@@ -119,4 +119,11 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 			Expect(results[0].State).To(Equal(v1alpha3.PassState))
 		})
 	}
+}
+
+// trimmedOutput trims the deprecation message (if present) from the output
+func trimmedOutput(output []byte) []byte {
+	outputStr := string(output)
+	index := strings.Index(outputStr, "{")
+	return []byte(outputStr[index:])
 }
