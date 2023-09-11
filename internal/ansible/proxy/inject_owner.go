@@ -26,8 +26,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/set"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	k8sRequest "github.com/operator-framework/operator-sdk/internal/ansible/proxy/requestfactory"
@@ -41,6 +43,8 @@ type injectOwnerReferenceHandler struct {
 	next              http.Handler
 	cMap              *controllermap.ControllerMap
 	restMapper        meta.RESTMapper
+	scheme            *runtime.Scheme
+	cache             cache.Cache
 	watchedNamespaces map[string]interface{}
 	apiResources      *apiResources
 }
@@ -174,7 +178,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			_, allNsPresent := i.watchedNamespaces[metav1.NamespaceAll]
 			_, reqNsPresent := i.watchedNamespaces[r.Namespace]
 			if allNsPresent || reqNsPresent {
-				err = addWatchToController(*owner, i.cMap, data, i.restMapper, addOwnerRef)
+				err = addWatchToController(*owner, i.cMap, data, i.restMapper, i.cache, i.scheme, addOwnerRef)
 				if err != nil {
 					m := "could not add watch to controller"
 					log.Error(err, m)

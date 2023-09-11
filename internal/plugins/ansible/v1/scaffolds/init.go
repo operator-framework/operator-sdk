@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
-	kustomizev2Alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2-alpha"
+	kustomizev2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
@@ -73,7 +73,7 @@ func (s *initScaffolder) Scaffold() error {
 		&templates.Dockerfile{AnsibleOperatorVersion: ansibleOperatorVersion},
 		&templates.Makefile{
 			Image:                  imageName,
-			KustomizeVersion:       kustomizev2Alpha.KustomizeVersion,
+			KustomizeVersion:       kustomizev2.KustomizeVersion,
 			AnsibleOperatorVersion: ansibleOperatorVersion,
 		},
 		&templates.GitIgnore{},

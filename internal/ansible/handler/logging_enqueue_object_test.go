@@ -15,6 +15,8 @@
 package handler
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	dto "github.com/prometheus/client_model/go"
@@ -33,10 +35,11 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 	var q workqueue.RateLimitingInterface
 	var instance LoggingEnqueueRequestForObject
 	var pod *corev1.Pod
+	var ctx = context.TODO()
 
 	BeforeEach(func() {
 		logBuffer.Reset()
-		q = controllertest.Queue{Interface: workqueue.New()}
+		q = &controllertest.Queue{Interface: workqueue.New()}
 		instance = LoggingEnqueueRequestForObject{}
 		pod = &corev1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -58,7 +61,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 
 			// test the create
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Create.*/v1.*Pod.*bizname.*biznamespace`,
 			))
@@ -74,8 +77,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 			}))
 
 			// verify metrics
-			gauges, err := metrics.Registry.Gather()
+			rawGauges, err := metrics.Registry.Gather()
 			Expect(err).NotTo(HaveOccurred())
+			gauges := filterGauges(rawGauges)
 			Expect(gauges).To(HaveLen(1))
 			assertMetrics(gauges[0], 1, []*corev1.Pod{pod})
 		})
@@ -88,7 +92,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 					Object: pod,
 				}
 				logBuffer.Reset()
-				instance.Create(evt, q)
+				instance.Create(ctx, evt, q)
 				Expect(logBuffer.String()).To(MatchRegexp(
 					`ansible.handler.*Create.*/v1.*Pod.*bizname.*biznamespace`,
 				))
@@ -101,7 +105,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 
 				logBuffer.Reset()
 				// test the delete
-				instance.Delete(evt, q)
+				instance.Delete(ctx, evt, q)
 				Expect(logBuffer.String()).To(MatchRegexp(
 					`ansible.handler.*Delete.*/v1.*Pod.*bizname.*biznamespace`,
 				))
@@ -117,8 +121,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 				}))
 
 				// verify metrics
-				gauges, err := metrics.Registry.Gather()
+				rawGauges, err := metrics.Registry.Gather()
 				Expect(err).NotTo(HaveOccurred())
+				gauges := filterGauges(rawGauges)
 				Expect(gauges).To(BeEmpty())
 			})
 		})
@@ -130,7 +135,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 
 				logBuffer.Reset()
 				// test the delete
-				instance.Delete(evt, q)
+				instance.Delete(ctx, evt, q)
 				Expect(logBuffer.String()).To(MatchRegexp(
 					`ansible.handler.*Delete.*/v1.*Pod.*bizname.*biznamespace`,
 				))
@@ -146,8 +151,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 				}))
 
 				// verify metrics
-				gauges, err := metrics.Registry.Gather()
+				rawGauges, err := metrics.Registry.Gather()
 				Expect(err).NotTo(HaveOccurred())
+				gauges := filterGauges(rawGauges)
 				Expect(gauges).To(BeEmpty())
 			})
 		})
@@ -169,7 +175,7 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 
 			logBuffer.Reset()
 			// test the update
-			instance.Update(evt, q)
+			instance.Update(ctx, evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
 				`ansible.handler.*Update.*/v1.*Pod.*bizname.*biznamespace`,
 			))
@@ -185,8 +191,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 			}))
 
 			// verify metrics
-			gauges, err := metrics.Registry.Gather()
+			rawGauges, err := metrics.Registry.Gather()
 			Expect(err).NotTo(HaveOccurred())
+			gauges := filterGauges(rawGauges)
 			Expect(gauges).To(HaveLen(1))
 			assertMetrics(gauges[0], 2, []*corev1.Pod{newpod, pod})
 		})
@@ -215,4 +222,14 @@ func assertMetrics(gauge *dto.MetricFamily, count int, pods []*corev1.Pod) {
 			}
 		}
 	}
+}
+
+func filterGauges(gauges []*dto.MetricFamily) []*dto.MetricFamily {
+	var filteredGauges []*dto.MetricFamily
+	for _, gauge := range gauges {
+		if *gauge.Name != "rest_client_requests_total" {
+			filteredGauges = append(filteredGauges, gauge)
+		}
+	}
+	return filteredGauges
 }

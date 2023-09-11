@@ -14,6 +14,7 @@
 package handler
 
 import (
+	"context"
 	"strings"
 
 	"github.com/operator-framework/operator-lib/handler"
@@ -34,27 +35,27 @@ type LoggingEnqueueRequestForAnnotation struct {
 }
 
 // Create implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForAnnotation) Create(e event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForAnnotation) Create(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Create", e.Object, nil)
-	h.EnqueueRequestForAnnotation.Create(e, q)
+	h.EnqueueRequestForAnnotation.Create(ctx, e, q)
 }
 
 // Update implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForAnnotation) Update(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForAnnotation) Update(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Update", e.ObjectOld, e.ObjectNew)
-	h.EnqueueRequestForAnnotation.Update(e, q)
+	h.EnqueueRequestForAnnotation.Update(ctx, e, q)
 }
 
 // Delete implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForAnnotation) Delete(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForAnnotation) Delete(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Delete", e.Object, nil)
-	h.EnqueueRequestForAnnotation.Delete(e, q)
+	h.EnqueueRequestForAnnotation.Delete(ctx, e, q)
 }
 
 // Generic implements EventHandler, and emits a log message.
-func (h LoggingEnqueueRequestForAnnotation) Generic(e event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (h LoggingEnqueueRequestForAnnotation) Generic(ctx context.Context, e event.GenericEvent, q workqueue.RateLimitingInterface) {
 	h.logEvent("Generic", e.Object, nil)
-	h.EnqueueRequestForAnnotation.Generic(e, q)
+	h.EnqueueRequestForAnnotation.Generic(ctx, e, q)
 }
 
 func (h LoggingEnqueueRequestForAnnotation) logEvent(eventType string, object, newObject client.Object) {

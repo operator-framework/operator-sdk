@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	helmClient "github.com/operator-framework/operator-sdk/internal/helm/client"
 	"github.com/operator-framework/operator-sdk/internal/helm/controller"
@@ -93,8 +94,12 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		err     error
 	)
 	if f.ManagerConfigPath != "" {
-		cfgLoader := ctrl.ConfigFile().AtPath(f.ManagerConfigPath)
-		if options, err = options.AndFrom(cfgLoader); err != nil {
+		// TODO: option to load from config file is deprecated. This will also be removed from here when
+		// componentConfig option is removed.
+		//
+		// Refer: https://github.com/kubernetes-sigs/controller-runtime/issues/895
+		cfgLoader := ctrl.ConfigFile().AtPath(f.ManagerConfigPath) //nolint:staticcheck
+		if options, err = options.AndFrom(cfgLoader); err != nil { //nolint:staticcheck
 			log.Error(err, "Unable to load the manager config file")
 			os.Exit(1)
 		}
@@ -137,44 +142,39 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	options = f.ToManagerOptions(options)
 
 	if options.NewClient == nil {
-		options.NewClient = func(cache cache.Cache, config *rest.Config, options client.Options, uncachedObjects ...client.Object) (client.Client, error) {
-			// Create the Client for Write operations.
-			c, err := client.New(config, options)
-			if err != nil {
-				return nil, err
-			}
-
-			return client.NewDelegatingClient(client.NewDelegatingClientInput{
-				CacheReader:       cache,
-				Client:            c,
-				UncachedObjects:   uncachedObjects,
-				CacheUnstructured: true,
-			})
-		}
+		options.NewClient = client.New
 	}
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	log = log.WithValues("Namespace", namespace)
+	var watchNamespaces []string
 	if found {
 		log.V(1).Info(fmt.Sprintf("Setting namespace with value in %s", k8sutil.WatchNamespaceEnvVar))
 		if namespace == metav1.NamespaceAll {
 			log.Info("Watching all namespaces.")
-			options.Namespace = metav1.NamespaceAll
+			watchNamespaces = []string{metav1.NamespaceAll}
 		} else {
 			if strings.Contains(namespace, ",") {
 				log.Info("Watching multiple namespaces.")
-				options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
+				watchNamespaces = strings.Split(namespace, "")
 			} else {
 				log.Info("Watching single namespace.")
-				options.Namespace = namespace
+				watchNamespaces = []string{namespace}
 			}
 		}
-	} else if options.Namespace == "" {
+		// TODO: remove this when loading from config file option is removed
+	} else if options.Namespace == "" { //nolint:staticcheck
 		log.Info(fmt.Sprintf("Watch namespaces not configured by environment variable %s or file. "+
 			"Watching all namespaces.", k8sutil.WatchNamespaceEnvVar))
-		options.Namespace = metav1.NamespaceAll
+		watchNamespaces = []string{metav1.NamespaceAll}
 	}
 
-	mgr, err := manager.New(cfg, options)
+	mgr, err := manager.New(cfg, manager.Options{
+		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
+			return cache.New(config, cache.Options{
+				Namespaces: watchNamespaces,
+			})
+		},
+	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		os.Exit(1)
@@ -234,19 +234,21 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 // if any of those fields are not their default values.
 func exitIfUnsupported(options manager.Options) {
 	var keys []string
-	// The below options are webhook-specific, which is not supported by ansible.
-	if options.CertDir != "" {
-		keys = append(keys, "certDir")
-	}
-	if options.Host != "" {
-		keys = append(keys, "host")
-	}
-	if options.Port != 0 {
-		keys = append(keys, "port")
-	}
 
-	if len(keys) > 0 {
-		log.Error(fmt.Errorf("%s set in manager options", strings.Join(keys, ", ")), "unsupported fields")
+	if options.WebhookServer != nil {
+		// The below options are webhook-specific, which is not supported by helm.
+		// Adding logs only for the previously supported values through manager.
+		if options.WebhookServer.(*webhook.DefaultServer).Options.CertDir != "" {
+			keys = append(keys, "certDir")
+		}
+		if options.WebhookServer.(*webhook.DefaultServer).Options.Host != "" {
+			keys = append(keys, "host")
+		}
+		if options.WebhookServer.(*webhook.DefaultServer).Options.Port != 0 {
+			keys = append(keys, "port")
+		}
+		log.Error(fmt.Errorf(`options for setting webhook server configuration is not supported. 
+		%s set in manager options`, strings.Join(keys, ", ")), "unsupported fields")
 		os.Exit(1)
 	}
 }

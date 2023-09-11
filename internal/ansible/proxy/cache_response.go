@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/set"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -45,6 +46,7 @@ type marshaler interface {
 
 type cacheResponseHandler struct {
 	next              http.Handler
+	scheme            *runtime.Scheme
 	informerCache     cache.Cache
 	restMapper        meta.RESTMapper
 	watchedNamespaces map[string]interface{}
@@ -216,7 +218,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 
 	for _, oRef := range un.GetOwnerReferences() {
 		if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
-			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, true)
+			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, c.informerCache, c.scheme, true)
 			if err != nil {
 				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 				return
@@ -231,7 +233,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 			return
 		}
 		if typeString == fmt.Sprintf("%v.%v", ownerRef.Kind, ownerGV.Group) {
-			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, false)
+			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, c.informerCache, c.scheme, false)
 			if err != nil {
 				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 				return

@@ -44,8 +44,8 @@ internally to version your Kubernetes resources and are thus used for many thing
 name your domain to group your resource types in meaningful group(s) for ease of understanding and because these
 groups determine how access can be controlled to your resource types using RBAC. For more information, see [the core Kubernetes docs](https://kubernetes.io/docs/reference/using-api/#api-groups) and [the Kubebuilder docs](https://book.kubebuilder.io/cronjob-tutorial/gvks.html).
 
-**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4-alpha`
-plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4-alpha`
+**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4`
+plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4`
 
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
 

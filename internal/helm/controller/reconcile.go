@@ -464,7 +464,7 @@ func (r HelmOperatorReconciler) waitForDeletion(ctx context.Context, o client.Ob
 
 	tctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
-	return wait.PollImmediateUntil(time.Millisecond*10, func() (bool, error) {
+	return wait.PollUntilContextCancel(ctx, time.Millisecond*10, true, func(ctx context.Context) (bool, error) {
 		err := r.Client.Get(tctx, key, o)
 		if apierrors.IsNotFound(err) {
 			return true, nil
@@ -473,5 +473,5 @@ func (r HelmOperatorReconciler) waitForDeletion(ctx context.Context, o client.Ob
 			return false, err
 		}
 		return false, nil
-	}, tctx.Done())
+	})
 }

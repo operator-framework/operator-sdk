@@ -12,7 +12,7 @@ Initialize a new project including the following files:
   - a "PROJECT" file that stores project configuration
   - a "Makefile" with several useful make targets for the project
   - several YAML files for project deployment under the "config" directory
-  - a "main.go" file that creates the manager that will run the project controllers
+  - a "cmd/main.go" file that creates the manager that will run the project controllers
 
 
 ```
@@ -23,17 +23,16 @@ operator-sdk init [flags]
 
 ```
   # Initialize a new project with your domain and name in copyright
-  operator-sdk init --plugins go/v3 --domain example.org --owner "Your name"
+  operator-sdk init --plugins go/v4 --domain example.org --owner "Your name"
 
   # Initialize a new project defining a specific project version
-  operator-sdk init --plugins go/v3 --project-version 3
+  operator-sdk init --plugins go/v4 --project-version 3
 
 ```
 
 ### Options
 
 ```
-      --component-config         create a versioned ComponentConfig file, may be 'true' or 'false'
       --domain string            domain for groups (default "my.domain")
       --fetch-deps               ensure dependencies are downloaded (default true)
   -h, --help                     help for init

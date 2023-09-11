@@ -1,269 +1,258 @@
-// Copyright 2021 The Operator-SDK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+	Copyright 2018 The Kubernetes Authors.
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+			http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
 
 package handler
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllertest"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	crHandler "sigs.k8s.io/controller-runtime/pkg/handler"
-
-	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var _ = Describe("LoggingEnqueueRequestForOwner", func() {
+var _ = Describe("Eventhandler", func() {
+	var ctx = context.Background()
 	var q workqueue.RateLimitingInterface
-	var instance LoggingEnqueueRequestForOwner
 	var pod *corev1.Pod
-	var podOwner *metav1.OwnerReference
-
+	var mapper meta.RESTMapper
 	BeforeEach(func() {
-		q = controllertest.Queue{Interface: workqueue.New()}
-		podOwner = &metav1.OwnerReference{
-			Kind:       "Pod",
-			APIVersion: "v1",
-			Name:       "podOwnerName",
-		}
-
+		q = &controllertest.Queue{Interface: workqueue.New()}
 		pod = &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace:       "biz",
-				Name:            "biz",
-				OwnerReferences: []metav1.OwnerReference{*podOwner},
-			},
+			ObjectMeta: metav1.ObjectMeta{Namespace: "biz", Name: "baz"},
 		}
-
 		pod.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"})
+		Expect(cfg).NotTo(BeNil())
 
-		instance = LoggingEnqueueRequestForOwner{
-			crHandler.EnqueueRequestForOwner{
-				OwnerType: pod,
-			}}
+		httpClient, err := rest.HTTPClientFor(cfg)
+		Expect(err).ShouldNot(HaveOccurred())
+		mapper, err = apiutil.NewDiscoveryRESTMapper(cfg, httpClient)
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
-	Describe("Create", func() {
-		It("should emit a log with the ownerReference of the object in case of CreateEvent", func() {
+	Describe("EnqueueRequestForOwnerWithLogging", func() {
+		var repl *appsv1.ReplicaSet
+
+		BeforeEach(func() {
+			repl = &appsv1.ReplicaSet{}
+			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
+		})
+
+		It("should enqueue a Request with the Owner of the object in the CreateEvent.", func() {
+			instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, repl)
+
+			pod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
+				},
+			}
 			evt := event.CreateEvent{
 				Object: pod,
 			}
-
 			logBuffer.Reset()
-			instance.Create(evt, q)
+			instance.Create(ctx, evt, q)
+			Expect(q.Len()).To(Equal(1))
+
+			i, _ := q.Get()
+			Expect(i).To(Equal(reconcile.Request{
+				NamespacedName: types.NamespacedName{Namespace: pod.GetNamespace(), Name: "foo-parent"}}))
 			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Create.*/v1.*Pod.*biz.*biz.*v1.*Pod.*podOwnerName`,
+				`ansible.handler.*OwnerReference.*handler.*event.*Create.*Owner.APIVersion.*Owner.Kind.*Owner.Name.*`,
 			))
 		})
 
-		It("emit a log when the ownerReferences are applied in child object"+
-			" in the Create Event", func() {
-			repl := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:       "foo",
-					Name:            "faz",
-					OwnerReferences: []metav1.OwnerReference{*podOwner},
+		It("should enqueue a Request with the Owner of the object in the DeleteEvent.", func() {
+			instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, repl)
+			pod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
 				},
 			}
-			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
-
-			evt := event.CreateEvent{
-				Object: repl,
-			}
-			logBuffer.Reset()
-			instance.Create(evt, q)
-			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Create.*apps/v1.*ReplicaSet.*faz.*foo.*Pod.*podOwnerName`,
-			))
-		})
-		It("should not emit a log or there are no ownerReferences matching with the object", func() {
-			repl := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "foo",
-					Name:      "faz",
-				},
-			}
-			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
-
-			evt := event.CreateEvent{
-				Object: repl,
-			}
-
-			logBuffer.Reset()
-			instance.Create(evt, q)
-			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
-			Expect(q.Len()).To(Equal(0))
-		})
-		It("should not emit a log if the ownerReference does not match the OwnerType", func() {
-			repl := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "foo",
-					Name:      "faz",
-					OwnerReferences: []metav1.OwnerReference{{
-						APIVersion: "v1",
-						Kind:       "ConfigMap",
-						Name:       "podOwnerName",
-					}},
-				},
-			}
-			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
-
-			evt := event.CreateEvent{
-				Object: repl,
-			}
-
-			logBuffer.Reset()
-			instance.Create(evt, q)
-			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
-		})
-
-		It("should not emit a log for an object which does not have ownerReferences", func() {
-			repl := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "foo",
-					Name:      "faz",
-				},
-			}
-			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
-
-			evt := event.CreateEvent{
-				Object: repl,
-			}
-
-			logBuffer.Reset()
-			instance.Create(evt, q)
-			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
-		})
-	})
-
-	Describe("Delete", func() {
-		It("should emit a log with the ownerReferenc of the object in case of DeleteEvent", func() {
 			evt := event.DeleteEvent{
 				Object: pod,
 			}
 			logBuffer.Reset()
-			instance.Delete(evt, q)
+			instance.Delete(ctx, evt, q)
+			Expect(q.Len()).To(Equal(1))
+
+			i, _ := q.Get()
+			Expect(i).To(Equal(reconcile.Request{
+				NamespacedName: types.NamespacedName{Namespace: pod.GetNamespace(), Name: "foo-parent"}}))
 			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Delete.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName`,
+				`ansible.handler.*OwnerReference.*handler.*event.*Delete.*Owner.APIVersion.*Owner.Kind.*Owner.Name.*`,
 			))
 		})
-	})
 
-	Describe("Update", func() {
-		It("should emit a log and enqueue a Request with annotations applied to both objects in UpdateEvent", func() {
+		It("should enqueue a Request with the Owners of both objects in the UpdateEvent.", func() {
 			newPod := pod.DeepCopy()
 			newPod.Name = pod.Name + "2"
 			newPod.Namespace = pod.Namespace + "2"
 
+			instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, repl)
+
+			pod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo1-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
+				},
+			}
+			newPod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo2-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
+				},
+			}
+			logBuffer.Reset()
 			evt := event.UpdateEvent{
 				ObjectOld: pod,
 				ObjectNew: newPod,
 			}
+			instance.Update(ctx, evt, q)
+			Expect(q.Len()).To(Equal(2))
 
-			logBuffer.Reset()
-			instance.Update(evt, q)
+			i1, _ := q.Get()
+			i2, _ := q.Get()
+			Expect([]interface{}{i1, i2}).To(ConsistOf(
+				reconcile.Request{
+					NamespacedName: types.NamespacedName{Namespace: pod.GetNamespace(), Name: "foo1-parent"}},
+				reconcile.Request{
+					NamespacedName: types.NamespacedName{Namespace: newPod.GetNamespace(), Name: "foo2-parent"}},
+			))
 			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Update.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName`,
+				`ansible.handler.*OwnerReference.*handler.*event.*Update.*Owner.APIVersion.*Owner.Kind.*Owner.Name.*`,
 			))
 		})
-		It("should emit a log with the ownerReferences applied in one of the objects in case of UpdateEvent", func() {
-			noOwnerPod := pod.DeepCopy()
-			noOwnerPod.Name = pod.Name + "2"
-			noOwnerPod.Namespace = pod.Namespace + "2"
-			noOwnerPod.OwnerReferences = []metav1.OwnerReference{}
 
-			evt := event.UpdateEvent{
-				ObjectOld: pod,
-				ObjectNew: noOwnerPod,
-			}
+		It("should enqueue a Request with the one duplicate Owner of both objects in the UpdateEvent.", func() {
+			newPod := pod.DeepCopy()
+			newPod.Name = pod.Name + "2"
 
-			logBuffer.Reset()
-			instance.Update(evt, q)
-			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Update.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName`,
-			))
+			instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, &appsv1.ReplicaSet{})
 
-			evt = event.UpdateEvent{
-				ObjectOld: noOwnerPod,
-				ObjectNew: pod,
-			}
-
-			logBuffer.Reset()
-			instance.Update(evt, q)
-			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Update.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName`,
-			))
-		})
-		It("should emit a log when the OwnerReference is applied after creation in case of UpdateEvent", func() {
-			repl := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "foo",
-					Name:      "faz",
+			pod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
 				},
 			}
-			repl.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"})
-
-			instance = LoggingEnqueueRequestForOwner{
-				crHandler.EnqueueRequestForOwner{
-					OwnerType: repl,
-				}}
-
-			evt := event.CreateEvent{
-				Object: repl,
+			newPod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
+				},
 			}
-
-			logBuffer.Reset()
-			instance.Create(evt, q)
-			Expect(logBuffer.String()).To(Not(ContainSubstring("ansible.handler")))
-
-			newRepl := repl.DeepCopy()
-			newRepl.Name = pod.Name + "2"
-			newRepl.Namespace = pod.Namespace + "2"
-
-			newRepl.OwnerReferences = []metav1.OwnerReference{{
-				APIVersion: "apps/v1",
-				Kind:       "ReplicaSet",
-				Name:       "faz",
-			}}
-
-			evt2 := event.UpdateEvent{
-				ObjectOld: repl,
-				ObjectNew: newRepl,
+			evt := event.UpdateEvent{
+				ObjectOld: pod,
+				ObjectNew: newPod,
 			}
+			instance.Update(ctx, evt, q)
+			Expect(q.Len()).To(Equal(1))
 
-			logBuffer.Reset()
-			instance.Update(evt2, q)
-			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Update.*apps/v1.*ReplicaSet.*faz.*foo.*apps/v1.*ReplicaSet.*faz`,
-			))
+			i, _ := q.Get()
+			Expect(i).To(Equal(reconcile.Request{
+				NamespacedName: types.NamespacedName{Namespace: pod.GetNamespace(), Name: "foo-parent"}}))
 		})
-	})
 
-	Describe("Generic", func() {
-		It("should emit a log with the OwnerReference of the object in case of GenericEvent", func() {
+		It("should enqueue a Request with the Owner of the object in the GenericEvent.", func() {
+			instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, repl)
+			pod.OwnerReferences = []metav1.OwnerReference{
+				{
+					Name:       "foo-parent",
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
+				},
+			}
 			evt := event.GenericEvent{
 				Object: pod,
 			}
 			logBuffer.Reset()
-			instance.Generic(evt, q)
+			instance.Generic(ctx, evt, q)
+			Expect(q.Len()).To(Equal(1))
+
+			i, _ := q.Get()
+			Expect(i).To(Equal(reconcile.Request{
+				NamespacedName: types.NamespacedName{Namespace: pod.GetNamespace(), Name: "foo-parent"}}))
 			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Generic.*/v1.*Pod.*biz.*biz.*Pod.*podOwnerName`,
+				`ansible.handler.*OwnerReference.*handler.*event.*Generic.*Owner.APIVersion.*Owner.Kind.*Owner.Name.*`,
 			))
 		})
+
+		Context("with a nil object", func() {
+			It("should do nothing.", func() {
+				instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, &appsv1.ReplicaSet{})
+				pod.OwnerReferences = []metav1.OwnerReference{
+					{
+						Name:       "foo1-parent",
+						Kind:       "ReplicaSet",
+						APIVersion: "apps/v1",
+					},
+				}
+				evt := event.CreateEvent{
+					Object: nil,
+				}
+				instance.Create(ctx, evt, q)
+				Expect(q.Len()).To(Equal(0))
+			})
+		})
+
+		Context("with a nil OwnerType", func() {
+			It("should panic", func() {
+				Expect(func() {
+					EnqueueRequestForOwnerWithLogging(nil, nil, nil)
+				}).To(Panic())
+			})
+		})
+
+		Context("with an invalid APIVersion in the OwnerReference", func() {
+			It("should do nothing.", func() {
+				instance := EnqueueRequestForOwnerWithLogging(scheme.Scheme, mapper, &appsv1.ReplicaSet{})
+				pod.OwnerReferences = []metav1.OwnerReference{
+					{
+						Name:       "foo1-parent",
+						Kind:       "ReplicaSet",
+						APIVersion: "apps/v1/fail",
+					},
+				}
+				evt := event.CreateEvent{
+					Object: pod,
+				}
+				instance.Create(ctx, evt, q)
+				Expect(q.Len()).To(Equal(0))
+			})
+		})
 	})
+
 })

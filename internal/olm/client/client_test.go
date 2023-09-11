@@ -27,8 +27,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -412,4 +414,12 @@ func (c *errClient) RESTMapper() meta.RESTMapper {
 
 func (c *errClient) Status() client.SubResourceWriter {
 	return c.cli.Status()
+}
+
+func (c *errClient) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return apiutil.GVKForObject(obj, c.Scheme())
+}
+
+func (c *errClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return apiutil.IsObjectNamespaced(obj, c.Scheme(), c.RESTMapper())
 }

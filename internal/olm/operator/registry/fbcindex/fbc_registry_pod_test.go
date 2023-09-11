@@ -127,7 +127,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				}
 				Expect(rp.init(cfg, cs)).To(Succeed())
 
-				mockBadPodCheck := wait.ConditionFunc(func() (done bool, err error) {
+				mockBadPodCheck := wait.ConditionWithContextFunc(func(ctx context.Context) (done bool, err error) {
 					return false, fmt.Errorf("error waiting for registry pod")
 				})
 

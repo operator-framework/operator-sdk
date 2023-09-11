@@ -334,7 +334,7 @@ func filterResources(resources []unstructured.Unstructured, filter func(unstruct
 
 func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedName) (types.NamespacedName, error) {
 	var csvKey types.NamespacedName
-	subscriptionInstalledCSV := func() (bool, error) {
+	subscriptionInstalledCSV := func(ctx context.Context) (bool, error) {
 		sub := olmapiv1alpha1.Subscription{}
 		err := c.KubeClient.Get(ctx, subKey, &sub)
 		if err != nil {
@@ -351,5 +351,5 @@ func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 		log.Printf("  Found installed CSV %q", installedCSV)
 		return true, nil
 	}
-	return csvKey, wait.PollImmediateUntil(time.Second, subscriptionInstalledCSV, ctx.Done())
+	return csvKey, wait.PollUntilContextCancel(ctx, time.Second, true, subscriptionInstalledCSV)
 }

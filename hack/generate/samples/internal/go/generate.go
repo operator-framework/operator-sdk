@@ -28,6 +28,6 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 	// ensure that the tutorial follows the good practices
 	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3"))
 	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3", "monitoring"))
-	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha"))
-	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha", "monitoring"))
+	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4"))
+	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4", "monitoring"))
 }

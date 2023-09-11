@@ -89,7 +89,12 @@ type Client struct {
 }
 
 func NewClientForConfig(cfg *rest.Config) (*Client, error) {
-	rm, err := apiutil.NewDynamicRESTMapper(cfg)
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create httpclient from config: %v", err)
+	}
+
+	rm, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)
 	}
@@ -133,18 +138,17 @@ func (c Client) safeCreateOneResource(ctx context.Context, obj client.Object, ki
 		Factor:   1,
 	}
 
-	err := wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
 		err := c.KubeClient.Create(ctx, obj)
 		if err == nil || apierrors.IsAlreadyExists(err) {
 			log.Infof("  %s %q created", kind, resourceName)
 			return true, nil
 		}
 
-		if meta.IsNoMatchError(err) {
+		if meta.IsNoMatchError(err) || hasDiscoveryFailedError(err) {
 			log.Infof("    Failed to create %s %q. CRD is not ready yet. Retrying...", kind, resourceName)
 			return false, nil
 		}
-
 		return false, err
 	})
 
@@ -167,7 +171,8 @@ func (c Client) DoDelete(ctx context.Context, objs ...client.Object) error {
 			log.Infof("    %s %q does not exist", kind, getName(obj.GetNamespace(), obj.GetName()))
 		}
 		key := client.ObjectKeyFromObject(obj)
-		if err := wait.PollImmediateUntil(time.Millisecond*100, func() (bool, error) {
+		// We wait until context is cancelled and keep polling for the OLM objects to appear until then.
+		if err := wait.PollUntilContextCancel(ctx, time.Millisecond*100, true, func(ctx context.Context) (bool, error) {
 			err := c.KubeClient.Get(ctx, key, obj)
 			if apierrors.IsNotFound(err) {
 				return true, nil
@@ -175,7 +180,7 @@ func (c Client) DoDelete(ctx context.Context, objs ...client.Object) error {
 				return false, err
 			}
 			return false, nil
-		}, ctx.Done()); err != nil {
+		}); err != nil {
 			return err
 		}
 	}
@@ -196,7 +201,7 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 	onceNotAvailable := sync.Once{}
 	onceSpecUpdate := sync.Once{}
 
-	rolloutComplete := func() (bool, error) {
+	rolloutComplete := func(ctx context.Context) (bool, error) {
 		deployment := appsv1.Deployment{}
 		err := c.KubeClient.Get(ctx, key, &deployment)
 		if err != nil {
@@ -244,7 +249,7 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 		})
 		return false, nil
 	}
-	return wait.PollImmediateUntil(time.Second, rolloutComplete, ctx.Done())
+	return wait.PollUntilContextCancel(ctx, time.Second, true, rolloutComplete)
 }
 
 func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
@@ -255,7 +260,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	once := sync.Once{}
 
 	csv := olmapiv1alpha1.ClusterServiceVersion{}
-	csvPhaseSucceeded := func() (bool, error) {
+	csvPhaseSucceeded := func(ctx context.Context) (bool, error) {
 		err := c.KubeClient.Get(ctx, key, &csv)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -282,7 +287,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		}
 	}
 
-	err := wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
+	err := wait.PollUntilContextCancel(ctx, time.Second, true, csvPhaseSucceeded)
 	if err != nil && errors.Is(err, context.DeadlineExceeded) {
 		depCheckErr := c.checkDeploymentErrors(ctx, key, csv)
 		if depCheckErr != nil {
