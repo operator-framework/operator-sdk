@@ -159,7 +159,7 @@ TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/op
 
 KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p path)
 test-unit: ## Run unit tests
-	go test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
+	KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS) go test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
 
 e2e_tests := test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm test-e2e-integration
 e2e_targets := test-e2e $(e2e_tests)

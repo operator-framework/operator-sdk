@@ -77,8 +77,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 			}))
 
 			// verify metrics
-			gauges, err := metrics.Registry.Gather()
+			rawGauges, err := metrics.Registry.Gather()
 			Expect(err).NotTo(HaveOccurred())
+			gauges := filterGauges(rawGauges)
 			Expect(gauges).To(HaveLen(1))
 			assertMetrics(gauges[0], 1, []*corev1.Pod{pod})
 		})
@@ -120,8 +121,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 				}))
 
 				// verify metrics
-				gauges, err := metrics.Registry.Gather()
+				rawGauges, err := metrics.Registry.Gather()
 				Expect(err).NotTo(HaveOccurred())
+				gauges := filterGauges(rawGauges)
 				Expect(gauges).To(BeEmpty())
 			})
 		})
@@ -149,8 +151,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 				}))
 
 				// verify metrics
-				gauges, err := metrics.Registry.Gather()
+				rawGauges, err := metrics.Registry.Gather()
 				Expect(err).NotTo(HaveOccurred())
+				gauges := filterGauges(rawGauges)
 				Expect(gauges).To(BeEmpty())
 			})
 		})
@@ -188,8 +191,9 @@ var _ = Describe("LoggingEnqueueRequestForObject", func() {
 			}))
 
 			// verify metrics
-			gauges, err := metrics.Registry.Gather()
+			rawGauges, err := metrics.Registry.Gather()
 			Expect(err).NotTo(HaveOccurred())
+			gauges := filterGauges(rawGauges)
 			Expect(gauges).To(HaveLen(1))
 			assertMetrics(gauges[0], 2, []*corev1.Pod{newpod, pod})
 		})
@@ -218,4 +222,14 @@ func assertMetrics(gauge *dto.MetricFamily, count int, pods []*corev1.Pod) {
 			}
 		}
 	}
+}
+
+func filterGauges(gauges []*dto.MetricFamily) []*dto.MetricFamily {
+	var filteredGauges []*dto.MetricFamily
+	for _, gauge := range gauges {
+		if *gauge.Name != "rest_client_requests_total" {
+			filteredGauges = append(filteredGauges, gauge)
+		}
+	}
+	return filteredGauges
 }
