@@ -167,3 +167,18 @@ The value that is present under this key must be in the h/m/s format. For exampl
 
 **NOTE**: This is just one way of specifying the reconcile period for Helm-based operators. There are two other ways: using the `--reconcile-period` command-line flag and under the 'reconcilePeriod' key in the watches.yaml file. If these three methods are used simultaneously to specify reconcile period (which they should not be), the order of precedence is as follows: 
 Custom Resource Annotations > watches.yaml > command-line flag.
+
+## `helm.sdk.operatorframework.io/rollback-force`
+
+Whenever a helm-based operator encounters an error during reconcilliation, by default, it would attempt to perform a rollback with the `--force` option. While this works as expected in most scenarios, there are a few edge cases where performing a rollback with `--force` could have undesired side effects.
+
+```sh
+...
+metadata:
+  name: nginx-sample
+  annotations:
+    helm.sdk.operatorframework.io/rollback-force: false
+...
+```
+
+Adding annotation to the custom resource, `helm.sdk.operatorframework.io/rollback-force: false` therefore allows a user, to change the default behavior of the helm-based operator whereby, rollbacks will be performed without the `--force` option whenever an error is encountered.
