@@ -226,6 +226,7 @@ func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rp
 			// Therefore, we should perform the rollback when we have a non-nil
 			// release. Any rollback error here would be unexpected, so always
 			// log both the upgrade and rollback errors.
+			fmt.Printf("release upgrade failed; %v", err)
 
 			return nil, nil, ErrUpgradeFailed
 		}
