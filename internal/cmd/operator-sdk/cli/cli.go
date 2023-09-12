@@ -35,6 +35,7 @@ import (
 	golangv4 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v4"
 	grafanav1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/optional/grafana/v1alpha"
 
+	ansibleexternal "github.com/operator-framework/ansible-operator-plugins/pkg/plugins/ansible/v1"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
@@ -103,6 +104,12 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
+	ansibleV2AlphaBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 2, Stage: stage.Alpha},
+		kustomizev2Alpha.Plugin{},
+		ansibleexternal.Plugin{},
+		manifestsv2.Plugin{},
+		scorecardv2.Plugin{},
+	)
 	helmBundle, _ := plugin.NewBundle("helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
 		kustomizev2Alpha.Plugin{},
 		helmv1.Plugin{},
@@ -124,6 +131,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		cli.WithVersion(makeVersionString()),
 		cli.WithPlugins(
 			ansibleBundle,
+			ansibleV2AlphaBundle,
 			gov2Bundle, // Deprecated
 			gov3Bundle,
 			gov4AlphaBundle,

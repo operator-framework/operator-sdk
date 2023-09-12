@@ -763,6 +763,8 @@ github.com/opencontainers/runtime-spec v1.0.2/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/
 github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 h1:3snG66yBm59tKhhSPQrQ/0bCrv1LQbKt40LnUPiUxdc=
 github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
+github.com/operator-framework/ansible-operator-plugins v0.1.2 h1:oXT3sJafLzJwfHCclZZ8tov+psbhQop0NSlJQRDKIt0=
+github.com/operator-framework/ansible-operator-plugins v0.1.2/go.mod h1:G46APyI1JOzYW8BaSuPHxkTCfnEd0Hl0mwW8+bOn4IY=
 github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42 h1:d/Pnr19TnmIq3zQ6ebewC+5jt5zqYbRkvYd37YZENQY=
 github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42/go.mod h1:l/cuwtPxkVUY7fzYgdust2m9tlmb8I4pOvbsUufRb24=
 github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230413193425-4632388adc61 h1:FPO2hS4HNIU2pzWeX2KusKxqDFeGIURRMkxRtn/i570=
