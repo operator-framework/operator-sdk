@@ -107,7 +107,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	// Having to call this something other than "ansible" due to it causing amibiguity issues
 	// when marking --plugins=ansible. Naming this "ansible" is likely a breaking change since
 	// our documentation mentions using --plugins=ansible instead of --plugins=ansible/v1
-	ansibleV2AlphaBundle, _ := plugin.NewBundle("ansible-external"+plugins.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
+	ansibleV2AlphaBundle, _ := plugin.NewBundle("external-ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
 		kustomizev2Alpha.Plugin{},
 		ansibleexternal.Plugin{},
 		manifestsv2.Plugin{},

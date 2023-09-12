@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Adds a new `ansible-external/v1-alpha` plugin. The only user facing difference is that the
+      Adds a new `external-ansible/v1-alpha` plugin. The only user facing difference is that the
       image used in the scaffolded `Dockerfile` `FROM` directive is now 
       `quay.io/operator-framework/ansible-operator-plugins:<version>`. The first version
       tag that is usable is `v0.1.2`.
@@ -31,7 +31,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: (Optional) Converting from `ansible/v1` to `ansible-external/v1-alpha`
+      header: (Optional) Converting from `ansible/v1` to `external-ansible/v1-alpha`
       body: |
         In your `Dockerfile`, replace the `FROM` directive of:
         ```
