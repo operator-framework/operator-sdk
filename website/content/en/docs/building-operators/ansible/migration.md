@@ -71,7 +71,7 @@ So let's create a new project with the same domain (`example.com`):
 ```sh
 mkdir memcached-operator
 cd memcached-operator
-operator-sdk init --plugins=ansible --domain=example.com
+operator-sdk init --plugins=ansible/v1 --domain=example.com
 ```
 
 Now that we have our new project initialized, we need to recreate each of our APIs.

@@ -69,7 +69,7 @@ func (ma *AdvancedMolecule) Prepare() {
 func (ma *AdvancedMolecule) Run() {
 	log.Infof("creating the project")
 	err := ma.ctx.Init(
-		"--plugins", "ansible",
+		"--plugins", "ansible/v1",
 		"--group", ma.ctx.Group,
 		"--version", ma.ctx.Version,
 		"--kind", ma.ctx.Kind,

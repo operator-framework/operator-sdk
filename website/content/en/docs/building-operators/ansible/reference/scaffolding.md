@@ -8,12 +8,14 @@ A new Ansible operator project can be created using a command that looks like
 the following:
 
 ```
-operator-sdk init --plugins ansible \
+operator-sdk init --plugins ansible/v1 \
   --domain=my.domain \
   --group=apps --version=v1alpha1 --kind=AppService \
   --generate-playbook \
   --generate-role
 ```
+
+**Note**: To use the new `ansible/v2-alpha` plugin replace `ansible/v1` in the above command with `ansible/v2-alpha`
 
 The new project directory has many generated folders and files. For further information check the [Project Layout][project-layout] doc.
 

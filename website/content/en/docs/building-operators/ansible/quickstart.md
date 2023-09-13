@@ -25,8 +25,10 @@ This guide walks through an example of building a simple memcached-operator powe
   ```sh
   mkdir memcached-operator
   cd memcached-operator
-  operator-sdk init --domain example.com --plugins ansible
+  operator-sdk init --domain example.com --plugins ansible/v1
   ```
+
+  **Note**: To use the new `ansible/v2-alpha` plugin replace `ansible/v1` in the above command with `ansible/v2-alpha`
 
 1. Create a simple Memcached API:
 

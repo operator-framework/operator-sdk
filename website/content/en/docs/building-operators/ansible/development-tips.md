@@ -64,7 +64,7 @@ this, initialize a new project:
 
 ```sh
 mkdir memcached-operator && cd memcached-operator
-operator-sdk init --plugins=ansible --domain=example.com --group=cache --version=v1alpha1 --kind=Memcached --generate-role
+operator-sdk init --plugins=ansible/v1 --domain=example.com --group=cache --version=v1alpha1 --kind=Memcached --generate-role
 ansible-galaxy collection install -r requirements.yml
 ```
 
