@@ -80,7 +80,7 @@ jobs:
       uses: docker/setup-qemu-action@v2
 
     - name: set up buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
 
     - name: quay.io login
       if: ${{ github.event_name != 'pull_request' }}
@@ -126,7 +126,7 @@ jobs:
       uses: docker/setup-qemu-action@v2
 
     - name: set up buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
 
     - name: quay.io login
       if: ${{ github.event_name != 'pull_request' }}
