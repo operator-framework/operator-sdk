@@ -1,10 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: docker
-    directory: "/images/ansible-operator"
-    schedule:
-      interval: daily
-  - package-ecosystem: docker
     directory: "/images/custom-scorecard-tests"
     schedule:
       interval: daily

@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         # TODO(estroz): support scorecard-test-kuttl rebuilds.
-        id: ["operator-sdk", "ansible-operator", "helm-operator", "scorecard-test"]
+        id: ["operator-sdk", "helm-operator", "scorecard-test"]
     steps:
     - name: set up qemu
       uses: docker/setup-qemu-action@v2
