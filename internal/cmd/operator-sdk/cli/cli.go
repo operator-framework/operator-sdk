@@ -35,6 +35,7 @@ import (
 	golangv4 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v4"
 	grafanav1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/optional/grafana/v1alpha"
 
+	ansiblev1 "github.com/operator-framework/ansible-operator-plugins/pkg/plugins/ansible/v1"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
@@ -45,7 +46,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/plugins"
-	ansiblev1 "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1"
 	envtestv1 "github.com/operator-framework/operator-sdk/internal/plugins/envtest/v1"
 	helmv1 "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1"
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
