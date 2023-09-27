@@ -84,7 +84,7 @@ jobs:
 
     - name: quay.io login
       if: ${{ github.event_name != 'pull_request' }}
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
@@ -130,7 +130,7 @@ jobs:
 
     - name: quay.io login
       if: ${{ github.event_name != 'pull_request' }}
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
