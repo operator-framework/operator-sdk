@@ -12,7 +12,7 @@ jobs:
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: check_docs_only
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.19
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - run: sudo rm -rf /usr/local/bin/kustomize
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.19
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - run: make test-unit

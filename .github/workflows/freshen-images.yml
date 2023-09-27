@@ -18,7 +18,7 @@ jobs:
       git_tags: ${{ steps.tags.outputs.git_tags }}
     steps:
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - id: tags
@@ -45,7 +45,7 @@ jobs:
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 1
     - name: build and push
