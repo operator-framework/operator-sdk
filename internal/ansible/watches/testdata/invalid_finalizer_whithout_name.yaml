@@ -1,8 +1,0 @@
----
-- version: v1alpha1
-  group: app.example.com
-  kind: Database
-  playbook: playbook.yaml
-  finalizer:
-    name:
-

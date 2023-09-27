@@ -36,16 +36,6 @@ builds:
       - linux_ppc64le
       - linux_s390x
 
-  # ansible-operator build steps
-  - id: ansible-operator
-    main: ./cmd/ansible-operator
-    binary: ansible-operator
-    mod_timestamp: "{{ .CommitTimestamp }}"
-    asmflags: *build-asmflags
-    gcflags: *build-gcflags
-    ldflags: *build-ldflags
-    targets: *build-targets
-
   # helm-operator build steps
   - id: helm-operator
     main: ./cmd/helm-operator

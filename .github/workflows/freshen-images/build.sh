@@ -22,7 +22,7 @@ IMAGE_DO=--load
 # Space-separated list of git tags.
 # The --tags arg can be comma-separated.
 TAGS=
-# ID of the image, ex. operator-sdk, ansible-operator.
+# ID of the image, ex. operator-sdk.
 IMAGE_ID=
 # Update all images.
 FORCE=0
@@ -78,20 +78,6 @@ git clone https://github.com/operator-framework/operator-sdk.git $tmp
 trap "rm -rf $tmp" EXIT
 pushd $tmp
 
-case $IMAGE_ID in
-ansible-operator)
-  # ansible-operator has a base image that must be rebuilt in advance if necessary.
-  # This script will detect that the base is fresh when inspecting ansible-operator's
-  # Dockerfile and build it.
-  for i in ${!TAGS[*]}; do
-    if (($i=0)); then
-      build_ansible_base ${TAGS[$i]} "$PLATFORMS" true
-    else
-      build_ansible_base ${TAGS[$i]} "$PLATFORMS" false
-    fi
-  done
-;;
-esac
 
 # Build the image defined by IMAGE_ID for each tag for a set of platforms.
 for i in ${!TAGS[*]}; do

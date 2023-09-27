@@ -13,6 +13,7 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo/v2 v2.7.0
 	github.com/onsi/gomega v1.24.2
+	github.com/operator-framework/ansible-operator-plugins v1.32.0
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
 	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20230413193425-4632388adc61
 	github.com/operator-framework/java-operator-plugins v0.7.1-0.20230306190439-0eed476d2b75
@@ -20,7 +21,6 @@ require (
 	github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230227155221-caa8b9e1ab12
 	github.com/operator-framework/operator-registry v1.28.0
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/client_model v0.3.0
 	github.com/sergi/go-diff v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.9.3
@@ -166,7 +166,6 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
 	github.com/otiai10/copy v1.2.0 // indirect
@@ -175,6 +174,7 @@ require (
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect

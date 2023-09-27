@@ -48,38 +48,6 @@ function is_dockerfile_fresh() {
   done
 }
 
-# Build an image at path ./images/ansible-operator/base.Dockerfile checked out at git tag $1
-# for all platforms in $2. Semantics are otherwise the same as build_generic.
-function build_ansible_base() {
-  local tag=$1
-  local platforms=$2
-  local buildlatest=$3
-  local dockerfile=./images/ansible-operator/base.Dockerfile
-
-
-  git checkout refs/tags/$tag
-  local ansible_base_image_tag=$(grep -oP 'FROM \K(quay\.io/operator-framework/ansible-operator-base:.+)' ./images/ansible-operator/Dockerfile)
-  # Attempt to get the git ref that built this image from the git_commit image label,
-  # falling back to parsing it from the image tag, which typically contains a git ref
-  # as the last hyphen-delimit element.
-  local ansible_base_git_ref=$(docker inspect --format '{{ index .Config.Labels "git_commit" }}' $ansible_base_image_tag)
-  if [[ $ansible_base_git_ref == "devel" || $ansible_base_git_ref == "" ]]; then
-    ansible_base_git_ref=$(echo $ansible_base_image_tag | sed -E 's|.+:.+-(.+)|\1|')
-  fi
-  git checkout $ansible_base_git_ref
-  if is_dockerfile_fresh "$dockerfile"; then
-    echo "Skipping build of $dockerfile, it is FRESH!"
-  else
-    # dockerfile is not fresh, rebuildng image
-    if $buildlatest; then
-      echo "Rebuilding image [$ansible_base_image_tag] and latest for [$platforms]"
-      _buildx --tag $ansible_base_image_tag --tag quay.io/operator-framework/ansible-operator-base:latest --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
-    else
-      echo "Rebuilding image [$ansible_base_image_tag] for [$platforms]"
-      _buildx --tag $ansible_base_image_tag --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
-    fi
-  fi
-}
 
 # Build an image at path ./images/$2/Dockerfile checked out at git tag $1
 # for all platforms in $3. Tag is assumed to be "v"+semver; the image is tagged
