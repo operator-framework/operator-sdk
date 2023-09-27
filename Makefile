@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-# IMAGE_VERSION represents the ansible-operator, helm-operator, and scorecard subproject versions.
+# IMAGE_VERSION represents the helm-operator, and scorecard subproject versions.
 # This value must be updated to the release tag of the most recent release, a change that must
 # occur in the release commit. IMAGE_VERSION will be removed once each subproject that uses this
 # version is moved to a separate repo and release process.
@@ -71,16 +71,16 @@ clean: ## Cleanup build artifacts and tool binaries.
 ##@ Build
 
 .PHONY: install
-install: ## Install operator-sdk, ansible-operator, and helm-operator.
-	go install $(GO_BUILD_ARGS) ./cmd/{operator-sdk,ansible-operator,helm-operator}
+install: ## Install operator-sdk and helm-operator.
+	go install $(GO_BUILD_ARGS) ./cmd/{operator-sdk,helm-operator}
 
 .PHONY: build
-build: ## Build operator-sdk, ansible-operator, and helm-operator.
+build: ## Build operator-sdk and helm-operator.
 	@mkdir -p $(BUILD_DIR)
-	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/{operator-sdk,ansible-operator,helm-operator}
+	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/{operator-sdk,helm-operator}
 
-.PHONY: build/operator-sdk build/ansible-operator build/helm-operator
-build/operator-sdk build/ansible-operator build/helm-operator:
+.PHONY: build/operator-sdk build/helm-operator
+build/operator-sdk build/helm-operator:
 	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
 
 # Build scorecard binaries.
@@ -92,13 +92,9 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 
 # Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
-IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
+IMAGE_TARGET_LIST = operator-sdk helm-operator scorecard-test scorecard-test-kuttl
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
-# Convenience wrapper for building dependency base images.
-.PHONY: image-build-base
-IMAGE_BASE_TARGET_LIST = ansible-operator
-image-build-base: $(foreach i,$(IMAGE_BASE_TARGET_LIST),image-base/$(i)) ## Build all images.
 
 # Build an image.
 BUILD_IMAGE_REPO = quay.io/operator-framework
@@ -159,7 +155,7 @@ TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/op
 test-unit: ## Run unit tests
 	go test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
 
-e2e_tests := test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm test-e2e-integration
+e2e_tests := test-e2e-go test-e2e-helm test-e2e-integration
 e2e_targets := test-e2e $(e2e_tests)
 .PHONY: $(e2e_targets)
 
@@ -193,12 +189,6 @@ test-e2e-sample-go:: dev-install cluster-create ## Run Memcached Operator Sample
 	make test-e2e -C ./testdata/go/v3/memcached-operator/
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
-test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
-	go test -count=1 ./internal/ansible/proxy/...
-	go test ./test/e2e/ansible -v -ginkgo.v
-test-e2e-ansible-molecule:: install dev-install image/ansible-operator ## Run molecule-based Ansible e2e tests
-	go run ./hack/generate/samples/molecule/generate.go
-	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 	go test ./test/e2e/helm -v -ginkgo.v
 test-e2e-integration:: ## Run integration tests
