@@ -16,7 +16,6 @@ package controller
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +30,6 @@ import (
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	ctrlpredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
 
@@ -46,7 +44,6 @@ var log = logf.Log.WithName("helm.controller")
 // WatchOptions contains the necessary values to create a new controller that
 // manages helm releases in a particular namespace based on a GVK watch.
 type WatchOptions struct {
-	Namespace               string
 	GVK                     schema.GroupVersionKind
 	ManagerFactory          release.ManagerFactory
 	ReconcilePeriod         time.Duration
@@ -71,10 +68,6 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 		SuppressOverrideValues: options.SuppressOverrideValues,
 	}
 
-	// Register the GVK with the schema
-	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
-	metav1.AddToGroupVersion(mgr.GetScheme(), options.GVK.GroupVersion())
-
 	c, err := controller.New(controllerName, mgr, controller.Options{
 		Reconciler:              r,
 		MaxConcurrentReconciles: options.MaxConcurrentReconciles,
@@ -86,18 +79,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
 
-	var preds []ctrlpredicate.Predicate
-	p, err := parsePredicateSelector(options.Selector)
-
-	if err != nil {
-		return err
-	}
-
-	if p != nil {
-		preds = append(preds, p)
-	}
-
-	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}, preds...); err != nil {
+	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}); err != nil {
 		return err
 	}
 
@@ -106,33 +88,19 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	}
 
 	log.Info("Watching resource", "apiVersion", options.GVK.GroupVersion(), "kind",
-		options.GVK.Kind, "namespace", options.Namespace, "reconcilePeriod", options.ReconcilePeriod.String())
+		options.GVK.Kind, "reconcilePeriod", options.ReconcilePeriod.String())
 	return nil
-}
-
-// parsePredicateSelector parses the selector in the WatchOptions and creates a predicate
-// that is used to filter resources based on the specified selector
-func parsePredicateSelector(selector metav1.LabelSelector) (ctrlpredicate.Predicate, error) {
-	// If a selector has been specified in watches.yaml, add it to the watch's predicates.
-	if !reflect.ValueOf(selector).IsZero() {
-		p, err := ctrlpredicate.LabelSelectorPredicate(selector)
-		if err != nil {
-			return nil, fmt.Errorf("error constructing predicate from watches selector: %v", err)
-		}
-		return p, nil
-	}
-	return nil, nil
 }
 
 // watchDependentResources adds a release hook function to the HelmOperatorReconciler
 // that adds watches for resources in released Helm charts.
 func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c controller.Controller) {
-	owner := &unstructured.Unstructured{}
-	owner.SetGroupVersionKind(r.GVK)
-
 	var m sync.RWMutex
 	watches := map[schema.GroupVersionKind]struct{}{}
 	releaseHook := func(release *rpb.Release) error {
+		owner := &unstructured.Unstructured{}
+		owner.SetGroupVersionKind(r.GVK)
+		owner.SetNamespace(release.Namespace)
 		resources := releaseutil.SplitManifests(release.Manifest)
 		for _, resource := range resources {
 			var u unstructured.Unstructured

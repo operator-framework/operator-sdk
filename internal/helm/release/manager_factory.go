@@ -58,6 +58,10 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		return nil, fmt.Errorf("failed to load chart dir: %w", err)
 	}
 
+	actionConfig.KubeClient = client.NewLabelInjectingClient(actionConfig.KubeClient, map[string]string{
+		"helm.sdk.operatorframework.io/chart": crChart.Name(),
+	})
+
 	releaseName, err := getReleaseName(actionConfig.Releases, crChart.Name(), cr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm release name: %w", err)
