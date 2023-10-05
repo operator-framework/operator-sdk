@@ -10,6 +10,8 @@ Welcome to the Operator SDK! Before contributing, make sure to:
     - Sign your commit https://github.com/apps/dco
 - Follow the below checklist if making a user-facing change 
 
+Note, the location for ansible operator related logic has changed. For ansible operator related changes, please create the Pull Request in https://github.com/operator-framework/ansible-operator-plugins 
+
 -->
 
 **Description of the change:**

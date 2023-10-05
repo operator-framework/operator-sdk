@@ -45,7 +45,7 @@ We will try our best to answer the question, but we also have a mailing list and
 <!-- Uncomment one or more of the following lines corresponding to the language of the operator type -->
 
 <!-- /language go -->
-<!-- /language ansible -->
+<!-- /language ansible - For ansible operator related questions, please create the issue in https://github.com/operator-framework/ansible-operator-plugins -->
 <!-- /language helm -->
 
 **Kubernetes cluster type:**
