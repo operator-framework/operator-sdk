@@ -1,9 +1,0 @@
-entries:
-  - description: >
-      (helm): Use informer cache label selectors to reduce memory consumption.
-    kind: bugfix
-    breaking: false
-  - description: >
-      (helm): Fix bug with detection of owner reference support when setting up dynamic watches
-    kind: bugfix
-    breaking: false
