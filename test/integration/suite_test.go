@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 // TestIntegration tests operator-sdk projects with OLM.
@@ -64,9 +63,6 @@ var _ = BeforeSuite(func() {
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
-	By("updating the project configuration")
-	Expect(tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
-
 	By("installing OLM")
 	Expect(tc.InstallOLMVersion(testutils.OlmVersionForTestSuite)).To(Succeed())
 
@@ -92,16 +88,6 @@ var _ = BeforeSuite(func() {
 	}
 	Expect(writeCSV(&tc, "0.0.1", csv, false)).To(Succeed())
 
-	// TODO(estroz): enable when bundles can be tested locally.
-	//
-	// By("generating the operator bundle")
-	// err = tc.Make("bundle", "IMG="+tc.ImageName)
-	// Expect(err).NotTo(HaveOccurred())
-	//
-	// By("building the operator bundle image")
-	// err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
-	// Expect(err).NotTo(HaveOccurred())
-
 	By("creating the test namespace")
 	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
 	Expect(err).NotTo(HaveOccurred())
@@ -125,24 +111,6 @@ func warn(output string, err error) {
 	if err != nil {
 		fmt.Fprintf(GinkgoWriter, "warning: %s\n%s", err, output)
 	}
-}
-
-func runPackageManifests(tc *testutils.TestContext, args ...string) error {
-	allArgs := []string{"run", "packagemanifests", "--timeout", "6m", "--namespace", tc.Kubectl.Namespace}
-	output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
-	if err == nil {
-		fmt.Fprintln(GinkgoWriter, string(output))
-	}
-	return err
-}
-
-func cleanup(tc *testutils.TestContext) (string, error) {
-	allArgs := []string{"cleanup", tc.ProjectName, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
-	output, err := tc.Run(exec.Command(tc.BinaryName, allArgs...))
-	if err == nil {
-		fmt.Fprintln(GinkgoWriter, string(output))
-	}
-	return string(output), err
 }
 
 func readCSV(tc *testutils.TestContext, version string, isBundle bool) (*v1alpha1.ClusterServiceVersion, error) {
