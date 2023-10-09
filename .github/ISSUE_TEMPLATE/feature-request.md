@@ -24,5 +24,5 @@ I have an issue when ...
 <!-- If your request relates to a particular operator type, uncomment one or more of the following lines corresponding to the language of that type -->
 
 <!-- /language go -->
-<!-- /language ansible -->
+<!-- /language ansible For ansible operator related feature requests, please create the issue in https://github.com/operator-framework/ansible-operator-plugins -->
 <!-- /language helm -->
