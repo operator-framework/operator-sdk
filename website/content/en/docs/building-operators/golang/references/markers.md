@@ -151,7 +151,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 
 ## Deprecated markers
 
-[Markers][deprecated-markers] supported by `operator-sdk` prior to v1.0.0 are deprecated.
+Markers supported by `operator-sdk` prior to v1.0.0 are deprecated.
 You can migrate to the new marker system by running the following script:
 
 ```console
@@ -166,4 +166,3 @@ $ ./migrate-markers.sh path/to/*_types.go
 [csv-x-desc]:https://github.com/openshift/console/blob/master/frontend/packages/operator-lifecycle-manager/src/components/descriptors/reference/reference.md
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md
 [csv-crds]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#your-custom-resource-definitions
-[deprecated-markers]:https://v0-19-x.sdk.operatorframework.io/docs/golang/references/markers/

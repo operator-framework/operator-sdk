@@ -539,8 +539,8 @@ Next, check out the following:
 [kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
 [kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [kubernetes-extend-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
-[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
-[legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli
+[legacy-quickstart-doc]:https://github.com/operator-framework/operator-sdk/blob/v0.19.x/website/content/en/docs/golang/legacy/quickstart.md
+[legacy_CLI]:https://github.com/operator-framework/operator-sdk/tree/v0.19.x/website/content/en/docs/cli
 [manager_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/latest/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
