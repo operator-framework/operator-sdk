@@ -440,7 +440,7 @@ For further steps regarding the deployment of the operator, creation of custom r
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
 [what-are-the-the-differences-between-kubebuilder-and-operator-sdk]: /docs/faqs/#what-are-the-the-differences-between-kubebuilder-and-operator-sdk
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
-[cert-manager-docs]: https://cert-manager.io/docs/installation/upgrading/
+[cert-manager-docs]: https://cert-manager.io/docs/installation/upgrade/
 [webhook-doc]: https://book.kubebuilder.io/reference/webhook-overview.html
 [healthz-ping]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/healthz#CheckHandler
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
