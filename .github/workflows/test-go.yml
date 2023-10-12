@@ -29,12 +29,12 @@ jobs:
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: "go.mod"
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
       - run: sudo rm -rf /usr/local/bin/kustomize
       - run: make test-e2e-go
 
@@ -44,12 +44,12 @@ jobs:
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: "go.mod"
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
       - run: make test-unit
       - uses: shogo82148/actions-goveralls@v1
         with:
