@@ -357,7 +357,7 @@ Next, check out the following:
 1. The [advanced features][advanced-features] doc for more use cases and under-the-hood details.
 
 
-[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/helm/quickstart/
+[legacy-quickstart-doc]:https://github.com/operator-framework/operator-sdk/tree/v0.19.x/website/content/en/docs/helm/quickstart.md
 [migration-guide]:/docs/building-operators/helm/migration
 [install-guide]:/docs/building-operators/helm/installation
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
