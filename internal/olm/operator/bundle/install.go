@@ -51,6 +51,9 @@ func NewInstall(cfg *operator.Configuration) Install {
 
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&i.IndexImage, "index-image", fbcutil.DefaultIndexImage, "index image in which to inject bundle")
+	fs.StringVar(&i.InitImage, "decompression-image", fbcutil.DefaultInitImage, "image used in an init container in "+
+		"the registry pod to decompress the compressed catalog contents. cat and gzip binaries are expected to exist "+
+		"in the PATH")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
 
 	// --mode is hidden so only users who know what they're doing can alter add mode.

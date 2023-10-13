@@ -60,6 +60,9 @@ type FBCRegistryPod struct { //nolint:maligned
 	// new version of an operator bundle when published can be added to an index image
 	IndexImage string
 
+	// InitImage is the image to be used in the registry init container
+	InitImage string
+
 	// GRPCPort is the container grpc port
 	GRPCPort int32
 
@@ -349,7 +352,7 @@ func (f *FBCRegistryPod) addGZIPInitContainer(containerVolumeMount []corev1.Volu
 	initContainerVolumeMount := append(containerVolumeMount, gzipVolumeMount...)
 	f.pod.Spec.InitContainers = append(f.pod.Spec.InitContainers, corev1.Container{
 		Name:  defaultInitContainerName,
-		Image: "docker.io/library/busybox:1.36.0",
+		Image: f.InitImage,
 		Command: []string{
 			"sh",
 			"-c",
