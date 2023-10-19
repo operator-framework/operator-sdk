@@ -47,6 +47,8 @@ const (
 	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
 	// TODO(v2.0.0): pin this image tag to a specific version.
 	DefaultIndexImage = DefaultIndexImageBase + "latest"
+	// DefaultInitImage is the default image to be used in the registry init container
+	DefaultInitImage = "docker.io/library/busybox:1.36.0"
 )
 
 // BundleDeclcfg represents a minimal File-Based Catalog.

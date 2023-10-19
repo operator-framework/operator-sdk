@@ -98,6 +98,7 @@ type IndexImageCatalogCreator struct {
 	FBCContent      string
 	PackageName     string
 	IndexImage      string
+	InitImage       string
 	BundleImage     string
 	SecretName      string
 	CASecretName    string
@@ -518,12 +519,16 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	if c.IndexImage == "" {
 		c.IndexImage = fbcutil.DefaultIndexImage
 	}
+	if c.InitImage == "" {
+		c.InitImage = fbcutil.DefaultInitImage
+	}
 
 	if c.HasFBCLabel {
 		// Initialize and create the FBC registry pod.
 		fbcRegistryPod := fbcindex.FBCRegistryPod{
 			BundleItems:     items,
 			IndexImage:      c.IndexImage,
+			InitImage:       c.InitImage,
 			FBCContent:      c.FBCContent,
 			SecurityContext: c.SecurityContext.String(),
 		}
