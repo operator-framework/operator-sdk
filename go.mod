@@ -13,7 +13,8 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
-	github.com/operator-framework/ansible-operator-plugins v1.32.0
+	// TODO(everettraven): bump ansible dependency when possible
+	// github.com/operator-framework/ansible-operator-plugins v1.32.0
 	github.com/operator-framework/api v0.17.7
 	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20231013185714-215d1f8a3e7d
 	github.com/operator-framework/java-operator-plugins v0.8.1

@@ -56,7 +56,7 @@ type Client struct {
 }
 
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
-	cl, err := olmresourceclient.NewClientForConfig(cfg)
+	cl, err := olmresourceclient.NewClientForConfig(cfg, http.DefaultClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get OLM resource client: %v", err)
 	}

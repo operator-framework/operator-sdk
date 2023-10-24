@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -346,6 +347,8 @@ var _ = Describe("Client", func() {
 	})
 })
 
+var _ client.Client = &errClient{}
+
 type errClient struct {
 	cli            client.Client
 	noMatchCounter int
@@ -412,4 +415,12 @@ func (c *errClient) RESTMapper() meta.RESTMapper {
 
 func (c *errClient) Status() client.SubResourceWriter {
 	return c.cli.Status()
+}
+
+func (c *errClient) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return c.cli.GroupVersionKindFor(obj)
+}
+
+func (c *errClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return c.cli.IsObjectNamespaced(obj)
 }

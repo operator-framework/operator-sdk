@@ -159,20 +159,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	}
 
 	if options.NewClient == nil {
-		options.NewClient = func(cache cache.Cache, config *rest.Config, options client.Options, uncachedObjects ...client.Object) (client.Client, error) {
-			// Create the Client for Write operations.
-			c, err := client.New(config, options)
-			if err != nil {
-				return nil, err
-			}
-
-			return client.NewDelegatingClient(client.NewDelegatingClientInput{
-				CacheReader:       cache,
-				Client:            c,
-				UncachedObjects:   uncachedObjects,
-				CacheUnstructured: true,
-			})
-		}
+		options.NewClient = client.New
 	}
 
 	mgr, err := manager.New(cfg, options)
@@ -228,20 +215,9 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 // exitIfUnsupported prints an error containing unsupported field names and exits
 // if any of those fields are not their default values.
 func exitIfUnsupported(options manager.Options) {
-	var keys []string
-	// The below options are webhook-specific, which is not supported by ansible.
-	if options.CertDir != "" {
-		keys = append(keys, "certDir")
-	}
-	if options.Host != "" {
-		keys = append(keys, "host")
-	}
-	if options.Port != 0 {
-		keys = append(keys, "port")
-	}
-
-	if len(keys) > 0 {
-		log.Error(fmt.Errorf("%s set in manager options", strings.Join(keys, ", ")), "unsupported fields")
+	// The below options are webhook-specific, which is not supported by helm.
+	if options.WebhookServer != nil {
+		log.Error(errors.New("webhook configurations set in manager options"), "unsupported configuration")
 		os.Exit(1)
 	}
 }
@@ -271,7 +247,7 @@ func getWatchNamespaces(defaultNamespace string) []string {
 }
 
 func buildNewCacheFunc(watchNamespaces []string, ws []watches.Watch, sch *apimachruntime.Scheme) (cache.NewCacheFunc, error) {
-	selectorsByObject := cache.SelectorsByObject{}
+	selectorsByObject := map[client.Object]cache.ByObject{}
 	chartNames := make([]string, 0, len(ws))
 	for _, w := range ws {
 		sch.AddKnownTypeWithName(w.GroupVersionKind, &unstructured.Unstructured{})
@@ -282,7 +258,7 @@ func buildNewCacheFunc(watchNamespaces []string, ws []watches.Watch, sch *apimac
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse watch selector for %s: %v", w.GroupVersionKind, err)
 		}
-		selectorsByObject[crObj] = cache.ObjectSelector{Label: sel}
+		selectorsByObject[crObj] = cache.ByObject{Label: sel}
 
 		chrt, err := loader.LoadDir(w.ChartDir)
 		if err != nil {
@@ -298,14 +274,9 @@ func buildNewCacheFunc(watchNamespaces []string, ws []watches.Watch, sch *apimac
 	defaultSelector := labels.NewSelector().Add(*req)
 
 	return func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-		opts.SelectorsByObject = selectorsByObject
-		opts.DefaultSelector = cache.ObjectSelector{Label: defaultSelector}
-		if len(watchNamespaces) > 1 {
-			return cache.MultiNamespacedCacheBuilder(watchNamespaces)(config, opts)
-		}
-		if len(watchNamespaces) == 1 {
-			opts.Namespace = watchNamespaces[0]
-		}
+		opts.ByObject = selectorsByObject
+		opts.DefaultLabelSelector = defaultSelector
+		opts.Namespaces = watchNamespaces
 		return cache.New(config, opts)
 	}, nil
 }
