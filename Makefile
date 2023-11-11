@@ -73,6 +73,10 @@ clean: ## Cleanup build artifacts and tool binaries.
 
 .PHONY: install
 install: ## Install operator-sdk and helm-operator.
+	@if [ -z "$(GOBIN)" ]; then \
+		echo "Error: GOBIN is not set"; \
+		exit 1; \
+	fi
 	$(GO) install $(GO_BUILD_ARGS) ./cmd/{operator-sdk,helm-operator}
 
 .PHONY: build
