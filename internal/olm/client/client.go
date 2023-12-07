@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
+	olmapiv1 "github.com/operator-framework/api/pkg/operators/v1"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -93,6 +94,14 @@ func NewClientForConfig(cfg *rest.Config, httpClient *http.Client) (*Client, err
 	rm, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)
+	}
+
+	if err := olmapiv1alpha1.AddToScheme(Scheme); err != nil {
+		return nil, fmt.Errorf("failed to add OLM API v1alpha1 types to scheme: %v", err)
+	}
+
+	if err := olmapiv1.AddToScheme(Scheme); err != nil {
+		return nil, fmt.Errorf("failed to add OLM API v1 types to scheme: %v", err)
 	}
 
 	cl, err := client.New(cfg, client.Options{

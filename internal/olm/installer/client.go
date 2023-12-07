@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
+	olmapiv1 "github.com/operator-framework/api/pkg/operators/v1"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmmanifests "github.com/operator-framework/operator-sdk/internal/bindata/olm"
 	log "github.com/sirupsen/logrus"
@@ -56,7 +57,12 @@ type Client struct {
 }
 
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
-	cl, err := olmresourceclient.NewClientForConfig(cfg, http.DefaultClient)
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build an HTTP client for the kubeconfig: %v", err)
+	}
+
+	cl, err := olmresourceclient.NewClientForConfig(cfg, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get OLM resource client: %v", err)
 	}
@@ -69,14 +75,31 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 }
 
 func (c Client) InstallVersion(ctx context.Context, namespace, version string) (*olmresourceclient.Status, error) {
-
-	resources, err := c.getResources(ctx, version)
+	crds, resources, err := c.getResources(ctx, version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resources: %v", err)
 	}
-	objs := toObjects(resources...)
 
-	status := c.GetObjectsStatus(ctx, objs...)
+	log.Info("Checking for existing OLM CRDs")
+	crdObjs := toObjects(crds...)
+	status := c.GetObjectsStatus(ctx, crdObjs...)
+	crdsInstalled, err := status.HasInstalledResources()
+	if err != nil {
+		return nil, fmt.Errorf("detected errored OLM resources: %v", err)
+	} else if crdsInstalled {
+		return nil, errors.New(
+			"detected existing OLM resources: OLM must be completely uninstalled before installation")
+	}
+
+	log.Info("Checking for existing OLM resources")
+	nonOlmCrds := filterResources(resources, func(r unstructured.Unstructured) bool {
+		return r.GroupVersionKind().GroupVersion() != olmapiv1.GroupVersion && r.GroupVersionKind().GroupVersion() != schema.GroupVersion{
+			Group:   olmapiv1alpha1.GroupName,
+			Version: olmapiv1alpha1.GroupVersion,
+		}
+	})
+	nonCrdObjs := toObjects(nonOlmCrds...)
+	status = c.GetObjectsStatus(ctx, nonCrdObjs...)
 	installed, err := status.HasInstalledResources()
 	if err != nil {
 		return nil, fmt.Errorf("detected errored OLM resources: %v", err)
@@ -85,7 +108,24 @@ func (c Client) InstallVersion(ctx context.Context, namespace, version string) (
 			"detected existing OLM resources: OLM must be completely uninstalled before installation")
 	}
 
-	log.Print("Creating CRDs and resources")
+	log.Info("Installing OLM CRDs...")
+	if err := c.DoCreate(ctx, crdObjs...); err != nil {
+		return nil, fmt.Errorf("failed to create CRDs: %v", err)
+	}
+
+	// Wait for CRDs to be created before creating other resources.
+	// retry 5 times with 1 second interval
+	for !crdsInstalled {
+		status = c.GetObjectsStatus(ctx, crdObjs...)
+		crdsInstalled, _ = status.HasInstalledResources()
+		if crdsInstalled {
+			log.Info("OLM CRDs successfully installed!")
+			break
+		}
+	}
+
+	log.Print("Creating OLM resources...")
+	objs := toObjects(resources...)
 	if err := c.DoCreate(ctx, objs...); err != nil {
 		return nil, fmt.Errorf("failed to create CRDs and resources: %v", err)
 	}
@@ -130,16 +170,17 @@ func (c Client) InstallVersion(ctx context.Context, namespace, version string) (
 		return nil, fmt.Errorf("deployment/%s failed to rollout: %v", packageServerKey.Name, err)
 	}
 
+	objs = toObjects(append(crds, resources...)...)
 	status = c.GetObjectsStatus(ctx, objs...)
 	return &status, nil
 }
 
 func (c Client) UninstallVersion(ctx context.Context, namespace, version string) error {
-	resources, err := c.getResources(ctx, version)
+	crds, resources, err := c.getResources(ctx, version)
 	if err != nil {
 		return fmt.Errorf("failed to get resources: %v", err)
 	}
-	objs := toObjects(resources...)
+	objs := toObjects(append(crds, resources...)...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
 	installed, err := status.HasInstalledResources()
@@ -155,11 +196,11 @@ func (c Client) UninstallVersion(ctx context.Context, namespace, version string)
 }
 
 func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmresourceclient.Status, error) {
-	resources, err := c.getResources(ctx, version)
+	crds, resources, err := c.getResources(ctx, version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resources: %v", err)
 	}
-	objs := toObjects(resources...)
+	objs := toObjects(append(crds, resources...)...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
 	installed, err := status.HasInstalledResources()
@@ -171,7 +212,7 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 	return &status, nil
 }
 
-func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, []unstructured.Unstructured, error) {
 	log.Infof("Fetching CRDs for version %q", version)
 
 	resolvedVersion := formatVersion(version)
@@ -186,29 +227,28 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 		crdManifestBindataPath := filepath.Join(bindataManifestPath, version+"-crds.yaml")
 		crdResources, err = getPackagedManifests(crdManifestBindataPath)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		olmManifestBindataPath := filepath.Join(bindataManifestPath, version+"-olm.yaml")
 		olmResources, err = getPackagedManifests(olmManifestBindataPath)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		log.Infof("Fetching resources for resolved version %q", resolvedVersion)
 		crdResources, err = c.getCRDs(ctx, resolvedVersion)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch CRDs: %v", err)
+			return nil, nil, fmt.Errorf("failed to fetch CRDs: %v", err)
 		}
 
 		olmResources, err = c.getOLM(ctx, resolvedVersion)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch resources: %v", err)
+			return nil, nil, fmt.Errorf("failed to fetch resources: %v", err)
 		}
 	}
 
-	resources := append(crdResources, olmResources...)
-	return resources, nil
+	return crdResources, olmResources, nil
 }
 
 func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
