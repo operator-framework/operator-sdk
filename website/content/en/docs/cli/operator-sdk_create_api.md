@@ -27,13 +27,14 @@ operator-sdk create api [flags]
   operator-sdk create api --group ship --version v1beta1 --kind Frigate
 
   # Edit the API Scheme
+
   nano api/v1beta1/frigate_types.go
 
   # Edit the Controller
-  nano controllers/frigate/frigate_controller.go
+  nano internal/controller/frigate/frigate_controller.go
 
   # Edit the Controller Test
-  nano controllers/frigate/frigate_controller_test.go
+  nano internal/controller/frigate/frigate_controller_test.go
 
   # Generate the manifests
   make manifests

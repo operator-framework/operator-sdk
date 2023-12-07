@@ -89,9 +89,9 @@ func (mh *Memcached) Prepare() {
 func (mh *Memcached) Run() {
 
 	if !mh.isV3() {
-		log.Infof("creating the v4-alpha project")
+		log.Infof("creating the v4 project")
 		err := mh.ctx.Init(
-			"--plugins", "go/v4-alpha",
+			"--plugins", "go/v4",
 			"--project-version", "3",
 			"--repo", "github.com/example/memcached-operator",
 			"--domain", mh.ctx.Domain)
@@ -150,7 +150,7 @@ func (mh *Memcached) Run() {
 
 	mh.implementingWebhooks()
 
-	if strings.Contains(mh.ctx.Dir, "v4-alpha") {
+	if strings.Contains(mh.ctx.Dir, "v4") {
 		mh.uncommentDefaultKustomizationV4()
 		mh.uncommentManifestsKustomizationv4()
 	} else {
@@ -871,14 +871,22 @@ const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
 func (mh *Memcached) customizingMakefile() {
 	makefilePath := filepath.Join(mh.ctx.Dir, "Makefile")
 
+	// TODO: update this to be different based on go plugin version
 	// Add prom-rule-ci target to the makefile
-	err := kbutil.InsertCode(makefilePath,
-		`$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -`,
-		makefileFragment)
-	pkg.CheckError("adding prom-rule-ci target to the makefile", err)
+	if mh.isV3() {
+		err := kbutil.InsertCode(makefilePath,
+			`$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -`,
+			makefileFragment)
+		pkg.CheckError("adding prom-rule-ci target to the makefile", err)
+	} else {
+		err := kbutil.InsertCode(makefilePath,
+			`$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -`,
+			makefileFragment)
+		pkg.CheckError("adding prom-rule-ci target to the makefile", err)
+	}
 
 	// Add metrics documentation
-	err = kbutil.InsertCode(makefilePath,
+	err := kbutil.InsertCode(makefilePath,
 		`$(MAKE) docker-push IMG=$(CATALOG_IMG)`,
 		metricsdocsMakefileFragment)
 	pkg.CheckError("adding metrics documentation", err)
@@ -1002,7 +1010,7 @@ const (
 	deploymentSizeUndesiredAlert = "MemcachedDeploymentSizeUndesired"
 	operatorDownAlert            = "MemcachedOperatorDown"
 	operatorUpTotalRecordingRule = "memcached_operator_up_total"
-	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/"
+	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/docs/monitoring/runbooks/"
 )
 
 // NewPrometheusRule creates new PrometheusRule(CR) for the operator to have alerts and recording rules
@@ -1112,7 +1120,7 @@ tests:
               description: "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes."
             exp_labels:
               severity: "warning"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedDeploymentSizeUndesired.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedDeploymentSizeUndesired.md"
       - eval_time: 5m
         alertname: MemcachedOperatorDown
         exp_alerts:
@@ -1120,7 +1128,7 @@ tests:
               description: "No running memcached-operator pods were detected in the last 5 min."
             exp_labels:
               severity: "critical"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedOperatorDown.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedOperatorDown.md"
       # it must not trigger before 15m
       - eval_time: 14m
         alertname: MemcachedDeploymentSizeUndesired
@@ -1136,7 +1144,7 @@ tests:
               description: "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes."
             exp_labels:
               severity: "warning"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedDeploymentSizeUndesired.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedDeploymentSizeUndesired.md"
       - eval_time: 15m
         alertname: MemcachedOperatorDown
         exp_alerts:
@@ -1144,7 +1152,7 @@ tests:
               description: "No running memcached-operator pods were detected in the last 5 min."
             exp_labels:
               severity: "critical"
-              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedOperatorDown.md"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/docs/monitoring/runbooks/MemcachedOperatorDown.md"
 `
 
 const ruleSpecDumperFragment = `
