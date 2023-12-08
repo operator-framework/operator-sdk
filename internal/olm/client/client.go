@@ -177,15 +177,15 @@ func (c Client) DoDelete(ctx context.Context, objs ...client.Object) error {
 			log.Infof("    %s %q does not exist", kind, getName(obj.GetNamespace(), obj.GetName()))
 		}
 		key := client.ObjectKeyFromObject(obj)
-		if err := wait.PollImmediateUntil(time.Millisecond*100, func() (bool, error) {
-			err := c.KubeClient.Get(ctx, key, obj)
+		if err := wait.PollUntilContextCancel(ctx, time.Millisecond*100, false, func(pctx context.Context) (bool, error) {
+			err := c.KubeClient.Get(pctx, key, obj)
 			if apierrors.IsNotFound(err) {
 				return true, nil
 			} else if err != nil {
 				return false, err
 			}
 			return false, nil
-		}, ctx.Done()); err != nil {
+		}); err != nil {
 			return err
 		}
 	}
@@ -206,9 +206,9 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 	onceNotAvailable := sync.Once{}
 	onceSpecUpdate := sync.Once{}
 
-	rolloutComplete := func() (bool, error) {
+	rolloutComplete := func(pctx context.Context) (bool, error) {
 		deployment := appsv1.Deployment{}
-		err := c.KubeClient.Get(ctx, key, &deployment)
+		err := c.KubeClient.Get(pctx, key, &deployment)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				onceNotFound.Do(func() {
@@ -254,7 +254,7 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 		})
 		return false, nil
 	}
-	return wait.PollImmediateUntil(time.Second, rolloutComplete, ctx.Done())
+	return wait.PollUntilContextCancel(ctx, time.Second, false, rolloutComplete)
 }
 
 func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
@@ -265,8 +265,8 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	once := sync.Once{}
 
 	csv := olmapiv1alpha1.ClusterServiceVersion{}
-	csvPhaseSucceeded := func() (bool, error) {
-		err := c.KubeClient.Get(ctx, key, &csv)
+	csvPhaseSucceeded := func(pctx context.Context) (bool, error) {
+		err := c.KubeClient.Get(pctx, key, &csv)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				once.Do(func() {
@@ -292,7 +292,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		}
 	}
 
-	err := wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
+	err := wait.PollUntilContextCancel(ctx, time.Second, false, csvPhaseSucceeded)
 	if err != nil && errors.Is(err, context.DeadlineExceeded) {
 		depCheckErr := c.checkDeploymentErrors(ctx, key, csv)
 		if depCheckErr != nil {

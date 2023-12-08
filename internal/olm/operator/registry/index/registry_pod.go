@@ -162,8 +162,8 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 	}
 
 	// poll and verify that pod is running
-	podCheck := wait.ConditionFunc(func() (done bool, err error) {
-		err = rp.cfg.Client.Get(ctx, podKey, rp.pod)
+	podCheck := wait.ConditionWithContextFunc(func(pctx context.Context) (done bool, err error) {
+		err = rp.cfg.Client.Get(pctx, podKey, rp.pod)
 		if err != nil {
 			return false, fmt.Errorf("error getting pod %s: %w", rp.pod.Name, err)
 		}
@@ -179,9 +179,9 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 }
 
 // checkPodStatus polls and verifies that the pod status is running
-func (rp *SQLiteRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
+func (rp *SQLiteRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionWithContextFunc) error {
 	// poll every 200 ms until podCheck is true or context is done
-	err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done())
+	err := wait.PollUntilContextCancel(ctx, 200*time.Millisecond, false, podCheck)
 	if err != nil {
 		return fmt.Errorf("error waiting for registry pod %s to run: %v", rp.pod.Name, err)
 	}

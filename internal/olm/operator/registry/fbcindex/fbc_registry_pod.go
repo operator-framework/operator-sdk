@@ -163,8 +163,8 @@ func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration
 	}
 
 	// poll and verify that pod is running
-	podCheck := wait.ConditionFunc(func() (done bool, err error) {
-		err = f.cfg.Client.Get(ctx, podKey, f.pod)
+	podCheck := wait.ConditionWithContextFunc(func(pctx context.Context) (done bool, err error) {
+		err = f.cfg.Client.Get(pctx, podKey, f.pod)
 		if err != nil {
 			return false, fmt.Errorf("error getting pod %s: %w", f.pod.Name, err)
 		}
@@ -180,9 +180,9 @@ func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration
 }
 
 // checkPodStatus polls and verifies that the pod status is running
-func (f *FBCRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
+func (f *FBCRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionWithContextFunc) error {
 	// poll every 200 ms until podCheck is true or context is done
-	err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done())
+	err := wait.PollUntilContextCancel(ctx, 200*time.Millisecond, false, podCheck)
 	if err != nil {
 		return fmt.Errorf("error waiting for registry pod %s to run: %v", f.pod.Name, err)
 	}

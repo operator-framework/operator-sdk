@@ -97,9 +97,15 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		options manager.Options
 		err     error
 	)
+	// TODO: This flag has been deprecated since controller-runtime has deprecated
+	// the component config package. This check and the associated flag
+	// should be removed when upgrading to a version of controller-runtime where the
+	// component config package has been removed.
+	// For tracking see https://github.com/kubernetes-sigs/controller-runtime/issues/895
+	// Until this has been done, ignore the linting errors
 	if f.ManagerConfigPath != "" {
-		cfgLoader := ctrl.ConfigFile().AtPath(f.ManagerConfigPath)
-		if options, err = options.AndFrom(cfgLoader); err != nil {
+		cfgLoader := ctrl.ConfigFile().AtPath(f.ManagerConfigPath) // nolint:staticcheck
+		if options, err = options.AndFrom(cfgLoader); err != nil { // nolint:staticcheck
 			log.Error(err, "Unable to load the manager config file")
 			os.Exit(1)
 		}
@@ -151,7 +157,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 
-	watchNamespaces := getWatchNamespaces(options.Namespace)
+	watchNamespaces := getWatchNamespaces(options.Cache.Namespaces)
 	options.NewCache, err = buildNewCacheFunc(watchNamespaces, ws, options.Scheme)
 	if err != nil {
 		log.Error(err, "Failed to create NewCache function for manager.")
@@ -222,7 +228,7 @@ func exitIfUnsupported(options manager.Options) {
 	}
 }
 
-func getWatchNamespaces(defaultNamespace string) []string {
+func getWatchNamespaces(namespaces []string) []string {
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	log = log.WithValues("Namespace", namespace)
 	if found {
@@ -238,12 +244,12 @@ func getWatchNamespaces(defaultNamespace string) []string {
 		log.Info("Watching single namespace.")
 		return []string{namespace}
 	}
-	if defaultNamespace == "" {
+	if len(namespaces) == 0 {
 		log.Info(fmt.Sprintf("Watch namespaces not configured by environment variable %s or file. "+
 			"Watching all namespaces.", k8sutil.WatchNamespaceEnvVar))
 		return []string{metav1.NamespaceAll}
 	}
-	return []string{defaultNamespace}
+	return namespaces
 }
 
 func buildNewCacheFunc(watchNamespaces []string, ws []watches.Watch, sch *apimachruntime.Scheme) (cache.NewCacheFunc, error) {

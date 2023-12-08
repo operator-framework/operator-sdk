@@ -28,14 +28,17 @@ import (
 	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
 	kustomizev2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
-	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
+
+	// TODO: Remove this import and plugin once we have upgraded to a version of
+	// kubebuilder that no longer has the declarative plugin as a package
+	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1" // nolint:staticcheck
 	deployimagev1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1"
 	golangv2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2"
 	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
 	golangv4 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v4"
 	grafanav1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/optional/grafana/v1alpha"
 
-	// ansiblev1 "github.com/operator-framework/ansible-operator-plugins/pkg/plugins/ansible/v1"
+	ansiblev1 "github.com/operator-framework/ansible-operator-plugins/pkg/plugins/ansible/v1"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
@@ -117,7 +120,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		plugin.WithVersion(plugin.Version{Number: 1}),
 		plugin.WithPlugins(
 			kustomizev2.Plugin{},
-			// ansiblev1.Plugin{},
+			ansiblev1.Plugin{},
 			manifestsv2.Plugin{},
 			scorecardv2.Plugin{},
 		),

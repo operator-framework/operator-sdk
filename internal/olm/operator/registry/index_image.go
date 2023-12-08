@@ -642,14 +642,14 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 	}
 
 	pod := corev1.Pod{}
-	podCheck := wait.ConditionFunc(func() (done bool, err error) {
-		if err := c.cfg.Client.Get(ctx, podKey, &pod); err != nil {
+	podCheck := wait.ConditionWithContextFunc(func(pctx context.Context) (done bool, err error) {
+		if err := c.cfg.Client.Get(pctx, podKey, &pod); err != nil {
 			return false, fmt.Errorf("error getting previous registry pod %s: %w", podName, err)
 		}
 		return true, nil
 	})
 
-	if err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done()); err != nil {
+	if err := wait.PollUntilContextCancel(ctx, 200*time.Millisecond, false, podCheck); err != nil {
 		return fmt.Errorf("error getting previous registry pod: %v", err)
 	}
 
@@ -661,14 +661,14 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 
 	// Failure of the old pod to clean up should block and cause the caller to error out if it fails,
 	// since the old pod may still be connected to OLM.
-	if err := wait.PollImmediateUntil(200*time.Millisecond, func() (bool, error) {
-		if err := c.cfg.Client.Get(ctx, podKey, &pod); apierrors.IsNotFound(err) {
+	if err := wait.PollUntilContextCancel(ctx, 200*time.Millisecond, false, func(pctx context.Context) (bool, error) {
+		if err := c.cfg.Client.Get(pctx, podKey, &pod); apierrors.IsNotFound(err) {
 			return true, nil
 		} else if err != nil {
 			return false, err
 		}
 		return false, nil
-	}, ctx.Done()); err != nil {
+	}); err != nil {
 		return fmt.Errorf("old registry pod %q failed to delete (%v), requires manual cleanup", pod.GetName(), err)
 	}
 
