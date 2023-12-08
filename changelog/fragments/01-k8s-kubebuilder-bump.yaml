@@ -1,0 +1,34 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Bump supported Kubernetes version to 1.27
+    kind: "change"
+    breaking: false
+  - description: >
+      (helm/v1): Deprecate the `--config` flag due to the controller-runtime ComponentConfig
+      package being deprecated with the planned removal of support for loading manager options
+      from a file
+    kind: "deprecation" 
+    breaking: false
+  - description: >
+      (go/v4): go/v4 is now stable and is the default version
+      used when scaffolding a Go based operator
+    kind: "change"
+    breaking: false
+  - description: >
+      (kustomize/v2): kustomize/v2 is now stable and is the default version
+      used in the plugin chain when using go/v4, ansible/v1, helm/v1, and hybrid/v1-alpha plugins
+    kind: "change"
+    breaking: false
+  - description: >
+      `operator-sdk olm install`: fix a bug where the retry logic would not
+      retry until the the command's timeout was reached, resulting in early exiting
+      of the command before the specified timeout was reached.
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      Updated the supported OLM versions to 0.24.0, 0.25.0, and 0.26.0
+    kind: "change"
+    breaking: false
+  
