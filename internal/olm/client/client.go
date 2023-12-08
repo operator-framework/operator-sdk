@@ -133,17 +133,10 @@ func (c Client) DoCreate(ctx context.Context, objs ...client.Object) error {
 	return nil
 }
 
-// try to create 10 times before giving up
+// try to create resource until context is cancelled
+// or resource is created successfully
 func (c Client) safeCreateOneResource(ctx context.Context, obj client.Object, kind string, resourceName string) error {
-	backoff := wait.Backoff{
-		// retrying every one seconds. We're relaying on the timeout context, so the number of steps is very large, so
-		// we could use the timeout flag (or its default value), as it used to create the context.
-		Duration: time.Second,
-		Steps:    1000,
-		Factor:   1,
-	}
-
-	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
+	err := wait.PollUntilContextCancel(ctx, time.Second, false, func(ctx context.Context) (bool, error) {
 		err := c.KubeClient.Create(ctx, obj)
 		if err == nil || apierrors.IsAlreadyExists(err) {
 			log.Infof("  %s %q created", kind, resourceName)
