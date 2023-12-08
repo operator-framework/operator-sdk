@@ -90,6 +90,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			manifestsv2.Plugin{},
 			scorecardv2.Plugin{},
 		),
+		plugin.WithDeprecationMessage(golangv2.Plugin{}.DeprecationWarning()),
 	)
 
 	// deprecated
@@ -102,6 +103,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			manifestsv2.Plugin{},
 			scorecardv2.Plugin{},
 		),
+		plugin.WithDeprecationMessage(golangv3.Plugin{}.DeprecationWarning()),
 	)
 
 	gov4Bundle, _ := plugin.NewBundleWithOptions(

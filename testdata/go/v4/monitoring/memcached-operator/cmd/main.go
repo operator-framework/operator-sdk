@@ -33,8 +33,6 @@ import (
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	"github.com/example/memcached-operator/internal/controller"
 	"github.com/example/memcached-operator/monitoring"
@@ -76,7 +74,8 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "86f835c3.example.com",
@@ -107,11 +106,9 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Memcached")
 		os.Exit(1)
 	}
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&cachev1alpha1.Memcached{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Memcached")
-			os.Exit(1)
-		}
+	if err = (&cachev1alpha1.Memcached{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Memcached")
+		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
 

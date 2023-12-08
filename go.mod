@@ -245,4 +245,5 @@ replace (
 	// latest tag resolves to a very old version. this is only used for spinning up local test registries
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
+	sigs.k8s.io/kubebuilder/v3 => sigs.k8s.io/kubebuilder/v3 v3.11.1
 )

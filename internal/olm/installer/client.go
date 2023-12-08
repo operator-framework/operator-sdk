@@ -114,14 +114,12 @@ func (c Client) InstallVersion(ctx context.Context, namespace, version string) (
 	}
 
 	// Wait for CRDs to be created before creating other resources.
-	// retry 5 times with 1 second interval
-	for !crdsInstalled {
-		status = c.GetObjectsStatus(ctx, crdObjs...)
-		crdsInstalled, _ = status.HasInstalledResources()
-		if crdsInstalled {
-			log.Info("OLM CRDs successfully installed!")
-			break
-		}
+	err = wait.PollUntilContextCancel(ctx, time.Second, false, func(ctx context.Context) (bool, error) {
+		status := c.GetObjectsStatus(ctx, crdObjs...)
+		return status.HasInstalledResources()
+	})
+	if err != nil {
+		return nil, fmt.Errorf("waiting for CRDs to be installed: %v", err)
 	}
 
 	log.Print("Creating OLM resources...")
