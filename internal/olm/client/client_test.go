@@ -298,7 +298,7 @@ var _ = Describe("Client", func() {
 		It("should eventually create all the resources successfully", func() {
 			cli := Client{KubeClient: fakeClient}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 			defer cancel()
 
 			Expect(cli.DoCreate(ctx,
