@@ -175,8 +175,8 @@ func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha
 	catSrcKey := client.ObjectKeyFromObject(cs)
 
 	// verify that catalog source connection status is READY
-	catSrcCheck := wait.ConditionFunc(func() (done bool, err error) {
-		if err := o.cfg.Client.Get(ctx, catSrcKey, cs); err != nil {
+	catSrcCheck := wait.ConditionWithContextFunc(func(pctx context.Context) (done bool, err error) {
+		if err := o.cfg.Client.Get(pctx, catSrcKey, cs); err != nil {
 			return false, err
 		}
 		if cs.Status.GRPCConnectionState != nil {
@@ -187,7 +187,7 @@ func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha
 		return false, nil
 	})
 
-	if err := wait.PollImmediateUntil(200*time.Millisecond, catSrcCheck, ctx.Done()); err != nil {
+	if err := wait.PollUntilContextCancel(ctx, 200*time.Millisecond, false, catSrcCheck); err != nil {
 		return fmt.Errorf("catalog source connection is not ready: %v", err)
 	}
 
@@ -353,8 +353,8 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 		prevIPRef = *sub.Status.InstallPlanRef
 	}
 
-	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
-		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
+	ipCheck := wait.ConditionWithContextFunc(func(pctx context.Context) (done bool, err error) {
+		if err := o.cfg.Client.Get(pctx, subKey, sub); err != nil {
 			return false, err
 		}
 		if sub.Status.InstallPlanRef != nil && sub.Status.InstallPlanRef.Name != prevIPRef.Name {
@@ -363,7 +363,7 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 		return false, nil
 	})
 
-	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
+	if err := wait.PollUntilContextCancel(ctx, 200*time.Millisecond, false, ipCheck); err != nil {
 		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 	return nil

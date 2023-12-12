@@ -290,9 +290,9 @@ func ConfigDocLink() string {
 // checking for a test pod to complete
 func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
 
-	podCheck := wait.ConditionFunc(func() (done bool, err error) {
+	podCheck := wait.ConditionWithContextFunc(func(pctx context.Context) (done bool, err error) {
 		var tmp *v1.Pod
-		tmp, err = r.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
+		tmp, err = r.Client.CoreV1().Pods(p.Namespace).Get(pctx, p.Name, metav1.GetOptions{})
 		if err != nil {
 			return true, fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
@@ -307,7 +307,7 @@ func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (er
 		return false, nil
 	})
 
-	err = wait.PollImmediateUntil(1*time.Second, podCheck, ctx.Done())
+	err = wait.PollUntilContextCancel(ctx, 1*time.Second, false, podCheck)
 	return err
 
 }

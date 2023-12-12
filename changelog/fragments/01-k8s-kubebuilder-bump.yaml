@@ -1,0 +1,52 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Bump supported Kubernetes version to 1.27
+    kind: "change"
+    breaking: false
+  - description: >
+      (helm/v1): Deprecate the `--config` flag due to the controller-runtime ComponentConfig
+      package being deprecated with the planned removal of support for loading manager options
+      from a file
+    kind: "deprecation" 
+    breaking: false
+  - description: >
+      (go/v4-alpha): go/v4 is now stable and is the default version
+      used when scaffolding a Go based operator
+    kind: "change"
+    breaking: true
+    migration:
+      header: (go/v4-alpha) Move go/v4 plugin from alpha to stable
+      body: |
+        The transition from Golang v2 and v3 plugins to the new Golang v4 plugin introduces significant changes. 
+        To gain insights into the reasoning behind these changes, you can refer to the explanation provided 
+        at https://book.kubebuilder.io/migration/v3vsv4#tldr-of-the-new-gov4-plugin.
+
+        For a comprehensive understanding of the migration process to the v4 plugin format, 
+        the Kubebuilder documentation outlines the necessary steps. Detailed instructions
+        can be found at https://book.kubebuilder.io/migration/manually_migration_guide_gov3_to_gov4.
+
+        This migration is designed to enhance your project's functionality and compatibility, 
+        reflecting the evolving landscape of Golang development.
+  - description: >
+      (kustomize/v2-alpha): kustomize/v2 is now stable and is the default version
+      used in the plugin chain when using go/v4, ansible/v1, helm/v1, and hybrid/v1-alpha plugins
+    kind: "change"
+    breaking: true
+    migration:
+      header: (kustomize/v2-alpha) Move kustomize/v2 plugin from alpha to stable
+      body: |
+        For more information on the kustomize/v2 plugin, please refer to the documentation at
+        https://book.kubebuilder.io/plugins/kustomize-v2
+  - description: >
+      `operator-sdk olm install`: fix a bug where the retry logic would not
+      retry until the the command's timeout was reached, resulting in early exiting
+      of the command before the specified timeout was reached.
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      Updated the supported OLM versions to 0.24.0, 0.25.0, and 0.26.0
+    kind: "change"
+    breaking: false
+  

@@ -62,7 +62,7 @@ var _ = BeforeSuite(func() {
 	tc.BundleImageName = fmt.Sprintf("quay.io/integration/%s-bundle:0.0.1", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
+	Expect(exec.Command("cp", "-r", "../../testdata/go/v4/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("updating the project configuration")
 	Expect(tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())

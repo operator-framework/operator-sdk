@@ -9,7 +9,7 @@ export IMAGE_VERSION = v1.32.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe --tags)" = "$(shell git describe --tags --abbrev=0)" && echo $(shell git describe --tags)) || echo $(shell git describe --tags --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.26.0
+export K8S_VERSION = 1.27.0
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -44,7 +44,7 @@ generate: build # Generate CLI docs and samples
 	$(GO) generate ./...
 
 .PHONY: bindata
-OLM_VERSIONS = 0.23.1 0.24.0 0.25.0
+OLM_VERSIONS = 0.24.0 0.25.0 0.26.0
 bindata: ## Update project bindata
 	./hack/generate/olm_bindata.sh $(OLM_VERSIONS)
 	$(MAKE) fix
@@ -191,7 +191,7 @@ $(e2e_targets):: test-e2e-setup image/scorecard-test
 test-e2e:: $(e2e_tests) ## Run e2e tests
 
 test-e2e-sample-go:: dev-install cluster-create ## Run Memcached Operator Sample e2e tests
-	make test-e2e -C ./testdata/go/v3/memcached-operator/
+	make test-e2e -C ./testdata/go/v4/memcached-operator/
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	$(GO) test ./test/e2e/go -v -ginkgo.v
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests

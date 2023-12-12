@@ -56,7 +56,7 @@ var _ = BeforeSuite(func() {
 	tc.Kubectl.ServiceAccount = fmt.Sprintf("%s-controller-manager", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
+	Expect(exec.Command("cp", "-r", "../../../testdata/go/v4/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()

@@ -65,7 +65,10 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...client.Object) Sta
 		}
 		u := unstructured.Unstructured{}
 		u.SetGroupVersionKind(gvk)
-		rs.Error = c.KubeClient.Get(ctx, nn, &u)
+		err := c.KubeClient.Get(ctx, nn, &u)
+		if err != nil {
+			rs.Error = fmt.Errorf("error getting resource %q with GVK %q: %w", nn, gvk, err)
+		}
 		if rs.Error == nil {
 			rs.Resource = &u
 		}

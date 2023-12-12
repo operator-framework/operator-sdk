@@ -221,14 +221,14 @@ func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs 
 		}
 		if waitForDelete {
 			key := client.ObjectKeyFromObject(obj)
-			if err := wait.PollImmediateUntil(250*time.Millisecond, func() (bool, error) {
-				if err := u.config.Client.Get(ctx, key, obj); apierrors.IsNotFound(err) {
+			if err := wait.PollUntilContextCancel(ctx, 250*time.Millisecond, false, func(pctx context.Context) (bool, error) {
+				if err := u.config.Client.Get(pctx, key, obj); apierrors.IsNotFound(err) {
 					return true, nil
 				} else if err != nil {
 					return false, err
 				}
 				return false, nil
-			}, ctx.Done()); err != nil {
+			}); err != nil {
 				return fmt.Errorf("wait for %s deleted: %v", lowerKind, err)
 			}
 		}
