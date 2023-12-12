@@ -183,14 +183,22 @@ func (mh *Memcached) Run() {
 	err = kbutil.ReplaceRegexInFile(csv, "createdAt:.*", createdAt)
 	pkg.CheckError("setting createdAt annotation", err)
 
-	log.Infof("striping bundle annotations")
+	log.Infof("stripping bundle annotations")
 	err = mh.ctx.StripBundleAnnotations()
-	pkg.CheckError("striping bundle annotations", err)
+	pkg.CheckError("stripping bundle annotations", err)
 
 	pkg.CheckError("formatting project", mh.ctx.Make("fmt"))
 
 	// Clean up built binaries, if any.
 	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
+
+	// TODO: remove when this is fixed
+	// Update the test make target to properly shell out
+	// to the go list command
+	pkg.CheckError("fixing \"test\" make target", kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
+		"KUBEBUILDER_ASSETS=\"$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)\"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out",
+		"KUBEBUILDER_ASSETS=\"$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)\"  go test $(shell go list ./... | grep -v /test/) -coverprofile cover.out"))
+
 }
 
 // isV3 checks if the golang plugin version is v3 or v4
@@ -444,7 +452,7 @@ func (mh *Memcached) implementingWebhooks() {
 	err = kbutil.InsertCode(webhookPath,
 		"import (",
 		// TODO(estroz): remove runtime dep when --programmatic-validation is added to `ccreate webhook` above.
-		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"")
+		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"\n\n\"sigs.k8s.io/controller-runtime/pkg/webhook/admission\"")
 	pkg.CheckError("adding imports", err)
 }
 
@@ -1417,24 +1425,24 @@ const webhooksFragment = `
 var _ webhook.Validator = &Memcached{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateCreate() error {
+func (r *Memcached) ValidateCreate() (admission.Warnings, error) {
 	memcachedlog.Info("validate create", "name", r.Name)
 
-	return validateOdd(r.Spec.Size)
+	return nil, validateOdd(r.Spec.Size)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateUpdate(old runtime.Object) error {
+func (r *Memcached) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	memcachedlog.Info("validate update", "name", r.Name)
 
-	return validateOdd(r.Spec.Size)
+	return nil, validateOdd(r.Spec.Size)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateDelete() error {
+func (r *Memcached) ValidateDelete() (admission.Warnings, error) {
 	memcachedlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 func validateOdd(n int32) error {
 	if n%2 == 0 {
