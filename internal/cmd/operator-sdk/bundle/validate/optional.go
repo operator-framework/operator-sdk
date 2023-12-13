@@ -33,16 +33,42 @@ const (
 	suiteKey = "suite"
 )
 
-// optionalValidators is a list of validators with 0their name, labels for CLI usage, and a light description.
+// optionalValidators is a list of validators with their name, labels for CLI usage, and a light description.
 var optionalValidators = validators{
 	{
-		Validator: apivalidation.OperatorHubValidator,
-		name:      "operatorhub",
+		Validator: apivalidation.OperatorHubV2Validator,
+		name:      "operatorhubv2",
 		labels: map[string]string{
-			nameKey:  "operatorhub",
+			nameKey:  "operatorhubv2",
 			suiteKey: "operatorframework",
 		},
 		desc: "OperatorHub.io metadata validation. ",
+	},
+	{
+		Validator: apivalidation.StandardCapabilitiesValidator,
+		name:      "capabilities",
+		labels: map[string]string{
+			nameKey:  "capabilities",
+			suiteKey: "operatorframework",
+		},
+		desc: "OperatorHub.io capabilities metadata validation. ",
+	},
+	{
+		Validator: apivalidation.StandardCategoriesValidator,
+		name:      "categories",
+		labels: map[string]string{
+			nameKey:  "categories",
+			suiteKey: "operatorframework",
+		},
+		desc: "OperatorHub.io categories metadata validation. ",
+	},
+	{
+		Validator: apivalidation.OperatorHubValidator, // nolint:staticcheck
+		name:      "operatorhub",
+		labels: map[string]string{
+			nameKey: "operatorhub",
+		},
+		desc: "Deprecated OperatorHub.io metadata validation. ",
 	},
 	{
 		Validator: apivalidation.CommunityOperatorValidator,

@@ -51,7 +51,7 @@ var _ = Describe("Running optional validators", func() {
 		It("runs a validator for one selector on an empty bundle", func() {
 			bundle = &apimanifests.Bundle{}
 			sel = labels.SelectorFromSet(map[string]string{
-				nameKey: "operatorhub",
+				suiteKey: "operatorframework",
 			})
 			results = vals.run(bundle, sel, map[string]string{"k8s-version": "1.22"})
 			Expect(results).To(HaveLen(1))
@@ -61,7 +61,7 @@ var _ = Describe("Running optional validators", func() {
 			bundle = &apimanifests.Bundle{}
 			bundle.CSV = &v1alpha1.ClusterServiceVersion{}
 			sel = labels.SelectorFromSet(map[string]string{
-				nameKey: "operatorhub",
+				suiteKey: "operatorframework",
 			})
 			results = vals.run(bundle, sel, nil)
 			Expect(results).To(HaveLen(1))
@@ -84,14 +84,14 @@ var _ = Describe("Running optional validators", func() {
 		})
 		It("returns an error for an unmatched selector with no validators", func() {
 			sel = labels.SelectorFromSet(map[string]string{
-				nameKey: "operatorhub",
+				suiteKey: "operatorframework",
 			})
 			err = vals.checkMatches(sel)
 			Expect(err).To(HaveOccurred())
 		})
 		It("returns no error for an unmatched selector with all optional validators", func() {
 			sel = labels.SelectorFromSet(map[string]string{
-				nameKey: "operatorhub",
+				suiteKey: "operatorframework",
 			})
 			vals = optionalValidators
 			err = vals.checkMatches(sel)
