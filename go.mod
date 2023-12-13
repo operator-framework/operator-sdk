@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/operator-framework/ansible-operator-plugins v1.33.0
-	github.com/operator-framework/api v0.17.7
+	github.com/operator-framework/api v0.20.0
 	github.com/operator-framework/helm-operator-plugins v0.0.11
 	github.com/operator-framework/java-operator-plugins v0.8.1
 	github.com/operator-framework/operator-lib v0.11.1-0.20231020142438-152ee1fb7f83
