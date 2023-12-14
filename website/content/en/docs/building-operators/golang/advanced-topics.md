@@ -504,18 +504,18 @@ Authors may decide to distribute their bundles for various architectures: x86_64
 [observability-best-practices]:https://sdk.operatorframework.io/docs/best-practices/observability-best-practices/
 [alerts]:https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
 [recording rules]:https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
-[prometheus_role.yaml]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/config/rbac/prometheus_role.yaml
-[prometheus_role_binding.yaml]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/config/rbac/prometheus_role_binding.yaml
-[MemcachedDeploymentSizeUndesiredCountTotal]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring/metrics.go
-[init() function example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/cmd/main.go
-[Metric update example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/internal/controller/memcached_controller.go
+[prometheus_role.yaml]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/config/rbac/prometheus_role.yaml
+[prometheus_role_binding.yaml]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/config/rbac/prometheus_role_binding.yaml
+[MemcachedDeploymentSizeUndesiredCountTotal]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/monitoring/metrics.go
+[init() function example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/cmd/main.go
+[Metric update example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/internal/controller/memcached_controller.go
 [Prometheus Documentation]:https://prometheus.io/docs/concepts/metric_types/
 [Prometheus Golang client]:https://pkg.go.dev/github.com/prometheus/client_golang/prometheus
 [kube-prometheus]:https://github.com/prometheus-operator/kube-prometheus
-[memcached-operator]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator
+[memcached-operator]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator
 [prometheus-operator API]:https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md
-[PrometheusRule example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring/alerts.go
-[PrometheusRule reconciliation example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4-alpha/monitoring/memcached-operator/internal/controller/memcached_controller.go
+[PrometheusRule example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/monitoring/alerts.go
+[PrometheusRule reconciliation example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/internal/controller/memcached_controller.go
 [unit testing documentation]:https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
-[alerts unit tests]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring/prom-rule-ci
+[alerts unit tests]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/monitoring/prom-rule-ci
 [kube-prometheus docs]:https://github.com/prometheus-operator/kube-prometheus/blob/main/docs/access-ui.md#prometheus
