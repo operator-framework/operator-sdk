@@ -34,12 +34,12 @@ require (
 	golang.org/x/tools v0.13.0
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.12.1
-	k8s.io/api v0.27.7
-	k8s.io/apiextensions-apiserver v0.27.7
-	k8s.io/apimachinery v0.27.7
-	k8s.io/cli-runtime v0.27.7
-	k8s.io/client-go v0.27.7
-	k8s.io/kubectl v0.27.7
+	k8s.io/api v0.27.8
+	k8s.io/apiextensions-apiserver v0.27.8
+	k8s.io/apimachinery v0.27.8
+	k8s.io/cli-runtime v0.27.8
+	k8s.io/client-go v0.27.8
+	k8s.io/kubectl v0.27.8
 	k8s.io/utils v0.0.0-20230711102312-30195339c3c7
 	sigs.k8s.io/controller-runtime v0.15.3
 	sigs.k8s.io/controller-tools v0.12.1
@@ -238,8 +238,8 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiserver v0.27.7 // indirect
-	k8s.io/component-base v0.27.7 // indirect
+	k8s.io/apiserver v0.27.8 // indirect
+	k8s.io/component-base v0.27.8 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230515121852-a1ae96baeb76 // indirect
 	oras.land/oras-go v1.2.4 // indirect
