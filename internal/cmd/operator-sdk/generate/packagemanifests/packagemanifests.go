@@ -239,8 +239,5 @@ func (c packagemanifestsCmd) generatePackageManifest() error {
 		IsDefaultChannel: c.isDefaultChannel,
 	}
 
-	if err := c.generator.Generate(c.packageName, c.version, c.outputDir, opts); err != nil {
-		return err
-	}
-	return nil
+	return c.generator.Generate(c.packageName, c.version, c.outputDir, opts)
 }

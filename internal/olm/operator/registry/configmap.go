@@ -110,10 +110,8 @@ func (c *ConfigMapCatalogCreator) updateCatalogSource(ctx context.Context, cs *v
 		}
 		cs.Spec.Address = registryGRPCAddr
 		cs.Spec.SourceType = v1alpha1.SourceTypeGrpc
-		if err := c.cfg.Client.Update(ctx, cs); err != nil {
-			return err
-		}
-		return nil
+
+		return c.cfg.Client.Update(ctx, cs)
 	}); err != nil {
 		return fmt.Errorf("error setting grpc address on catalog source: %v", err)
 	}

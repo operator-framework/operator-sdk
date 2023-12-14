@@ -125,7 +125,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			return reconcile.Result{}, nil
 		}
 
-		uninstalledRelease, err := manager.UninstallRelease(ctx)
+		uninstalledRelease, err := manager.UninstallRelease()
 		if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Error(err, "Failed to uninstall release")
 			status.SetCondition(types.HelmAppCondition{
@@ -173,7 +173,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 		if wait && status.DeployedRelease != nil && status.DeployedRelease.Manifest != "" {
 			log.Info("Uninstall wait")
-			isAllResourcesDeleted, err := manager.CleanupRelease(ctx, status.DeployedRelease.Manifest)
+			isAllResourcesDeleted, err := manager.CleanupRelease(status.DeployedRelease.Manifest)
 			if err != nil {
 				log.Error(err, "Failed to cleanup release")
 				status.SetCondition(types.HelmAppCondition{
@@ -217,7 +217,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		Status: types.StatusTrue,
 	})
 
-	if err := manager.Sync(ctx); err != nil {
+	if err := manager.Sync(); err != nil {
 		log.Error(err, "Failed to sync release")
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionIrreconcilable,
@@ -240,7 +240,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		installedRelease, err := manager.InstallRelease(ctx)
+		installedRelease, err := manager.InstallRelease()
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -314,14 +314,14 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		}
 		force := hasAnnotation(helmUpgradeForceAnnotation, o)
 
-		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
+		previousRelease, upgradedRelease, err := manager.UpgradeRelease(release.ForceUpgrade(force))
 		if err != nil {
 			if errors.Is(err, release.ErrUpgradeFailed) {
 				// the forceRollback variable takes the value of the annotation,
 				// "helm.sdk.operatorframework.io/rollback-force".
 				// The default value for the annotation is true
 				forceRollback := readBoolAnnotationWithDefault(o, helmRollbackForceAnnotation, true)
-				if err := manager.RollBack(ctx, release.ForceRollback(forceRollback)); err != nil {
+				if err := manager.RollBack(release.ForceRollback(forceRollback)); err != nil {
 					log.Error(err, "Error rolling back release")
 				}
 			}

@@ -273,7 +273,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 }
 
 // RunTest executes a single test
-func (r FakeTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration, podSec bool) (result *v1alpha3.TestStatus, err error) {
+func (r FakeTestRunner) RunTest(ctx context.Context, _ v1alpha3.TestConfiguration, _ bool) (result *v1alpha3.TestStatus, err error) {
 	select {
 	case <-time.After(r.Sleep):
 		return r.TestStatus, r.Error

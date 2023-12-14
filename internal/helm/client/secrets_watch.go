@@ -117,7 +117,7 @@ func (w *WatchedSecrets) Watch(ctx context.Context, opts metav1.ListOptions) (wa
 	return w.inner.Watch(ctx, opts)
 }
 
-func (w *WatchedSecrets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.Secret, err error) {
+func (w *WatchedSecrets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, _ ...string) (result *corev1.Secret, err error) {
 	return w.inner.Patch(ctx, name, pt, data, opts)
 }
 

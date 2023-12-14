@@ -12,7 +12,7 @@ type mockValidPRGetter struct{}
 
 var _ PullRequestNumberGetter = &mockValidPRGetter{}
 
-func (m *mockValidPRGetter) GetPullRequestNumberFor(file string) (uint, error) {
+func (m *mockValidPRGetter) GetPullRequestNumberFor(_ string) (uint, error) {
 	return 999998, nil
 }
 

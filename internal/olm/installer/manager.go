@@ -105,7 +105,7 @@ func (m *Manager) Uninstall() error {
 		m.Version = version
 	}
 
-	if err := m.Client.UninstallVersion(ctx, m.OLMNamespace, m.Version); err != nil {
+	if err := m.Client.UninstallVersion(ctx, m.Version); err != nil {
 		return err
 	}
 
@@ -133,7 +133,7 @@ func (m *Manager) Status() error {
 		m.Version = version
 	}
 
-	status, err := m.Client.GetStatus(ctx, m.OLMNamespace, m.Version)
+	status, err := m.Client.GetStatus(ctx, m.Version)
 	if err != nil {
 		return err
 	}

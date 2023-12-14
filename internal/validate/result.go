@@ -109,10 +109,7 @@ func (r *Result) Combine(results ...Result) error {
 	for _, result := range results {
 		r.Outputs = append(r.Outputs, result.Outputs...)
 	}
-	if err := r.prepare(); err != nil {
-		return err
-	}
-	return nil
+	return r.prepare()
 }
 
 // prepare should be used when writing an Result to a non-log writer.

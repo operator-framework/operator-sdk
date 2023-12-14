@@ -51,13 +51,13 @@ type Manager interface {
 	ReleaseName() string
 	IsInstalled() bool
 	IsUpgradeRequired() bool
-	Sync(context.Context) error
-	InstallRelease(context.Context, ...InstallOption) (*rpb.Release, error)
-	UpgradeRelease(context.Context, ...UpgradeOption) (*rpb.Release, *rpb.Release, error)
-	RollBack(context.Context, ...RollBackOption) error
+	Sync() error
+	InstallRelease(...InstallOption) (*rpb.Release, error)
+	UpgradeRelease(...UpgradeOption) (*rpb.Release, *rpb.Release, error)
+	RollBack(...RollBackOption) error
 	ReconcileRelease(context.Context) (*rpb.Release, error)
-	UninstallRelease(context.Context, ...UninstallOption) (*rpb.Release, error)
-	CleanupRelease(context.Context, string) (bool, error)
+	UninstallRelease(...UninstallOption) (*rpb.Release, error)
+	CleanupRelease(string) (bool, error)
 }
 
 type manager struct {
@@ -97,7 +97,7 @@ func (m manager) IsUpgradeRequired() bool {
 
 // Sync ensures the Helm storage backend is in sync with the status of the
 // custom resource.
-func (m *manager) Sync(ctx context.Context) error {
+func (m *manager) Sync() error {
 	// Get release history for this release name
 	releases, err := m.storageBackend.History(m.releaseName)
 	if err != nil && !notFoundErr(err) {
@@ -163,7 +163,7 @@ func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 }
 
 // InstallRelease performs a Helm release install.
-func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rpb.Release, error) {
+func (m manager) InstallRelease(opts ...InstallOption) (*rpb.Release, error) {
 	install := action.NewInstall(m.actionConfig)
 	install.ReleaseName = m.releaseName
 	install.Namespace = m.namespace
@@ -207,7 +207,7 @@ func ForceUpgrade(force bool) UpgradeOption {
 var ErrUpgradeFailed = errors.New("upgrade failed; rollback required")
 
 // UpgradeRelease performs a Helm release upgrade.
-func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
+func (m manager) UpgradeRelease(opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = m.namespace
 
@@ -243,7 +243,7 @@ func ForceRollback(force bool) RollBackOption {
 }
 
 // RollBack attempts to reverse any partially applied releases
-func (m manager) RollBack(ctx context.Context, opts ...RollBackOption) error {
+func (m manager) RollBack(opts ...RollBackOption) error {
 	rollback := action.NewRollback(m.actionConfig)
 
 	for _, fn := range opts {
@@ -387,7 +387,7 @@ func createJSONMergePatch(existingJSON, expectedJSON []byte) ([]byte, error) {
 }
 
 // UninstallRelease performs a Helm release uninstall.
-func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) (*rpb.Release, error) {
+func (m manager) UninstallRelease(opts ...UninstallOption) (*rpb.Release, error) {
 	uninstall := action.NewUninstall(m.actionConfig)
 	for _, o := range opts {
 		if err := o(uninstall); err != nil {
@@ -403,7 +403,7 @@ func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) 
 
 // CleanupRelease deletes resources if they are not deleted already.
 // Return true if all the resources are deleted, false otherwise.
-func (m manager) CleanupRelease(ctx context.Context, manifest string) (bool, error) {
+func (m manager) CleanupRelease(manifest string) (bool, error) {
 	dc, err := m.actionConfig.RESTClientGetter.ToDiscoveryClient()
 	if err != nil {
 		return false, fmt.Errorf("failed to get Kubernetes discovery client: %w", err)
