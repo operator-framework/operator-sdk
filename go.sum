@@ -649,8 +649,8 @@ github.com/operator-framework/ansible-operator-plugins v1.33.0 h1:cN5jYyNjVmDu2o
 github.com/operator-framework/ansible-operator-plugins v1.33.0/go.mod h1:V1ju4foYRWiuggI8IThIXuT6P273fnUZi29PNOHsr/0=
 github.com/operator-framework/api v0.20.0 h1:A2YCRhr+6s0k3pRJacnwjh1Ue8BqjIGuQ2jvPg9XCB4=
 github.com/operator-framework/api v0.20.0/go.mod h1:rXPOhrQ6mMeXqCmpDgt1ALoar9ZlHL+Iy5qut9R99a4=
-github.com/operator-framework/helm-operator-plugins v0.0.11 h1:u2odF2qJ8y1DswCJBt28tvM7PDNIiA8Yc8bjsC1fpKA=
-github.com/operator-framework/helm-operator-plugins v0.0.11/go.mod h1:X5HB7sPe/cyLg7qZ25k1icC5DKh06oTf3BV8j4kWuxY=
+github.com/operator-framework/helm-operator-plugins v0.0.12-0.20231013185714-215d1f8a3e7d h1:9xoqOnU573kDnOT69yI0cDe4Qx9wsntF8luqTYWUpds=
+github.com/operator-framework/helm-operator-plugins v0.0.12-0.20231013185714-215d1f8a3e7d/go.mod h1:/bB2uurq2eUI4yendxOaVRybnDkp2nPZfPbr5RXqgCQ=
 github.com/operator-framework/java-operator-plugins v0.8.1 h1:xdbzWror/SSzWx7y6T+Y/FRpHAReOHMjRBSQoKmsZMY=
 github.com/operator-framework/java-operator-plugins v0.8.1/go.mod h1:reXPLc9RvbwgaqdBRmJ35RGSLDApVGsmYkkW0N4BW98=
 github.com/operator-framework/operator-lib v0.11.1-0.20231020142438-152ee1fb7f83 h1:TDT89KCBWC5H6oP0w+NL8sQnqR3cXJpr256GnEY/1SA=
@@ -873,8 +873,9 @@ go.opentelemetry.io/proto/otlp v1.0.0/go.mod h1:Sy6pihPLfYHkr3NkUbEhGHFhINUSI/v8
 go.starlark.net v0.0.0-20230612165344-9532f5667272 h1:2/wtqS591wZyD2OsClsVBKRPEvBsQt/Js+fsCiYhwu8=
 go.starlark.net v0.0.0-20230612165344-9532f5667272/go.mod h1:jxU+3+j+71eXOW14274+SmmuW82qJzl6iZSeqEtTGds=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
-go.uber.org/atomic v1.7.0 h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
+go.uber.org/atomic v1.10.0 h1:9qC72Qh0+3MqyJbAn8YU5xVq1frD8bn3JtD2oXtafVQ=
+go.uber.org/atomic v1.10.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
 go.uber.org/goleak v1.1.11/go.mod h1:cwTWslyiVhfpKIDGSZEM2HlOvcqm+tG4zioyIeLoqMQ=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
