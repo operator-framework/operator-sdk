@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.27.10
 	github.com/operator-framework/ansible-operator-plugins v1.33.0
 	github.com/operator-framework/api v0.20.0
-	github.com/operator-framework/helm-operator-plugins v0.0.11
+	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20231013185714-215d1f8a3e7d
 	github.com/operator-framework/java-operator-plugins v0.8.1
 	github.com/operator-framework/operator-lib v0.11.1-0.20231020142438-152ee1fb7f83
 	github.com/operator-framework/operator-manifest-tools v0.2.3-0.20230525225330-523bad646f89
@@ -121,6 +121,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/cel-go v0.16.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.16.1 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -241,7 +242,7 @@ require (
 	k8s.io/apiserver v0.27.8 // indirect
 	k8s.io/component-base v0.27.8 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20230515121852-a1ae96baeb76 // indirect
+	k8s.io/kube-openapi v0.0.0-20230606174411-725288a7abf1 // indirect
 	oras.land/oras-go v1.2.4 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
