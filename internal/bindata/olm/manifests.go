@@ -97,7 +97,7 @@ func olmManifests0240CrdsYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "olm-manifests/0.24.0-crds.yaml", size: 755252, mode: os.FileMode(420), modTime: time.Unix(1702046714, 0)}
+	info := bindataFileInfo{name: "olm-manifests/0.24.0-crds.yaml", size: 755252, mode: os.FileMode(420), modTime: time.Unix(1702928011, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -117,7 +117,7 @@ func olmManifests0240OlmYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "olm-manifests/0.24.0-olm.yaml", size: 10698, mode: os.FileMode(420), modTime: time.Unix(1702046713, 0)}
+	info := bindataFileInfo{name: "olm-manifests/0.24.0-olm.yaml", size: 10698, mode: os.FileMode(420), modTime: time.Unix(1702928010, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -137,7 +137,7 @@ func olmManifests0250CrdsYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "olm-manifests/0.25.0-crds.yaml", size: 773165, mode: os.FileMode(420), modTime: time.Unix(1702046714, 0)}
+	info := bindataFileInfo{name: "olm-manifests/0.25.0-crds.yaml", size: 773165, mode: os.FileMode(420), modTime: time.Unix(1702928011, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -157,7 +157,7 @@ func olmManifests0250OlmYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "olm-manifests/0.25.0-olm.yaml", size: 10730, mode: os.FileMode(420), modTime: time.Unix(1702046714, 0)}
+	info := bindataFileInfo{name: "olm-manifests/0.25.0-olm.yaml", size: 10730, mode: os.FileMode(420), modTime: time.Unix(1702928011, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -177,7 +177,7 @@ func olmManifests0260CrdsYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "olm-manifests/0.26.0-crds.yaml", size: 825540, mode: os.FileMode(420), modTime: time.Unix(1702046715, 0)}
+	info := bindataFileInfo{name: "olm-manifests/0.26.0-crds.yaml", size: 825540, mode: os.FileMode(420), modTime: time.Unix(1702928012, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -197,7 +197,7 @@ func olmManifests0260OlmYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "olm-manifests/0.26.0-olm.yaml", size: 10828, mode: os.FileMode(420), modTime: time.Unix(1702046715, 0)}
+	info := bindataFileInfo{name: "olm-manifests/0.26.0-olm.yaml", size: 10828, mode: os.FileMode(420), modTime: time.Unix(1702928012, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
