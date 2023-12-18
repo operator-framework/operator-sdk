@@ -54,11 +54,8 @@ func (ctx SampleContext) StripBundleAnnotations() (err error) {
 		filepath.Join(ctx.Dir, "bundle", "manifests", ctx.ProjectName+".clusterserviceversion.yaml"),
 		filepath.Join(ctx.Dir, "config", "manifests", "bases", ctx.ProjectName+".clusterserviceversion.yaml"),
 	}
-	if err = removeAllAnnotationLines(manifestsAnnotations, manifestsFiles); err != nil {
-		return err
-	}
 
-	return nil
+	return removeAllAnnotationLines(manifestsAnnotations, manifestsFiles)
 }
 
 // removeAllAnnotationLines removes each line containing a key in annotations from all files at filePaths.

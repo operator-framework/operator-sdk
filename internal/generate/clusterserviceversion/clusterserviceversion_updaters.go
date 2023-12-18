@@ -574,7 +574,7 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admissionregv1.WebhookClientConfig) (depName string, ws *corev1.Service) {
 	// Return if a service reference is not specified, since a URL will be in that case.
 	if wcc.Service == nil {
-		return
+		return depName, ws
 	}
 
 	// Find the matching service, if any. The webhook server may be externally managed
@@ -586,18 +586,18 @@ func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admi
 		}
 	}
 	if ws == nil {
-		return
+		return depName, ws
 	}
 
 	// Only ExternalName-type services cannot have selectors.
 	if ws.Spec.Type == corev1.ServiceTypeExternalName {
-		return
+		return depName, ws
 	}
 
 	// If a selector does not exist, there is either an Endpoint or EndpointSlice object accompanying
 	// the service so it should not be added to the CSV.
 	if len(ws.Spec.Selector) == 0 {
-		return
+		return depName, ws
 	}
 
 	depName = findMatchingDepNameFromService(c, ws)
