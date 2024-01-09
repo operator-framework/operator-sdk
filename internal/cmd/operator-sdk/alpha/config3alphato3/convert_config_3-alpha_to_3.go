@@ -93,7 +93,7 @@ func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
 				// Only Go projects use "resources[*].path".
 				var apiPath string
 				if isMultigroup {
-					apiPath = path.Join("apis", resources[i].Group, resources[i].Version)
+					apiPath = path.Join("api", resources[i].Group, resources[i].Version)
 				} else {
 					apiPath = path.Join("api", resources[i].Version)
 				}

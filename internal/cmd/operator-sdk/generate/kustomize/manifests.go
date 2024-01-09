@@ -156,11 +156,7 @@ func (c *manifestsCmd) setDefaults(cfg config.Config) error {
 	}
 
 	if c.apisDir == "" {
-		if cfg.IsMultiGroup() {
-			c.apisDir = "apis"
-		} else {
-			c.apisDir = "api"
-		}
+		c.apisDir = "api"
 	}
 	return nil
 }
