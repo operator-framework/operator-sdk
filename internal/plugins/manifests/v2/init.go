@@ -204,7 +204,7 @@ endif
 
 	makefileSDKFragmentNonGo = `
 .PHONY: operator-sdk
-OPERATOR_SDK ?= ./bin/operator-sdk
+OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
 operator-sdk: ## Download operator-sdk locally if necessary.
 ifeq (,$(wildcard $(OPERATOR_SDK)))
 ifeq (, $(shell which operator-sdk 2>/dev/null))
@@ -250,7 +250,7 @@ bundle-push: ## Push the bundle image.
 
 	makefileOPMFragmentGo = `
 .PHONY: opm
-OPM = ./bin/opm
+OPM = $(LOCALBIN)/opm
 opm: ## Download opm locally if necessary.
 ifeq (,$(wildcard $(OPM)))
 ifeq (,$(shell which opm 2>/dev/null))
@@ -269,7 +269,7 @@ endif
 
 	makefileOPMFragmentNonGo = `
 .PHONY: opm
-OPM = ./bin/opm
+OPM = $(LOCALBIN)/opm
 opm: ## Download opm locally if necessary.
 ifeq (,$(wildcard $(OPM)))
 ifeq (,$(shell which opm 2>/dev/null))

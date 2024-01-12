@@ -27,7 +27,7 @@ Additional components would be `Dashboards`, `Logs` and `Traces`, which are not 
 
 ### Operators Observability General Guidelines
 **Important:** It is highly recommended to separate your monitoring code from your core operator code.  
-We recommend to create a dedicated `/monitoring` subfolder that will include all the code of the [Operator Observability Recommended Components](#operator-observability-recommended-components), that are outlined above. For example, in the [memcached-operator](https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/monitoring).
+We recommend to create a dedicated `/monitoring` subfolder that will include all the code of the [Operator Observability Recommended Components](#operator-observability-recommended-components), that are outlined above. For example, in the [memcached-operator](https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator/monitoring).
 
 In your core operator code only call the functions that will update the metrics value from your desired location. For example, in the [memcached-operator](https://github.com/operator-framework/operator-sdk/blob/367bd3597c30607099aa73637f5286f7120b847a/testdata/go/v3/monitoring/memcached-operator/controllers/memcached_controller.go#L242).
 
