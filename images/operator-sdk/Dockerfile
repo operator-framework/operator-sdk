@@ -17,18 +17,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/operator-sdk
 
 # Final image.
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
-
-ENV GO_VERSION 1.19
-
-ARG TARGETARCH
-RUN microdnf install -y make gcc which tar gzip
-RUN curl -sSLo /tmp/go.tar.gz https://golang.org/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
-	&& rm -rf /usr/local/go \
-	&& tar -C /usr/local -xzf /tmp/go.tar.gz \
-	&& ln -sf /usr/local/go/bin/* /usr/local/bin/ \
-	&& rm -f /tmp/go.tar.gz \
-	&& go version
+FROM registry.access.redhat.com/ubi8/ubi-micro:8.9
 
 COPY --from=builder /workspace/build/operator-sdk /usr/local/bin/operator-sdk
 
