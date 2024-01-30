@@ -39,29 +39,29 @@ var _ = Describe("Flags", func() {
 		When("the flag is set", func() {
 			It("uses the flag value when corresponding option value is empty", func() {
 				expOptionValue := ":5678"
-				options.MetricsBindAddress = ""
+				options.Metrics.BindAddress = ""
 				parseArgs(flagSet, "--metrics-bind-address", expOptionValue)
-				Expect(f.ToManagerOptions(options).MetricsBindAddress).To(Equal(expOptionValue))
+				Expect(f.ToManagerOptions(options).Metrics.BindAddress).To(Equal(expOptionValue))
 			})
 			It("uses the flag value when corresponding option value is not empty", func() {
 				expOptionValue := ":5678"
-				options.MetricsBindAddress = ":1234"
+				options.Metrics.BindAddress = ":1234"
 				parseArgs(flagSet, "--metrics-bind-address", expOptionValue)
-				Expect(f.ToManagerOptions(options).MetricsBindAddress).To(Equal(expOptionValue))
+				Expect(f.ToManagerOptions(options).Metrics.BindAddress).To(Equal(expOptionValue))
 			})
 		})
 		When("the flag is not set", func() {
 			It("uses the default flag value when corresponding option value is empty", func() {
 				expOptionValue := ":8080"
-				options.MetricsBindAddress = ""
+				options.Metrics.BindAddress = ""
 				parseArgs(flagSet)
-				Expect(f.ToManagerOptions(options).MetricsBindAddress).To(Equal(expOptionValue))
+				Expect(f.ToManagerOptions(options).Metrics.BindAddress).To(Equal(expOptionValue))
 			})
 			It("uses the option value when corresponding option value is not empty", func() {
 				expOptionValue := ":1234"
-				options.MetricsBindAddress = expOptionValue
+				options.Metrics.BindAddress = expOptionValue
 				parseArgs(flagSet)
-				Expect(f.ToManagerOptions(options).MetricsBindAddress).To(Equal(expOptionValue))
+				Expect(f.ToManagerOptions(options).Metrics.BindAddress).To(Equal(expOptionValue))
 			})
 		})
 	})

@@ -88,25 +88,15 @@ func (mh *Memcached) Prepare() {
 // Run the steps to create the Memcached with webhooks or with webhooks and monitoring Go Sample
 func (mh *Memcached) Run() {
 
-	if !mh.isV3() {
-		log.Infof("creating the v4 project")
-		err := mh.ctx.Init(
-			"--plugins", "go/v4",
-			"--project-version", "3",
-			"--repo", "github.com/example/memcached-operator",
-			"--domain", mh.ctx.Domain)
-		pkg.CheckError("creating the project", err)
-	} else {
-		log.Infof("creating the go/v3 project")
-		err := mh.ctx.Init(
-			"--plugins", "go/v3",
-			"--project-version", "3",
-			"--repo", "github.com/example/memcached-operator",
-			"--domain", mh.ctx.Domain)
-		pkg.CheckError("creating the project", err)
-	}
+	log.Infof("creating the go/v3 project")
+	err := mh.ctx.Init(
+		"--plugins", "go/v4",
+		"--project-version", "3",
+		"--repo", "github.com/example/memcached-operator",
+		"--domain", mh.ctx.Domain)
+	pkg.CheckError("creating the project", err)
 
-	err := mh.ctx.CreateAPI(
+	err = mh.ctx.CreateAPI(
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
 		"--kind", mh.ctx.Kind,
@@ -150,13 +140,8 @@ func (mh *Memcached) Run() {
 
 	mh.implementingWebhooks()
 
-	if strings.Contains(mh.ctx.Dir, "v4") {
-		mh.uncommentDefaultKustomizationV4()
-		mh.uncommentManifestsKustomizationv4()
-	} else {
-		mh.uncommentDefaultKustomizationV3()
-		mh.uncommentManifestsKustomizationv3()
-	}
+	mh.uncommentDefaultKustomizationV4()
+	mh.uncommentManifestsKustomizationv4()
 
 	mh.customizingMain()
 
@@ -201,82 +186,17 @@ func (mh *Memcached) Run() {
 
 }
 
-// isV3 checks if the golang plugin version is v3 or v4
-func (mh *Memcached) isV3() bool {
-	return strings.Contains(mh.ctx.Dir, "go/v3")
-}
-
-// uncommentDefaultKustomizationV3 will uncomment code in config/default/kustomization.yaml
-func (mh *Memcached) uncommentDefaultKustomizationV3() {
-	var err error
-	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
-	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
-
-	err = kbutil.UncommentCode(kustomization, "#- ../webhook", "#")
-	pkg.CheckError("uncomment webhook", err)
-
-	err = kbutil.UncommentCode(kustomization, "#- ../certmanager", "#")
-	pkg.CheckError("uncomment certmanager", err)
-
-	err = kbutil.UncommentCode(kustomization, "#- ../prometheus", "#")
-	pkg.CheckError("uncomment prometheus", err)
-
-	err = kbutil.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
-	pkg.CheckError("uncomment manager_webhook_patch.yaml", err)
-
-	err = kbutil.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
-	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
-
-	err = kbutil.UncommentCode(kustomization,
-		`#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
-#  objref:
-#    kind: Certificate
-#    group: cert-manager.io
-#    version: v1
-#    name: serving-cert # this name should match the one in certificate.yaml
-#  fieldref:
-#    fieldpath: metadata.namespace
-#- name: CERTIFICATE_NAME
-#  objref:
-#    kind: Certificate
-#    group: cert-manager.io
-#    version: v1
-#    name: serving-cert # this name should match the one in certificate.yaml
-#- name: SERVICE_NAMESPACE # namespace of the service
-#  objref:
-#    kind: Service
-#    version: v1
-#    name: webhook-service
-#  fieldref:
-#    fieldpath: metadata.namespace
-#- name: SERVICE_NAME
-#  objref:
-#    kind: Service
-#    version: v1
-#    name: webhook-service`, "#")
-	pkg.CheckError("uncommented certificate CR", err)
-}
-
 // uncommentDefaultKustomizationV4 will uncomment code in config/default/kustomization.yaml
 func (mh *Memcached) uncommentDefaultKustomizationV4() {
 	var err error
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
 	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
 
-	err = kbutil.UncommentCode(kustomization, "#- ../webhook", "#")
-	pkg.CheckError("uncomment webhook", err)
-
 	err = kbutil.UncommentCode(kustomization, "#- ../certmanager", "#")
 	pkg.CheckError("uncomment certmanager", err)
 
 	err = kbutil.UncommentCode(kustomization, "#- ../prometheus", "#")
 	pkg.CheckError("uncomment prometheus", err)
-
-	err = kbutil.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
-	pkg.CheckError("uncomment manager_webhook_patch.yaml", err)
-
-	err = kbutil.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
-	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
 
 	err = kbutil.UncommentCode(kustomization,
 		`#replacements:
@@ -380,32 +300,6 @@ func (mh *Memcached) uncommentDefaultKustomizationV4() {
 }
 
 // uncommentManifestsKustomization will uncomment code in config/manifests/kustomization.yaml
-func (mh *Memcached) uncommentManifestsKustomizationv3() {
-	var err error
-	kustomization := filepath.Join(mh.ctx.Dir, "config", "manifests", "kustomization.yaml")
-	log.Info("uncommenting config/manifests/kustomization.yaml to enable webhooks in OLM")
-
-	err = kbutil.UncommentCode(kustomization,
-		`#patchesJson6902:
-#- target:
-#    group: apps
-#    version: v1
-#    kind: Deployment
-#    name: controller-manager
-#    namespace: system
-#  patch: |-
-#    # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
-#    # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
-#    - op: remove
-#      path: /spec/template/spec/containers/1/volumeMounts/0
-#    # Remove the "cert" volume, since OLM will create and mount a set of certs.
-#    # Update the indices in this path if adding or removing volumes in the manager's Deployment.
-#    - op: remove
-#      path: /spec/template/spec/volumes/0`, "#")
-	pkg.CheckError("uncommented webhook volume removal patch", err)
-}
-
-// uncommentManifestsKustomization will uncomment code in config/manifests/kustomization.yaml
 func (mh *Memcached) uncommentManifestsKustomizationv4() {
 	var err error
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "manifests", "kustomization.yaml")
@@ -458,14 +352,8 @@ func (mh *Memcached) implementingWebhooks() {
 
 // implementingController will customizations in the Controller
 func (mh *Memcached) implementingController() {
-	var controllerPath string
-	if mh.isV3() {
-		controllerPath = filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
-			strings.ToLower(mh.ctx.Kind)))
-	} else {
-		controllerPath = filepath.Join(mh.ctx.Dir, "internal", "controller", fmt.Sprintf("%s_controller.go",
-			strings.ToLower(mh.ctx.Kind)))
-	}
+	controllerPath := filepath.Join(mh.ctx.Dir, "internal", "controller", fmt.Sprintf("%s_controller.go",
+		strings.ToLower(mh.ctx.Kind)))
 
 	err := kbutil.InsertCode(controllerPath,
 		`						SecurityContext: &corev1.SecurityContext{`, userIDWarningFragment)
@@ -558,7 +446,7 @@ func (mh *Memcached) implementingAPIMarkers() {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=3
 	// +kubebuilder:validation:ExclusiveMaximum=false
-	
+
 	// Size defines the number of Memcached instances
 	// +operator-sdk:csv:customresourcedefinitions:type=spec`,
 	)
@@ -754,15 +642,8 @@ func (mh *Memcached) implementingPrometheusRBAC() {
 
 // customizingController will customize the Controller to include monitoring
 func (mh *Memcached) customizingController() {
-	var controllerPath string
-
-	if mh.isV3() {
-		controllerPath = filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
-			strings.ToLower(mh.ctx.Kind)))
-	} else {
-		controllerPath = filepath.Join(mh.ctx.Dir, "internal", "controller", fmt.Sprintf("%s_controller.go",
-			strings.ToLower(mh.ctx.Kind)))
-	}
+	controllerPath := filepath.Join(mh.ctx.Dir, "internal", "controller", fmt.Sprintf("%s_controller.go",
+		strings.ToLower(mh.ctx.Kind)))
 
 	// Add monitoring imports
 	err := kbutil.InsertCode(controllerPath,
@@ -810,13 +691,7 @@ func (mh *Memcached) customizingController() {
 
 // customizingMain will add comments to main
 func (mh *Memcached) customizingMain() {
-	var mainPath string
-
-	if mh.isV3() {
-		mainPath = filepath.Join(mh.ctx.Dir, "main.go")
-	} else {
-		mainPath = filepath.Join(mh.ctx.Dir, "cmd", "main.go")
-	}
+	mainPath := filepath.Join(mh.ctx.Dir, "cmd", "main.go")
 
 	err := kbutil.InsertCode(mainPath,
 		"Scheme:   mgr.GetScheme(),",
@@ -826,16 +701,8 @@ func (mh *Memcached) customizingMain() {
 
 // customizingMainMonitoring will customize main.go to register metrics
 func (mh *Memcached) customizingMainMonitoring() {
-	var mainPath string
-
-	marker := "\"github.com/example/memcached-operator/"
-	if mh.isV3() {
-		mainPath = filepath.Join(mh.ctx.Dir, "main.go")
-		marker += "controllers\""
-	} else {
-		mainPath = filepath.Join(mh.ctx.Dir, "cmd", "main.go")
-		marker += "internal/controller\""
-	}
+	mainPath := filepath.Join(mh.ctx.Dir, "cmd", "main.go")
+	marker := "\"github.com/example/memcached-operator/internal/controller\""
 
 	err := kbutil.InsertCode(mainPath,
 		marker,
@@ -860,12 +727,7 @@ func (mh *Memcached) customizingDockerfile() {
 	dockerfilePath := filepath.Join(mh.ctx.Dir, "Dockerfile")
 
 	// Copy monitoring
-	var ctrlCopy string
-	if mh.isV3() {
-		ctrlCopy = "controllers/"
-	} else {
-		ctrlCopy = "internal/controller/"
-	}
+	ctrlCopy := "internal/controller/"
 
 	err := kbutil.InsertCode(dockerfilePath,
 		fmt.Sprintf("COPY %s %s", ctrlCopy, ctrlCopy),
@@ -881,20 +743,13 @@ func (mh *Memcached) customizingMakefile() {
 
 	// TODO: update this to be different based on go plugin version
 	// Add prom-rule-ci target to the makefile
-	if mh.isV3() {
-		err := kbutil.InsertCode(makefilePath,
-			`$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -`,
-			makefileFragment)
-		pkg.CheckError("adding prom-rule-ci target to the makefile", err)
-	} else {
-		err := kbutil.InsertCode(makefilePath,
-			`$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -`,
-			makefileFragment)
-		pkg.CheckError("adding prom-rule-ci target to the makefile", err)
-	}
+	err := kbutil.InsertCode(makefilePath,
+		`$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -`,
+		makefileFragment)
+	pkg.CheckError("adding prom-rule-ci target to the makefile", err)
 
 	// Add metrics documentation
-	err := kbutil.InsertCode(makefilePath,
+	err = kbutil.InsertCode(makefilePath,
 		`$(MAKE) docker-push IMG=$(CATALOG_IMG)`,
 		metricsdocsMakefileFragment)
 	pkg.CheckError("adding metrics documentation", err)
@@ -1270,7 +1125,7 @@ Unavailability of distributed memory object caching system in the cluster.
 - Observe the logs of the memcached manager pod, to see why it cannot create the memcached-sample pods.
 
    <code>kubectl get logs <memcached-operator-controller-manager-pod> -n memcached-operator-system</code>
-  
+
 ## Mitigation
 There can be several reasons. Like:
 - Node resource exhaustion

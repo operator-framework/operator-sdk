@@ -19,7 +19,7 @@ Unavailability of distributed memory object caching system in the cluster.
 - Observe the logs of the memcached manager pod, to see why it cannot create the memcached-sample pods.
 
    <code>kubectl get logs <memcached-operator-controller-manager-pod> -n memcached-operator-system</code>
-  
+
 ## Mitigation
 There can be several reasons. Like:
 - Node resource exhaustion

@@ -23,10 +23,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachruntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -157,13 +157,12 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 
-	watchNamespaces := getWatchNamespaces(options.Cache.Namespaces)
-	options.NewCache, err = buildNewCacheFunc(watchNamespaces, ws, options.Scheme)
+	configureWatchNamespaces(&options, log)
+	err = configureSelectors(&options, ws, options.Scheme)
 	if err != nil {
-		log.Error(err, "Failed to create NewCache function for manager.")
+		log.Error(err, "Failed to configure default selectors for caching")
 		os.Exit(1)
 	}
-
 	if options.NewClient == nil {
 		options.NewClient = client.New
 	}
@@ -228,31 +227,46 @@ func exitIfUnsupported(options manager.Options) {
 	}
 }
 
-func getWatchNamespaces(namespaces []string) []string {
-	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
-	log = log.WithValues("Namespace", namespace)
-	if found {
-		log.V(1).Info(fmt.Sprintf("Setting namespace with value in %s", k8sutil.WatchNamespaceEnvVar))
-		if namespace == metav1.NamespaceAll {
-			log.Info("Watching all namespaces.")
-			return []string{metav1.NamespaceAll}
+func configureWatchNamespaces(options *manager.Options, log logr.Logger) {
+	namespaces := splitNamespaces(os.Getenv(k8sutil.WatchNamespaceEnvVar))
+
+	namespaceConfigs := make(map[string]cache.Config)
+	if len(namespaces) != 0 {
+		log.Info("Watching namespaces", "namespaces", namespaces)
+		for _, namespace := range namespaces {
+			namespaceConfigs[namespace] = cache.Config{}
+			if namespace == metav1.NamespaceAll {
+				namespaceConfigs[namespace] = cache.Config{
+					LabelSelector: labels.Everything(),
+				}
+			}
 		}
-		if strings.Contains(namespace, ",") {
-			log.Info("Watching multiple namespaces.")
-			return strings.Split(namespace, ",")
+	} else {
+		log.Info("Watching all namespaces")
+		// in order to properly establish cluster level watches
+		// we need to override the default label selectors configured
+		// in later config steps
+		namespaceConfigs[metav1.NamespaceAll] = cache.Config{
+			LabelSelector: labels.Everything(),
 		}
-		log.Info("Watching single namespace.")
-		return []string{namespace}
 	}
-	if len(namespaces) == 0 {
-		log.Info(fmt.Sprintf("Watch namespaces not configured by environment variable %s or file. "+
-			"Watching all namespaces.", k8sutil.WatchNamespaceEnvVar))
-		return []string{metav1.NamespaceAll}
-	}
-	return namespaces
+
+	options.Cache.DefaultNamespaces = namespaceConfigs
 }
 
-func buildNewCacheFunc(watchNamespaces []string, ws []watches.Watch, sch *apimachruntime.Scheme) (cache.NewCacheFunc, error) {
+func splitNamespaces(namespaces string) []string {
+	list := strings.Split(namespaces, ",")
+	var out []string
+	for _, ns := range list {
+		trimmed := strings.TrimSpace(ns)
+		if trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
+func configureSelectors(opts *manager.Options, ws []watches.Watch, sch *apimachruntime.Scheme) error {
 	selectorsByObject := map[client.Object]cache.ByObject{}
 	chartNames := make([]string, 0, len(ws))
 	for _, w := range ws {
@@ -262,27 +276,24 @@ func buildNewCacheFunc(watchNamespaces []string, ws []watches.Watch, sch *apimac
 		crObj.SetGroupVersionKind(w.GroupVersionKind)
 		sel, err := metav1.LabelSelectorAsSelector(&w.Selector)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse watch selector for %s: %v", w.GroupVersionKind, err)
+			return fmt.Errorf("unable to parse watch selector for %s: %v", w.GroupVersionKind, err)
 		}
 		selectorsByObject[crObj] = cache.ByObject{Label: sel}
 
 		chrt, err := loader.LoadDir(w.ChartDir)
 		if err != nil {
-			return nil, fmt.Errorf("unable to load chart for %s: %v", w.GroupVersionKind, err)
+			return fmt.Errorf("unable to load chart for %s: %v", w.GroupVersionKind, err)
 		}
 		chartNames = append(chartNames, chrt.Name())
 
 	}
 	req, err := labels.NewRequirement("helm.sdk.operatorframework.io/chart", selection.In, chartNames)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create label requirement for cache default selector: %v", err)
+		return fmt.Errorf("unable to create label requirement for cache default selector: %v", err)
 	}
 	defaultSelector := labels.NewSelector().Add(*req)
 
-	return func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-		opts.ByObject = selectorsByObject
-		opts.DefaultLabelSelector = defaultSelector
-		opts.Namespaces = watchNamespaces
-		return cache.New(config, opts)
-	}, nil
+	opts.Cache.ByObject = selectorsByObject
+	opts.Cache.DefaultLabelSelector = defaultSelector
+	return nil
 }

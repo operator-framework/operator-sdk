@@ -35,15 +35,16 @@ func (fake *FakeGenerator) Generate(arg1 string, arg2 string, arg3 string, arg4 
 		arg3 string
 		arg4 packagemanifest.Options
 	}{arg1, arg2, arg3, arg4})
+	stub := fake.GenerateStub
+	fakeReturns := fake.generateReturns
 	fake.recordInvocation("Generate", []interface{}{arg1, arg2, arg3, arg4})
 	fake.generateMutex.Unlock()
-	if fake.GenerateStub != nil {
-		return fake.GenerateStub(arg1, arg2, arg3, arg4)
+	if stub != nil {
+		return stub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.generateReturns
 	return fakeReturns.result1
 }
 

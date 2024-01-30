@@ -103,7 +103,7 @@ func (mh *Memcached) Run() {
 
 	log.Infof("adding customized roles")
 	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
-		"#+kubebuilder:scaffold:rules", policyRolesFragment)
+		rolesFragmentReplaceTarget, policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
 	log.Infof("creating the bundle")
@@ -122,7 +122,91 @@ func (mh *Memcached) Run() {
 
 const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
 
+const rolesFragmentReplaceTarget = `
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+`
+
 const policyRolesFragment = `
+##
+## Base operator rules
+##
+# We need to get namespaces so the operator can read namespaces to ensure they exist
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+# We need to manage Helm release secrets
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - "*"
+# We need to create events on CRs about things happening during reconciliation
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+
+##
+## Rules for cache.example.com/v1alpha1, Kind: Memcached
+##
+- apiGroups:
+  - cache.example.com
+  resources:
+  - memcacheds
+  - memcacheds/status
+  - memcacheds/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - services/finalizers
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
+
 ##
 ## Rules customized for cache.example.com/v1alpha1, Kind: Memcached
 ##

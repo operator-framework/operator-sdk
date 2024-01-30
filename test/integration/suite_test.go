@@ -83,12 +83,14 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 	}
 
-	By("generating the operator package manifests and enabling all InstallModes")
+	By("generating the operator package manifests and enabling AllNamespaces InstallMode")
 	Expect(tc.Make("packagemanifests", "IMG="+tc.ImageName)).To(Succeed())
 	csv, err := readCSV(&tc, "0.0.1", false)
 	Expect(err).NotTo(HaveOccurred())
 	for i := range csv.Spec.InstallModes {
-		csv.Spec.InstallModes[i].Supported = true
+		if csv.Spec.InstallModes[i].Type == "AllNamespaces" {
+			csv.Spec.InstallModes[i].Supported = true
+		}
 	}
 	Expect(writeCSV(&tc, "0.0.1", csv, false)).To(Succeed())
 
