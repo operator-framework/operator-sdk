@@ -1,5 +1,5 @@
 /*
-Copyright 2022.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package e2e
+package v1alpha1
 
 import (
-	"fmt"
-	"testing"
-
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
-// Run e2e tests using the Ginkgo runner.
-func TestE2E(t *testing.T) {
-	RegisterFailHandler(Fail)
-	fmt.Fprintf(GinkgoWriter, "Starting Memcached Operator suite\n")
-	RunSpecs(t, "Memcached e2e suite")
-}
+var _ = Describe("Memcached Webhook", func() {
+
+	Context("When creating Memcached under Defaulting Webhook", func() {
+		It("Should fill in the default value if a required field is empty", func() {
+
+			// TODO(user): Add your logic here
+
+		})
+	})
+
+})

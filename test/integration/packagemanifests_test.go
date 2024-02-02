@@ -45,7 +45,7 @@ var _ = Describe("run packagemanifests", func() {
 		Expect(output).To(ContainSubstring(`package \"memcached-operator\" not found`))
 	})
 
-	It("should succeed with a single operator version in OwnNamespace mode", func() {
-		Expect(runPackageManifests(&tc, "--install-mode", "OwnNamespace", "--version", "0.0.1")).To(Succeed())
+	It("should succeed with a single operator version in AllNamespaces mode", func() {
+		Expect(runPackageManifests(&tc, "--install-mode", "AllNamespaces", "--version", "0.0.1")).To(Succeed())
 	})
 })

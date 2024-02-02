@@ -34,7 +34,7 @@ func (mh *Memcached) implementingE2ETests() {
 
 func (mh *Memcached) addTestE2eMakefileTarget() {
 	err := kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
-		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out`,
+		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out`,
 		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out`,
 	)
 	pkg.CheckError("replacing test target", err)
@@ -91,11 +91,17 @@ func (mh *Memcached) createGoFiles(testE2eDir string, testUtilsDir string) {
 
 func (mh *Memcached) createDirs(testDir string, testE2eDir string, testUtilsDir string) {
 	err := os.Mkdir(testDir, os.ModePerm)
-	pkg.CheckError("error to create test dir", err)
+	if !os.IsExist(err) {
+		pkg.CheckError("error to create test dir", err)
+	}
 	err = os.Mkdir(testE2eDir, os.ModePerm)
-	pkg.CheckError("error to create test e2e dir", err)
+	if !os.IsExist(err) {
+		pkg.CheckError("error to create test e2e dir", err)
+	}
 	err = os.Mkdir(testUtilsDir, os.ModePerm)
-	pkg.CheckError("error to create test utils dir", err)
+	if !os.IsExist(err) {
+		pkg.CheckError("error to create test utils dir", err)
+	}
 }
 
 const e2eSuiteTemplate = `/*

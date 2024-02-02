@@ -46,7 +46,7 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 		versionOne = "1.0.0"
 
 		originalDir = filepath.Join("..", "..", "..", "..", "internal", "cmd", "operator-sdk", "generate", "packagemanifests")
-		testDataDir = filepath.Join("..", "..", "..", "..", "..", "testdata", "go", "v3", "memcached-operator")
+		testDataDir = filepath.Join("..", "..", "..", "..", "..", "testdata", "go", "v4", "memcached-operator")
 	})
 	Describe("validate", func() {
 		It("fails if no version is provided", func() {
@@ -196,7 +196,7 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 				err := c.setDefaults()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(c.packageName).To(Equal("memcached-operator"))
-				Expect(c.layout).To(Equal("go.kubebuilder.io/v3"))
+				Expect(c.layout).To(Equal("go.kubebuilder.io/v4"))
 			})
 			It("doesn't overwrite the package name if it's already set", func() {
 				c.packageName = "cherry"
@@ -204,7 +204,7 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 				err := c.setDefaults()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(c.packageName).To(Equal("cherry"))
-				Expect(c.layout).To(Equal("go.kubebuilder.io/v3"))
+				Expect(c.layout).To(Equal("go.kubebuilder.io/v4"))
 			})
 		})
 		Context("an invalid project file is present", func() {

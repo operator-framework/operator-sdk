@@ -126,7 +126,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 			It("should be able to extract SDK stamps from CSV", func() {
 				annotations := map[string]string{
 					"operators.operatorframework.io/builder":        "operator-sdk-v1.5.0",
-					"operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+					"operators.operatorframework.io/project_layout": "go.kubebuilder.io/v4",
 				}
 
 				csv := operatorsv1alpha1.ClusterServiceVersion{

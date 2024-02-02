@@ -16,7 +16,7 @@ package cli
 
 import (
 	hybrid "github.com/operator-framework/helm-operator-plugins/pkg/plugins/hybrid/v1alpha"
-	quarkusv1 "github.com/operator-framework/java-operator-plugins/pkg/quarkus/v1alpha"
+	quarkusv1 "github.com/operator-framework/java-operator-plugins/pkg/quarkus/v1beta"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

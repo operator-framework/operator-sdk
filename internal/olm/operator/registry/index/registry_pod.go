@@ -29,7 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/utils/pointer"
+	pointer "k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -142,9 +142,9 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 
 		// Update the Registry Pod container security context to be restrictive
 		rp.pod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
-			Privileged:               pointer.Bool(false),
-			ReadOnlyRootFilesystem:   pointer.Bool(false),
-			AllowPrivilegeEscalation: pointer.Bool(false),
+			Privileged:               pointer.To(false),
+			ReadOnlyRootFilesystem:   pointer.To(false),
+			AllowPrivilegeEscalation: pointer.To(false),
 			Capabilities: &corev1.Capabilities{
 				Drop: []corev1.Capability{"ALL"},
 			},
