@@ -1,0 +1,13 @@
+#!/bin/sh
+
+CHAINSAW_PATH=${CHAINSAW_PATH:-"/bundle/tests/scorecard/chainsaw"}
+CHAINSAW_CONFIG=${CHAINSAW_CONFIG:-"${CHAINSAW_PATH}/.chainsaw.yaml"}
+
+chainsaw test \
+  --test-dir ${CHAINSAW_PATH} \
+  --config=${CHAINSAW_CONFIG} \
+  --report-format=JSON --report-name=/tmp/chainsaw-report > /tmp/chainsaw.stdout 2> /tmp/chainsaw.stderr
+
+# send the list of args to scorecard-test-chainsaw
+# NOTE: I'm not sure it uses the args for anything at the moment
+exec scorecard-test-chainsaw $@
