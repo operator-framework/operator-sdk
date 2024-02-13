@@ -55,6 +55,7 @@ type HelmOperatorReconciler struct {
 	OverrideValues         map[string]string
 	SuppressOverrideValues bool
 	releaseHook            ReleaseHookFunc
+	DryRunOption           string
 }
 
 const (
@@ -96,7 +97,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		return reconcile.Result{}, err
 	}
 
-	manager, err := r.ManagerFactory.NewManager(o, r.OverrideValues)
+	manager, err := r.ManagerFactory.NewManager(o, r.OverrideValues, r.DryRunOption)
 	if err != nil {
 		log.Error(err, "Failed to get release manager")
 		return reconcile.Result{}, err
