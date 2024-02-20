@@ -42,6 +42,8 @@ used for testing projects built with SDK `1.0.0`:
 
 Also, you can write tests for your operator in a declarative format using [kuttl][kuttl]. Via kuttl, you can define YAML manifests that specify the expected before and after states of a cluster when your operator is used. For more info see [Writing Kuttl Scorecard Tests][writing-kuttl-scorecard-tests].
 
+An alternative and more modern solution to kuttl is [chainsaw][chainsaw]. Chainsaw offers more flexibility, a rich assertion model, and is actively maintained. Tests from kuttl can be automatically converted to chainsaw, see [Migration from KUTTL][from-kuttl-to-chainsaw].
+
 To implement application-specific tests, the SDK's test harness, [scorecard][scorecard], provides the ability to ship custom code in container images as well, which can be referenced in the test suite. Because this test suite definition metadata travels with the Operator Bundle, it allows for functional testing of the Operator without the source code or the project layout being available. See [Writing Custom Scorecard Tests][writing-custom-scorecard-tests].
 
 [envtest]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest
@@ -59,3 +61,5 @@ To implement application-specific tests, the SDK's test harness, [scorecard][sco
 [go-legacy-shell]: https://github.com/operator-framework/operator-sdk/blob/v1.0.0/hack/tests/e2e-go.sh
 [helm-legacy-shell]: https://github.com/operator-framework/operator-sdk/blob/v1.0.0/hack/tests/e2e-helm.sh
 [ansible-legacy-shell]: https://github.com/operator-framework/operator-sdk/blob/v1.0.0/hack/tests/e2e-ansible.sh
+[chainsaw]: https://kyverno.github.io/chainsaw/latest/
+[from-kuttl-to-chainsaw]: https://kyverno.github.io/chainsaw/latest/more/kuttl-migration/
