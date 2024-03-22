@@ -51,7 +51,7 @@ type initSubcommand struct {
 
 var _ plugin.InitSubcommand = &initSubcommand{}
 
-// UpdateContext define plugin context
+// UpdateMetadata define plugin context
 func (p *initSubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdMeta *plugin.SubcommandMetadata) {
 	subcmdMeta.Description = `Initialize a new Helm-based operator project.
 
