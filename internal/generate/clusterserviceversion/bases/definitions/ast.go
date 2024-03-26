@@ -92,6 +92,13 @@ func (im importIdents) findPackagePathForSelExpr(expr *ast.SelectorExpr) (pkgPat
 	return loader.NonVendorPath(pkgPath)
 }
 
+type packagedFieldInfo struct {
+	fieldInfo
+
+	// package of the type holding the field
+	Package *loader.Package
+}
+
 // getMarkedChildrenOfField collects all marked fields from type declarations starting at rootField in depth-first order.
 func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField markers.FieldInfo) (map[crd.TypeIdent][]*fieldInfo, error) {
 	// Gather all types and imports needed to build the BFS tree.
@@ -102,10 +109,10 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 	}
 
 	// ast.Inspect will not traverse into fields, so iteratively collect them and to check for markers.
-	nextFields := []*fieldInfo{{FieldInfo: rootField}}
+	nextFields := []*packagedFieldInfo{{fieldInfo: fieldInfo{FieldInfo: rootField}, Package: rootPkg}}
 	markedFields := map[crd.TypeIdent][]*fieldInfo{}
 	for len(nextFields) > 0 {
-		fields := []*fieldInfo{}
+		fields := []*packagedFieldInfo{}
 		for _, field := range nextFields {
 			ast.Inspect(field.RawField, func(n ast.Node) bool {
 				if n == nil {
@@ -120,14 +127,14 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 						// Found no reference to pkgPath in any file.
 						return true
 					}
-					if pkg, hasImport := rootPkg.Imports()[pkgPath]; hasImport {
+					if pkg, hasImport := field.Package.Imports()[pkgPath]; hasImport {
 						pkg.NeedTypesInfo()
 						ident = crd.TypeIdent{Package: pkg, Name: nt.Sel.Name}
 					}
 				case *ast.Ident: // Local type definition.
 					// Only look at type idents or references to type idents in other files.
 					if nt.Obj == nil || nt.Obj.Kind == ast.Typ {
-						ident = crd.TypeIdent{Package: rootPkg, Name: nt.Name}
+						ident = crd.TypeIdent{Package: field.Package, Name: nt.Name}
 					}
 				}
 
@@ -156,14 +163,17 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 					// and add the field to the next fields to search.
 					parentSegments := make([]string, len(field.pathSegments), len(field.pathSegments)+1)
 					copy(parentSegments, field.pathSegments)
-					f := &fieldInfo{
-						FieldInfo:    finfo,
-						pathSegments: append(parentSegments, segment),
+					f := &packagedFieldInfo{
+						fieldInfo: fieldInfo{
+							FieldInfo:    finfo,
+							pathSegments: append(parentSegments, segment),
+						},
+						Package: ident.Package,
 					}
 					fields = append(fields, f)
 					// Marked fields get collected for the caller to parse.
 					if len(finfo.Markers) != 0 {
-						markedFields[ident] = append(markedFields[ident], f)
+						markedFields[ident] = append(markedFields[ident], &f.fieldInfo)
 					}
 				}
 
