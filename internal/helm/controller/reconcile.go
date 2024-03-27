@@ -108,7 +108,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
 	// Determine the correct reconcile period based on the existing value in the reconciler and the
 	// annotations in the custom resource. If a reconcile period is specified in the custom resource
-	// annotations, this value will take precedence over the the existing reconcile period value
+	// annotations, this value will take precedence over the existing reconcile period value
 	// (which came from either the command-line flag or the watches.yaml file).
 	finalReconcilePeriod, err := determineReconcilePeriod(r.ReconcilePeriod, o)
 	if err != nil {
