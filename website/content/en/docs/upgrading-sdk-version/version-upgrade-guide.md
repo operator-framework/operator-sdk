@@ -353,7 +353,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 **modules**
 
-- Ensure the the following `replace` directives are present in your `go.mod` file:
+- Ensure the following `replace` directives are present in your `go.mod` file:
     ```
     replace (
             github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
@@ -414,7 +414,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 **modules**
 
-- Ensure the the following `replace` directives are present in your `go.mod` file:
+- Ensure the following `replace` directives are present in your `go.mod` file:
     ```
     // Pinned to kubernetes-1.14.1
     replace (
@@ -506,7 +506,7 @@ Using `dep` is no longer supported. Follow [Go's official blog post about migrat
 
 **modules**
 
-- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+- Ensure the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
 ```
 require (
@@ -574,7 +574,7 @@ func printVersion() {
 
 **modules**
 
-- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+- Ensure the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
 ```
 require (
@@ -641,7 +641,7 @@ For further detailed information see [CHANGELOG](https://github.com/operator-fra
 
 **modules**
 
-- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+- Ensure the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
 ```
 require (
@@ -868,7 +868,7 @@ If you are using any external helm v2 tooling with the your helm operator-manage
 
 **modules**
 
-- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+- Ensure the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
 ```
 require (

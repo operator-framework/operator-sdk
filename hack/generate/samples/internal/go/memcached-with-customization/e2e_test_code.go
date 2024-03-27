@@ -242,7 +242,7 @@ var _ = Describe("memcached", Ordered, func() {
 			_, err = utils.Run(cmd)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
-			By("loading the the manager(Operator) image on Kind")
+			By("loading the manager(Operator) image on Kind")
 			err = utils.LoadImageToKindClusterWithName(operatorImage)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
@@ -455,7 +455,7 @@ var _ = Describe("memcached", Ordered, func() {
 			_, err = utils.Run(cmd)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
-			By("loading the the manager(Operator) image on Kind")
+			By("loading the manager(Operator) image on Kind")
 			err = utils.LoadImageToKindClusterWithName(operatorImage)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
