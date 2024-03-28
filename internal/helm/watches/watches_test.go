@@ -101,7 +101,30 @@ func TestLoadReader(t *testing.T) {
 			},
 			expectErr: false,
 		},
-
+		{
+			name: "valid with dry run option",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
+  watchDependentResources: false
+  overrideValues:
+    key: $MY_VALUE
+  dryRunOption: server
+`,
+			env: map[string]string{"MY_VALUE": "value"},
+			expectWatches: []Watch{
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
+					WatchDependentResources: &falseVal,
+					OverrideValues:          map[string]string{"key": "value"},
+					DryRunOption:            "server",
+				},
+			},
+			expectErr: false,
+		},
 		{
 			name: "invalid with override template expansion",
 			data: `---

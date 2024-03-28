@@ -75,6 +75,8 @@ type manager struct {
 	isUpgradeRequired bool
 	deployedRelease   *rpb.Release
 	chart             *cpb.Chart
+
+	dryRunOption string
 }
 
 type InstallOption func(*action.Install) error
@@ -159,6 +161,7 @@ func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true
+	upgrade.DryRunOption = m.dryRunOption
 	return upgrade.Run(name, chart, values)
 }
 

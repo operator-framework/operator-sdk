@@ -33,7 +33,7 @@ import (
 // improves decoupling between reconciliation logic and the Helm backend
 // components used to manage releases.
 type ManagerFactory interface {
-	NewManager(r *unstructured.Unstructured, overrideValues map[string]string) (Manager, error)
+	NewManager(r *unstructured.Unstructured, overrideValues map[string]string, dryRunOption string) (Manager, error)
 }
 
 type managerFactory struct {
@@ -47,7 +47,7 @@ func NewManagerFactory(mgr crmanager.Manager, acg client.ActionConfigGetter, cha
 	return &managerFactory{mgr, acg, chartDir}
 }
 
-func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues map[string]string) (Manager, error) {
+func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues map[string]string, dryRunOption string) (Manager, error) {
 	actionConfig, err := f.acg.ActionConfigFor(cr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm action config: %w", err)
@@ -86,9 +86,10 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		releaseName: releaseName,
 		namespace:   cr.GetNamespace(),
 
-		chart:  crChart,
-		values: values,
-		status: types.StatusFor(cr),
+		chart:        crChart,
+		values:       values,
+		status:       types.StatusFor(cr),
+		dryRunOption: dryRunOption,
 	}, nil
 }
 
