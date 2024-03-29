@@ -134,7 +134,7 @@ the Operator bundle generated with the target is built from the manifests under 
 the layout of your operator built with Operator-SDK see [Project Layout][project-layout].
 
 To check an example of a CSV which complies with the [restricted][restricted] policy, see the Golang sample
-under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
+under the [testdata/go/v4/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
 
 ### How can I verify my manifest? 
 
@@ -419,5 +419,5 @@ Therefore, if you want your workloads running in namespaces labeled to enforce r
 [restricted]: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 [security-standards]: https://kubernetes.io/docs/concepts/security/pod-security-standards/
 [psachecker]: https://github.com/stlaz/psachecker
-[sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
+[sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/memcached-operator
 [docker-good-practices-doc]: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user

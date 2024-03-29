@@ -418,7 +418,7 @@ For further steps regarding the deployment of the operator, creation of custom r
 [install-guide]: /docs/building-operators/ansible/installation
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/memcached-operator
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [markers]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
