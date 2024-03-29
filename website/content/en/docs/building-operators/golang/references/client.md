@@ -580,7 +580,7 @@ func labelsForApp(name string) map[string]string {
 }
 ```
 
-[memcached-testdata]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
+[memcached-testdata]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/memcached-operator
 [repo-controller-runtime]:https://github.com/kubernetes-sigs/controller-runtime
 [doc-client]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client#Client
 [doc-split-client]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client#DelegatingClient

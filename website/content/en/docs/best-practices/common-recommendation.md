@@ -105,4 +105,4 @@ spec:
 [k8s-manage-resources]: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 [best practices]: https://olm.operatorframework.io/docs/concepts/olm-architecture/dependency-resolution/
 [Dependency Resolution]:  /docs/best-practices/best-practices
-[sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
+[sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/memcached-operator

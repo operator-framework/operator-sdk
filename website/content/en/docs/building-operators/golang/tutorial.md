@@ -543,7 +543,7 @@ Next, check out the following:
 [legacy_CLI]:https://github.com/operator-framework/operator-sdk/tree/v0.19.x/website/content/en/docs/cli
 [manager_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
 [markers]: https://book.kubebuilder.io/reference/markers.html
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/latest/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/latest/testdata/go/v4/memcached-operator/internal/controller/memcached_controller.go
 [migration-guide]:/docs/building-operators/golang/migration
 [multi-namespaced-cache-builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
