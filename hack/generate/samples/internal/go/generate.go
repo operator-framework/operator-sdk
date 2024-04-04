@@ -24,7 +24,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 
 	// TODO: replace the Memcached implementation and update the tutorial
 	// to use the deploy.image/v1-alpha plugin to do the scaffold instead
-	// to create an empty scaffold add add all code. So that, we can also
+	// to create an empty scaffold add all code. So that, we can also
 	// ensure that the tutorial follows the good practices
 	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4"))
 	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4", "monitoring"))

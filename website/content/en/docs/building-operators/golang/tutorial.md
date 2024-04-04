@@ -89,7 +89,7 @@ controllers/memcached_controller.go
 
 This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.go` and the controller at `controllers/memcached_controller.go`.
 
-**Note:** In this tutorial we will be providing all the steps to show you how to implement an operator project. However, as a follow up you might want to check the [Deploy Image plugin][deploy-image-plugin-doc] with which it is possible to have the whole code generated to deploy and manage an Operand(image). To do so, you can use the the command `$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --plugins="deploy-image/v1-alpha" --image=memcached:1.4.36-alpine --image-container-command="memcached,-m=64,modern,-v" --run-as-user="1001"`
+**Note:** In this tutorial we will be providing all the steps to show you how to implement an operator project. However, as a follow up you might want to check the [Deploy Image plugin][deploy-image-plugin-doc] with which it is possible to have the whole code generated to deploy and manage an Operand(image). To do so, you can use the command `$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --plugins="deploy-image/v1-alpha" --image=memcached:1.4.36-alpine --image-container-command="memcached,-m=64,modern,-v" --run-as-user="1001"`
 
 **Note:** This guide will cover the default case of a single group API. If you would like to support Multi-Group APIs see the [Single Group to Multi-Group][multigroup-kubebuilder-doc] doc.
 
