@@ -545,7 +545,6 @@ Next, check out the following:
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/latest/testdata/go/v4/memcached-operator/internal/controller/memcached_controller.go
 [migration-guide]:/docs/building-operators/golang/migration
-[multi-namespaced-cache-builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
 [olm-integration]: /docs/olm-integration
 [openapi-validation]: /docs/building-operators/golang/references/openapi-validation
