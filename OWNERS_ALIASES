@@ -19,6 +19,7 @@ aliases:
   - grokspawn
   - anik120
   - acornett21
+  - OchiengEd
 
   # Contributors who can review and LGTM any PRs in the repo.
   sdk-reviewers:
