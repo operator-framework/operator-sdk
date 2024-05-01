@@ -131,7 +131,7 @@ ifeq (,$(shell which kustomize 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(KUSTOMIZE)) ;\
-	curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.2.1/kustomize_v5.2.1_$(OS)_$(ARCH).tar.gz | \
+	curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.3.0/kustomize_v5.3.0_$(OS)_$(ARCH).tar.gz | \
 	tar xzf - -C bin/ ;\
 	}
 else
