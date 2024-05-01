@@ -44,7 +44,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 
 ### Watching resources in specific Namespaces
 
-To restrict the scope of the [Manager's][ctrl-manager] cache to a specific Namespace set the `Cache.DefaultNamespaces'
+To restrict the scope of the [Manager's][ctrl-manager] cache to a specific Namespace, set `Cache.DefaultNamespaces`
 field in [Options][ctrl-options]:
 
 ```go
@@ -64,7 +64,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 
 ### Watching resources in a set of Namespaces
 
-It is also possible to use 'DefaultNamepsaces' to watch and manage resources in a set of Namespaces:
+It is also possible to use `DefaultNamespaces` to watch and manage resources in a set of Namespaces:
 
 ```go
 ...
