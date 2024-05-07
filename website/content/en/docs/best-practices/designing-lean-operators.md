@@ -14,36 +14,36 @@ Requests to a client backed by a filtered cache for objects that do not match th
 
 ## How is this done ?
 
-- When creating the manager, you can override the default NewCache function
+- When creating the manager, you can add an Options struct to configure the Cache
 - Each client.Object can be filtered with labels and fields
 
 ## Examples
 
-In this scenario, the user will override the NewCache function to filter the secret object by it's label. This will return a filtered cache for objects that match the filter.
+In this scenario, the user will configure the Cache to filter the secret object by it's label. This will return a filtered cache for objects that match the filter.
 
 ```yaml
 mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-   NewCache: cache.BuilderWithOptions(cache.Options{
-	  SelectorsByObject: cache.SelectorsByObject{
-	    &corev1.Secret{}: {
-	 	  Label: labels.SelectorFromSet(labels.Set{"app": "app-name"}),
-	    },
+  Cache: cache.Options{
+    ByObject: map[client.Object]cache.ByObject{
+      &corev1.Secret{}: cache.ByObject{
+	Label: labels.SelectorFromSet(labels.Set{"app": "app-name"}),
       },
-	}),
+    },
+  },
 })
 ```
 
-In this scenario, the user will override the NewCache function to filter the node object by it's field name. This will return a filtered cache for objects that match the filter.
+In this scenario, the user will configure the Cache to filter the node object by it's field name. This will return a filtered cache for objects that match the filter.
 
 ```yaml
 mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-   NewCache: cache.BuilderWithOptions(cache.Options{
-	  SelectorsByObject: cache.SelectorsByObject{
-	    &corev1.Node{}: {
-            Field: fields.SelectorFromSet(fields.Set{"metadata.name": "node01"}),
-        },
+  Cache: cache.Options{
+    ByObject: map[client.Object]cache.ByObject{
+      &corev1.Node{}: cache.ByObject{
+	Fields: labels.SelectorFromSet(fields.Set{"metadata.name": "node01"}),
       },
-	}),
+    },
+  },
 })
 ```
 
