@@ -131,7 +131,7 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 
-	if err := addInitCustomizations(p.config.GetProjectName(), p.config.IsComponentConfig()); err != nil {
+	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
 		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
@@ -178,46 +178,25 @@ func (p *initSubcommand) PostScaffold() error {
 }
 
 // addInitCustomizations will perform the required customizations for this plugin on the common base
-func addInitCustomizations(projectName string, componentConfig bool) error {
-	managerFile := filepath.Join("config", "manager", "manager.yaml")
-
+func addInitCustomizations(projectName string) error {
 	// todo: we ought to use afero instead. Replace this methods to insert/update
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
-	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
-	if componentConfig {
-		err := util.InsertCode(managerFile,
-			"- /manager",
-			fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
-		if err != nil {
-			return err
-		}
+	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_metrics_patch.yaml
+	managerMetricsPatchFile := filepath.Join("config", "default", "manager_metrics_patch.yaml")
+	err := util.InsertCode(managerMetricsPatchFile,
+		"- \"--metrics-bind-address=0.0.0.0:8080\"",
+		fmt.Sprintf("\n        - \"--leader-elect\"\n        - \"--leader-election-id=%s\"\n        - \"--health-probe-bind-address=:8081\"", projectName))
+	if err != nil {
+		return err
+	}
 
-		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-			"memory: 64Mi",
-			fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
-		if err != nil {
-			return err
-		}
-		// Remove the webhook option for the componentConfig since webhooks are not supported by helm
-		err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
-			"webhook:\n  port: 9443", "")
-		if err != nil {
-			return err
-		}
-	} else {
-		err := util.InsertCode(managerFile,
-			"--leader-elect",
-			fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
-		if err != nil {
-			return err
-		}
-		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-			"- \"--leader-elect\"",
-			fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
-		if err != nil {
-			return err
-		}
+	managerFile := filepath.Join("config", "manager", "manager.yaml")
+	err = util.InsertCode(managerFile,
+		"--leader-elect",
+		fmt.Sprintf("\n          - --leader-election-id=%s", projectName))
+	if err != nil {
+		return err
 	}
 
 	// Remove the call to the command as manager. Helm has not been exposing this entrypoint
@@ -225,7 +204,7 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 	const command = `command:
         - /manager
         `
-	err := util.ReplaceInFile(managerFile, command, "")
+	err = util.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
 	}

@@ -337,7 +337,7 @@ check the full Ansible result in the logs in order to be able to debug it.
 
 **Example**
 
-In `config/manager/manager.yaml` and `config/default/manager_auth_proxy_patch.yaml`:
+In `config/manager/manager.yaml` and `config/default/manager_metrics_patch.yaml`:
 
 ```yaml
 ...

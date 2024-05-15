@@ -302,7 +302,7 @@ var _ = Describe("memcached", Ordered, func() {
 			By("validating that pod(s) status.phase=Running")
 			getMemcachedPodStatus := func() error {
 				cmd = exec.Command("kubectl", "get",
-					"pods", "-l", "app.kubernetes.io/name=Memcached",
+					"pods", "-l", "app.kubernetes.io/managed-by=MemcachedController",
 					"-o", "jsonpath={.items[*].status}", "-n", namespace,
 				)
 				status, err := utils.Run(cmd)

@@ -152,7 +152,7 @@ make sure to update all RBAC bindings and your manager Deployment.
 ### Configuring your Operator
 
 If your existing project has customizations in `deploy/operator.yaml`, they need to be ported to
-`config/manager/manager.yaml`. If you are passing custom arguments in your deployment, make sure to also update `config/default/auth_proxy_patch.yaml`.
+`config/manager/manager.yaml`. If you are passing custom arguments in your deployment, make sure to also update `config/default/manager_metrics_patch.yaml`.
 
 Note that the following environment variables are no longer used.
 
@@ -184,9 +184,7 @@ For further steps regarding the deployment of the operator, creation of custom r
 [install-guide]: /docs/building-operators/helm/installation
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [kustomize]: https://github.com/kubernetes-sigs/kustomize
-[kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [marker]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
 [migration-doc]: /docs/upgrading-sdk-version/
 [tutorial-deploy]: /docs/building-operators/helm/tutorial/#run-the-operator
-

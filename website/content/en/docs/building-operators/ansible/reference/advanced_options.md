@@ -36,7 +36,7 @@ concurrently, which can improve reconciliation performance.
 
 The maximum number of concurrent reconciles can be set in two ways. Operator **authors and admins**
 can set the max concurrent reconciles default by including extra args to the operator
-container in `config/manager/manager.yaml` and the patch in `config/default/auth_proxy_patch.yaml`.
+container in `config/manager/manager.yaml` and the patch in `config/default/manager_metrics_patch.yaml`.
 (Otherwise, the default is the maximum number of logical CPUs available for the process obtained
 using `runtime.NumCPU()`.)
 
@@ -70,7 +70,7 @@ metadata:
 
 From this data, we can see that the environment variable will be
 `MAX_CONCURRENT_RECONCILES_MEMCACHED_CACHE_EXAMPLE_COM`, which we can then add to
-`config/manager/manager.yaml` and `config/default/auth_proxy_patch.yaml`:
+`config/manager/manager.yaml` and `config/default/manager_metrics_patch.yaml`:
 
 ``` yaml
 - name: manager
@@ -113,7 +113,7 @@ For demonstration purposes, let us assume that we have a database operator that
 supports two Kinds -- `MongoDB` and `PostgreSQL` -- in the `db.example.com`
 Group. We have only recently implemented the support for the `MongoDB` Kind so
 we want reconciles for this Kind to be more verbose. Our operator container's
-spec in our `config/manager/manager.yaml` and `config/default/auth_proxy_patch.yaml`
+spec in our `config/manager/manager.yaml` and `config/default/manager_metrics_patch.yaml`
 files might contain something like:
 
 ```yaml
@@ -292,4 +292,3 @@ You should not use all three methods to specify a single reconcile period. If al
 [ansible-vault-doc]: https://docs.ansible.com/ansible/latest/user_guide/vault.html
 [Zap-Logger]: https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/building-operators/golang/references/logging.md#default-zap-logger
 [verbosity-annotations]: https://sdk.operatorframework.io/docs/building-operators/ansible/reference/advanced_options/#ansible-verbosity
-

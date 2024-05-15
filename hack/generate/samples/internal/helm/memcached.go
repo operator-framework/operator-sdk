@@ -101,6 +101,12 @@ func (mh *Memcached) Run() {
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
 
+	log.Info("enabling metrics in the manager")
+	err = kbutil.UncommentCode(
+		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
+		"#- path: manager_metrics_patch.yaml", "#")
+	pkg.CheckError("enabling metrics endpoint", err)
+
 	log.Infof("adding customized roles")
 	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
 		rolesFragmentReplaceTarget, policyRolesFragment)

@@ -101,8 +101,8 @@ These permissions are found in the directory `config/rbac/`. The `ClusterRole` i
 in `role_binding.yaml` are used to grant the operator permissions to access and manage its resources.
 
 **NOTE** For changing the operator's scope only the `role.yaml` and `role_binding.yaml` manifests need to be updated.
-For the purposes of this doc, the other RBAC manifests `<kind>_editor_role.yaml`, `<kind>_viewer_role.yaml`,
-and `auth_proxy_*.yaml` are not relevant to changing the operator's resource permissions.
+For the purposes of this doc, the other RBAC manifests `<kind>_editor_role.yaml` and `<kind>_viewer_role.yaml`, are not
+relevant to changing the operator's resource permissions.
 
 ### Changing the permissions to Namespaced
 
@@ -311,7 +311,6 @@ If the operator can watch multiple namespaces, set the following in your `spec.i
 [ctrl-manager]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
 [ctrl-options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
 [k8s-rbac]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[kube-rbac-proxy]: https://github.com/brancz/kube-rbac-proxy
 [rbac-clusterrole]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole
 [crd-scope-doc]: /docs/building-operators/golang/crds-scope/
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
