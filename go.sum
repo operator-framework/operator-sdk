@@ -433,8 +433,8 @@ github.com/operator-framework/helm-operator-plugins v0.1.4-0.20240327183647-1cc5
 github.com/operator-framework/helm-operator-plugins v0.1.4-0.20240327183647-1cc5a55d3fe9/go.mod h1:ai473MGBNIcWF2rWGUY9CVz7kGpcDev+QD5dz2iDoLI=
 github.com/operator-framework/java-operator-plugins v0.9.1-0.20240222100057-3c7f592a2aba h1:k9KsTPBJjHpIUdEinzp+Z+UPL6N7dJUStk8OQRfFJ7E=
 github.com/operator-framework/java-operator-plugins v0.9.1-0.20240222100057-3c7f592a2aba/go.mod h1:YQsfkdwiZVq/r4Ad2nNjDo4lQGhg2ll6aDBRfoRBDaI=
-github.com/operator-framework/operator-lib v0.12.1-0.20240430173419-b394e34ce702 h1:3aD8l95+Bfp6y0speIxgF+6bLpoAbvF6XxpCHrbUh0o=
-github.com/operator-framework/operator-lib v0.12.1-0.20240430173419-b394e34ce702/go.mod h1:RDs1wGdOKWSMCO+BYSbqmmKGnD5jOP7TVP+KvoX8jMg=
+github.com/operator-framework/operator-lib v0.13.0 h1:+TWgJhbJqyNix9m1LmHK5gY/lb3CGqZX3Wvl7K0k+6I=
+github.com/operator-framework/operator-lib v0.13.0/go.mod h1:RDs1wGdOKWSMCO+BYSbqmmKGnD5jOP7TVP+KvoX8jMg=
 github.com/operator-framework/operator-manifest-tools v0.6.0 h1:1fUP0ki3plXM6WivlcE6m5cV8fO2ZZVPHJM93vlgWJo=
 github.com/operator-framework/operator-manifest-tools v0.6.0/go.mod h1:rL+U7e+hpH87/kq88mbEprZpq25lwtJofsAFhq6Y/Wc=
 github.com/operator-framework/operator-registry v1.39.0 h1:GiAlmA2h16sLpLjVIuURd2ANm7wYoUbssGCJbdGauYw=

@@ -17,7 +17,7 @@ require (
 	github.com/operator-framework/api v0.23.0
 	github.com/operator-framework/helm-operator-plugins v0.1.4-0.20240327183647-1cc5a55d3fe9
 	github.com/operator-framework/java-operator-plugins v0.9.1-0.20240222100057-3c7f592a2aba
-	github.com/operator-framework/operator-lib v0.12.1-0.20240430173419-b394e34ce702
+	github.com/operator-framework/operator-lib v0.13.0
 	github.com/operator-framework/operator-manifest-tools v0.6.0
 	github.com/operator-framework/operator-registry v1.39.0
 	github.com/prometheus/client_golang v1.19.0
