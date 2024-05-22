@@ -122,12 +122,8 @@ spec:
         serviceAccountName: memcached-operator-controller-manager
       deployments:
       - label:
-          app.kubernetes.io/component: manager
-          app.kubernetes.io/created-by: memcached-operator
-          app.kubernetes.io/instance: controller-manager
           app.kubernetes.io/managed-by: kustomize
-          app.kubernetes.io/name: deployment
-          app.kubernetes.io/part-of: memcached-operator
+          app.kubernetes.io/name: memcached-operator
           control-plane: controller-manager
         name: memcached-operator-controller-manager
         spec:
@@ -188,7 +184,7 @@ spec:
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
                 - --v=0
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
