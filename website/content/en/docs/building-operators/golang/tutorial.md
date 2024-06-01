@@ -83,11 +83,11 @@ When prompted, enter yes `y` for creating both the resource and controller.
 $ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller
 Writing scaffold for you to edit...
 api/v1alpha1/memcached_types.go
-controllers/memcached_controller.go
+internal/controllers/memcached_controller.go
 ...
 ```
 
-This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.go` and the controller at `controllers/memcached_controller.go`.
+This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.go` and the controller at `internal/controllers/memcached_controller.go`.
 
 **Note:** In this tutorial we will be providing all the steps to show you how to implement an operator project. However, as a follow up you might want to check the [Deploy Image plugin][deploy-image-plugin-doc] with which it is possible to have the whole code generated to deploy and manage an Operand(image). To do so, you can use the command `$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --plugins="deploy-image/v1-alpha" --image=memcached:1.4.36-alpine --image-container-command="memcached,-m=64,modern,-v" --run-as-user="1001"`
 
@@ -183,7 +183,7 @@ See the [OpenAPI validation][openapi-validation] doc for details.
 
 ## Implement the Controller
 
-For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation. 
+For this example replace the generated controller file `internal/controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation. 
 
 **Note**: If you used a value other than `github.com/example/memcached-operator` for repository (`--repo` flag) when running the `operator-sdk init` command, modify accordingly in the `import` block of the file.
 
@@ -209,7 +209,7 @@ This recorder will be used within the reconcile method of the controller to emit
 
 ### Resources watched by the Controller
 
-The `SetupWithManager()` function in `controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
+The `SetupWithManager()` function in `internal/controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
 
 ```Go
 import (
