@@ -272,18 +272,9 @@ spec:
     spec:
       containers:
       - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=10
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
-      - args:
-        - --metrics-addr=127.0.0.1:8080
-        - --enable-leader-election
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=0.0.0.0:8080
+        - --leader-elect
         command:
         - /manager
         image: controller:latest

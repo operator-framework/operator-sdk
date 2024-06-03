@@ -190,13 +190,17 @@ func (mh *Memcached) Run() {
 func (mh *Memcached) uncommentDefaultKustomizationV4() {
 	var err error
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
-	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
+	log.Info("uncommenting config/default/kustomization.yaml to enable metrics, webhooks, and ca injection")
 
 	err = kbutil.UncommentCode(kustomization, "#- ../certmanager", "#")
 	pkg.CheckError("uncomment certmanager", err)
 
 	err = kbutil.UncommentCode(kustomization, "#- ../prometheus", "#")
 	pkg.CheckError("uncomment prometheus", err)
+
+	log.Info("enabling metrics in the manager")
+	err = kbutil.UncommentCode(kustomization, "#- path: manager_metrics_patch.yaml", "#")
+	pkg.CheckError("uncomment metrics patch", err)
 
 	err = kbutil.UncommentCode(kustomization,
 		`#replacements:
