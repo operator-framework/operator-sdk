@@ -3,12 +3,8 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
-    app.kubernetes.io/component: webhook
-    app.kubernetes.io/created-by: memcached-operator
-    app.kubernetes.io/instance: webhook-service
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: service
-    app.kubernetes.io/part-of: memcached-operator
+    app.kubernetes.io/name: memcached-operator
   name: memcached-operator-webhook-service
 spec:
   ports:
