@@ -156,7 +156,7 @@ type MemcachedList struct {...}
 
 ### Webhooks
 
-SDK version `1.0.0` and later has support for webhooks by the CLI. If your project doesn't require any webhooks, you can skip this section. However, if you have been using it via customizations in your project, you should use the tool to re-scaffold the webhooks.  
+SDK version `1.0.0` and later has support for webhooks by the CLI. If your project doesn't require any webhooks, you can skip this section. However, if you have been using it via customizations in your project, you should use the tool to re-scaffold the webhooks.
 
 A webhook can only be scaffolded for a pre-existent API in your project. Then, for each case you will run the command `operator-sdk create webhook` providing the `--group`, `--kind` and `version` of the API based on the flags that need to be used.
 
@@ -225,7 +225,7 @@ In the Memcached example, they look like the following:
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list
 ```
 
-To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.  
+To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.
 
 By default, new projects are cluster-scoped (i.e. they have cluster-scoped permissions and watch all namespaces). Read the [operator scope documentation][operator-scope] for more information about changing the scope of your operator.
 
@@ -330,7 +330,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/re
 
 #### Use Handler from `operator-lib`
 
-By using the [InstrumentedEnqueueRequestForObject](https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/handler?tab=doc#InstrumentedEnqueueRequestForObject) you will be able to export metrics from your Custom Resources. In our example, it would look like:  
+By using the [InstrumentedEnqueueRequestForObject](https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/handler?tab=doc#InstrumentedEnqueueRequestForObject) you will be able to export metrics from your Custom Resources. In our example, it would look like:
 
 ```go
 import (
@@ -445,7 +445,6 @@ For further steps regarding the deployment of the operator, creation of custom r
 [healthz-ping]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/healthz#CheckHandler
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
 [component-proposal]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/designs/component-config.md
-[component-config-tutorial]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/docs/book/src/component-config-tutorial/tutorial.md
 [plugins-phase1-design-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/extensible-cli-and-scaffolding-plugins-phase-1.md
 [migration-doc]: /docs/upgrading-sdk-version/
 [tutorial-deploy]: /docs/building-operators/golang/tutorial/#run-the-operator

@@ -6,7 +6,7 @@ weight: 20
 
 # Overview
 
-Operator SDK-generated operators use the [`logr`][godoc_logr] interface to log. This log interface has several backends such as [`zap`][repo_zapr], which the SDK uses in generated code by default. [`logr.Logger`][godoc_logr_logger] exposes [structured logging][site_struct_logging] methods that help create machine-readable logs and adding a wealth of information to log records.
+Operator SDK-generated operators use the [`logr`][godoc_logr] interface to log. This log interface has several backends such as [`zap`][repo_zapr], which the SDK uses in generated code by default. [`logr.Logger`][godoc_logr_logger] exposes structured logging methods that help create machine-readable logs and adding a wealth of information to log records.
 
 ## Default zap logger
 
@@ -258,7 +258,6 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [godoc_logr]:https://pkg.go.dev/github.com/go-logr/logr
 [repo_zapr]:https://pkg.go.dev/github.com/go-logr/zapr
 [godoc_logr_logger]:https://pkg.go.dev/github.com/go-logr/logr#Logger
-[site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
 [code_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.2.0/testdata/go/memcached-operator/controllers/memcached_controller.go
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
