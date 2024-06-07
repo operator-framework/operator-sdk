@@ -18,8 +18,6 @@ limitations under the License.
 package scaffolds
 
 import (
-	"os"
-
 	kustomizev2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
@@ -67,9 +65,10 @@ func (s *initScaffolder) Scaffold() error {
 		machinery.WithConfig(s.config),
 	)
 
-	if err := os.MkdirAll(chartutil.HelmChartsDir, 0755); err != nil {
+	if err := s.fs.FS.MkdirAll(chartutil.HelmChartsDir, 0755); err != nil {
 		return err
 	}
+
 	return scaffold.Execute(
 		&templates.Dockerfile{
 			HelmOperatorVersion: helmOperatorVersion,

@@ -103,7 +103,7 @@ func (mh *Memcached) Run() {
 
 	log.Infof("adding customized roles")
 	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
-		rolesFragmentReplaceTarget, policyRolesFragment)
+		"#+kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
 	log.Infof("creating the bundle")
@@ -121,12 +121,6 @@ func (mh *Memcached) Run() {
 }
 
 const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
-
-const rolesFragmentReplaceTarget = `
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
-`
 
 const policyRolesFragment = `
 ##
