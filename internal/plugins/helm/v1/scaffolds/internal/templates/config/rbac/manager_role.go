@@ -52,6 +52,7 @@ func (f *ManagerRole) SetTemplateDefaults() error {
 	}
 
 	f.TemplateBody = fmt.Sprintf(roleTemplate, machinery.NewMarkerFor(f.Path, rulesMarker))
+	f.IfExistsAction = machinery.OverwriteFile
 
 	return nil
 }
