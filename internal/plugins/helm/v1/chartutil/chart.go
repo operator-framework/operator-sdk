@@ -27,6 +27,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
@@ -181,12 +182,16 @@ func ScaffoldChart(chrt *chart.Chart, projectDir string) (*chart.Chart, string, 
 func fetchChartDependencies(chartPath string) error {
 	settings := cli.New()
 	getters := getter.All(settings)
-
+	client, err := registry.NewClient()
+	if err != nil {
+		return err
+	}
 	out := &bytes.Buffer{}
 	man := &downloader.Manager{
 		Out:              out,
 		ChartPath:        chartPath,
 		Getters:          getters,
+		RegistryClient:   client,
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
 	}
