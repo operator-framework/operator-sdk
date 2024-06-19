@@ -11,7 +11,7 @@ The Operator SDK project recommends using controller-runtime's [envtest][envtest
 
 ## Using EnvTest
 
-You will see that `controllers/suite_test.go` is created when a controller is scaffolded by the tool. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega][gomega].
+You will see that `internal/controller/suite_test.go` is created when a controller is scaffolded by the tool. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega][gomega].
 Setup instructions, including those for disconnected environments, are found [here][envtest-setup].
 
 These tests are runnable as native Go tests:
