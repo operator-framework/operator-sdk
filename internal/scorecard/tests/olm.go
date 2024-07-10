@@ -237,7 +237,7 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	var crdDescription *operatorsv1alpha1.CRDDescription
 
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == cr.GetKind() {
+		if owned.Kind == cr.GetKind() && owned.Version == cr.GroupVersionKind().Version {
 			crdDescription = &owned
 			break
 		}
@@ -288,7 +288,7 @@ func checkOwnedCSVSpecDescriptors(cr unstructured.Unstructured, csv *operatorsv1
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == cr.GetKind() {
+		if owned.Kind == cr.GetKind() && owned.Version == cr.GroupVersionKind().Version {
 			crd = &owned
 			break
 		}
