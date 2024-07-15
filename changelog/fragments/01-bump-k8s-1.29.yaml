@@ -1,0 +1,152 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+- description: >
+    - Upgrade Kubernetes dependencies from `1.28` to `1.29`.
+
+  # kind is one of:
+  # - addition
+  # - change
+  # - deprecation
+  # - removal
+  # - bugfix
+  kind: "change"
+
+  # Is this a breaking change?
+  breaking: false
+
+  # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+  # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+  #
+  # The generator auto-detects the PR number from the commit
+  # message in which this file was originally added.
+  #
+  # What is the pull request number (without the "#")?
+  # pull_request_override: 0
+
+  # Migration can be defined to automatically add a section to
+  # the migration guide. This is required for breaking changes.
+  migration:
+    header: Upgrade K8s versions to use 1.29
+    body: >
+      Regarding the upcoming major changes in the plugin, please note that `go/v3` is being deprecated by Kubebuilder hence Operator SDK would also be migrating to `go/v4` soon.
+      Following are the changes to be addressed in your project structure, `Makefile` and `go.mod` files:
+      1) [go/v4] Update your `go.mod` file to upgrade the dependencies and run `go mod tidy` to download them
+      ```go
+        k8s.io/api v0.29.2
+        k8s.io/apimachinery v0.29.2
+        k8s.io/client-go v0.29.2
+        sigs.k8s.io/controller-runtime v0.17.3
+      ```
+      2) [go/v4, helm/v1] The projects are now scaffolded with 0.16.0 version of kube-rbac-proxy. Modify the version of kube-rbac-proxy in the following scaffolded files:
+      - config/default/manager_auth_proxy_patch.yaml     
+        ```diff
+          - gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+          + gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0
+        ```
+      3) [go/v4] You can now generate a file that contains all the resources built with Kustomize, which are necessary to install this project without its dependencies. Update your Makefile by adding: 
+        ```diff
+          + .PHONY: build-installer
+          +   build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
+          +   	mkdir -p dist
+          +   	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+          +   	$(KUSTOMIZE) build config/default > dist/install.yaml
+        ```
+      4) [go/v4] Update ENVTEST_K8S_VERSION in your Makefile:
+        ```diff
+          - ENVTEST_K8S_VERSION = 1.28.3
+          + ENVTEST_K8S_VERSION = 1.29.0
+        ```
+      5) [go/v4] Remove the following section from your Makefile:
+        ```diff
+          - GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
+          - GOLANGCI_LINT_VERSION ?= v1.54.2
+          - golangci-lint:
+          - 	@[ -f $(GOLANGCI_LINT) ] || { \
+          - 	set -e ;\
+          - 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell dirname $(GOLANGCI_LINT)) $(GOLANGCI_LINT_VERSION) ;\
+          - 	}
+        ```
+      6) [go/v4] Update the following in your Makefile:
+        ```diff
+          - ## Tool Binaries
+          - KUBECTL ?= kubectl
+          - KUSTOMIZE ?= $(LOCALBIN)/kustomize
+          - CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+          - ENVTEST ?= $(LOCALBIN)/setup-envtest
+          - 
+          - ## Tool Versions
+          - KUSTOMIZE_VERSION ?= v5.2.1
+          - CONTROLLER_TOOLS_VERSION ?= v0.13.0
+          - 
+          - .PHONY: kustomize
+          - kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
+          - $(KUSTOMIZE): $(LOCALBIN)
+          -   @if test -x $(LOCALBIN)/kustomize && ! $(LOCALBIN)/kustomize version | grep -q $(KUSTOMIZE_VERSION); then \
+          -   echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
+          -   rm -rf $(LOCALBIN)/kustomize; \
+          -   fi
+          -   test -s $(LOCALBIN)/kustomize || GOBIN=$(LOCALBIN) GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$(KUSTOMIZE_VERSION)
+          - 
+          - .PHONY: controller-gen
+          - controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
+          - $(CONTROLLER_GEN): $(LOCALBIN)
+          -   test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
+          -   GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+          - 
+          - .PHONY: envtest
+          - envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
+          - $(ENVTEST): $(LOCALBIN)
+          -   test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          + ## Tool Binaries
+          + KUBECTL ?= kubectl
+          + KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
+          + CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_TOOLS_VERSION)
+          + ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
+          + GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
+          + 
+          + ## Tool Versions
+          + KUSTOMIZE_VERSION ?= v5.3.0
+          + CONTROLLER_TOOLS_VERSION ?= v0.14.0
+          + ENVTEST_VERSION ?= release-0.17
+          + GOLANGCI_LINT_VERSION ?= v1.57.2
+          + 
+          + .PHONY: kustomize
+          + kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
+          + $(KUSTOMIZE): $(LOCALBIN)
+          + 	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v5,$(KUSTOMIZE_VERSION))
+          + 
+          + .PHONY: controller-gen
+          + controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
+          + $(CONTROLLER_GEN): $(LOCALBIN)
+          + 	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_TOOLS_VERSION))
+          + 
+          + .PHONY: envtest
+          + envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
+          + $(ENVTEST): $(LOCALBIN)
+          + 	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
+          + 
+          + .PHONY: golangci-lint
+          + golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
+          + $(GOLANGCI_LINT): $(LOCALBIN)
+          + 	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
+          + 
+          + # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
+          + # $1 - target path with name of binary (ideally with version)
+          + # $2 - package url which can be installed
+          + # $3 - specific version of package
+          + define go-install-tool
+          + @[ -f $(1) ] || { \
+          + set -e; \
+          + package=$(2)@$(3) ;\
+          + echo "Downloading $${package}" ;\
+          + GOBIN=$(LOCALBIN) go install $${package} ;\
+          + mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
+          + }
+          + endef
+        ```
+      7) [helm/v1] Update the kustomize version in your Makefile:
+        ```diff
+        - curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.2.1/kustomize_v5.2.1_$(OS)_$(ARCH).tar.gz | \
+        + curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.3.0/kustomize_v5.3.0_$(OS)_$(ARCH).tar.gz | \
+        ```
