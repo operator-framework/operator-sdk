@@ -13,9 +13,9 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
 	github.com/onsi/ginkgo/v2 v2.17.2
 	github.com/onsi/gomega v1.33.0
-	github.com/operator-framework/ansible-operator-plugins v1.34.4-0.20240703132544-13b29895d255
+	github.com/operator-framework/ansible-operator-plugins v1.35.0
 	github.com/operator-framework/api v0.23.0
-	github.com/operator-framework/helm-operator-plugins v0.1.4-0.20240327183647-1cc5a55d3fe9
+	github.com/operator-framework/helm-operator-plugins v0.2.1
 	github.com/operator-framework/java-operator-plugins v0.9.1-0.20240222100057-3c7f592a2aba
 	github.com/operator-framework/operator-lib v0.13.0
 	github.com/operator-framework/operator-manifest-tools v0.6.0
