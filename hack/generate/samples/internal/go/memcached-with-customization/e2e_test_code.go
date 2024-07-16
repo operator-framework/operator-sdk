@@ -4,9 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	log "github.com/sirupsen/logrus"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 )
 
 // implementingE2ETests will add e2e test for the sample
@@ -302,7 +303,7 @@ var _ = Describe("memcached", Ordered, func() {
 			By("validating that pod(s) status.phase=Running")
 			getMemcachedPodStatus := func() error {
 				cmd = exec.Command("kubectl", "get",
-					"pods", "-l", "app.kubernetes.io/name=Memcached",
+					"pods", "-l", "app.kubernetes.io/name=memcached-operator",
 					"-o", "jsonpath={.items[*].status}", "-n", namespace,
 				)
 				status, err := utils.Run(cmd)
@@ -515,7 +516,7 @@ var _ = Describe("memcached", Ordered, func() {
 			By("validating that pod(s) status.phase=Running")
 			getMemcachedPodStatus := func() error {
 				cmd = exec.Command("kubectl", "get",
-					"pods", "-l", "app.kubernetes.io/name=Memcached",
+					"pods", "-l", "app.kubernetes.io/name=memcached-operator",
 					"-o", "jsonpath={.items[*].status}", "-n", namespace,
 				)
 				status, err := utils.Run(cmd)
