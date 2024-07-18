@@ -16,7 +16,7 @@ require (
 	github.com/operator-framework/ansible-operator-plugins v1.35.0
 	github.com/operator-framework/api v0.23.0
 	github.com/operator-framework/helm-operator-plugins v0.2.1
-	github.com/operator-framework/java-operator-plugins v0.9.1-0.20240716203007-44a166f00e75
+	github.com/operator-framework/java-operator-plugins v0.10.0
 	github.com/operator-framework/operator-lib v0.13.0
 	github.com/operator-framework/operator-manifest-tools v0.6.0
 	github.com/operator-framework/operator-registry v1.39.0
