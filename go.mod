@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.33.0
 	github.com/operator-framework/ansible-operator-plugins v1.35.0
 	github.com/operator-framework/api v0.23.0
-	github.com/operator-framework/helm-operator-plugins v0.2.1
+	github.com/operator-framework/helm-operator-plugins v0.2.2
 	github.com/operator-framework/java-operator-plugins v0.10.0
 	github.com/operator-framework/operator-lib v0.13.0
 	github.com/operator-framework/operator-manifest-tools v0.6.0

@@ -429,8 +429,8 @@ github.com/operator-framework/ansible-operator-plugins v1.35.0 h1:ranI6NhcnAl2so
 github.com/operator-framework/ansible-operator-plugins v1.35.0/go.mod h1:ehsR1S7COaxHD54t7/1CXuvnTkSiMxUqgJhTGVcH6Fs=
 github.com/operator-framework/api v0.23.0 h1:kHymOwcHBpBVujT49SKOCd4EVG7Odwj4wl3NbOR2LLA=
 github.com/operator-framework/api v0.23.0/go.mod h1:oKcFOz+Xc1UhMi2Pzcp6qsO7wjS4r+yP7EQprQBXrfM=
-github.com/operator-framework/helm-operator-plugins v0.2.1 h1:xPD05rYpIYKlI9VXfQBQ3XG7LFF2fALqg72lqAyFF44=
-github.com/operator-framework/helm-operator-plugins v0.2.1/go.mod h1:SJyyAVYkl3tqiTJl16mz0KbGv89NhPOOGRBeQb8S4Nw=
+github.com/operator-framework/helm-operator-plugins v0.2.2 h1:xbVRXM4VIpixrjA9OwVF+Kky6DpYHpkOnME2HEoQUfg=
+github.com/operator-framework/helm-operator-plugins v0.2.2/go.mod h1:h8HwfHHr29GRpduxy5jCL/sIe4TDarS5XHExBHVDc8k=
 github.com/operator-framework/java-operator-plugins v0.10.0 h1:JkYapsvQv08+KXMWXhIyJ3JKcB6BSSvvK+RsJe2VMz0=
 github.com/operator-framework/java-operator-plugins v0.10.0/go.mod h1:2qkhvf5jY3Myd6Ef+3HtseJyZPAAOWTa8xTOsPidHKY=
 github.com/operator-framework/operator-lib v0.13.0 h1:+TWgJhbJqyNix9m1LmHK5gY/lb3CGqZX3Wvl7K0k+6I=
