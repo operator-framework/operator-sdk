@@ -199,7 +199,7 @@ url_latest_version = "https://sdk.operatorframework.io"
 
 [[params.versions]]
   version = "v1.20"
-  url = "https://v1-20-x.sdk.operatorframework.io"
+  url = "https://github.com/operator-framework/operator-sdk/tree/v1.20.x/website/content/en/docs"
   kube_version = "1.23"
   client_go_version = "v0.23.1"
 

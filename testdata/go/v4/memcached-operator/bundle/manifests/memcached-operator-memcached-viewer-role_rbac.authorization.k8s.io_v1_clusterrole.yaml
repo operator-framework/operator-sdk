@@ -1,11 +1,11 @@
-# permissions for end users to view memcacheds.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   labels:
-    app.kubernetes.io/name: memcached-operator
     app.kubernetes.io/managed-by: kustomize
-  name: memcached-viewer-role
+    app.kubernetes.io/name: memcached-operator
+  name: memcached-operator-memcached-viewer-role
 rules:
 - apiGroups:
   - cache.example.com
