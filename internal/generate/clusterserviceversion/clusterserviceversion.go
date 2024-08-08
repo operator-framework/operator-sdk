@@ -127,7 +127,7 @@ func (g *Generator) Generate(opts ...Option) (err error) {
 	return genutil.WriteObject(w, csv)
 }
 
-// setSDKAnnotations adds SDK metric labels to the base if they do not exist.
+// setAnnotations adds SDK metric labels to the base if they do not exist.
 func (g Generator) setAnnotations(csv *v1alpha1.ClusterServiceVersion) {
 	annotations := csv.GetAnnotations()
 	if annotations == nil {
