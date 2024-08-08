@@ -237,7 +237,7 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	var crdDescription *operatorsv1alpha1.CRDDescription
 
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == cr.GetKind() {
+		if owned.Kind == cr.GetKind() && owned.Version == getVersionFromGV(cr) {
 			crdDescription = &owned
 			break
 		}
@@ -288,7 +288,7 @@ func checkOwnedCSVSpecDescriptors(cr unstructured.Unstructured, csv *operatorsv1
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == cr.GetKind() {
+		if owned.Kind == cr.GetKind() && owned.Version == getVersionFromGV(cr) {
 			crd = &owned
 			break
 		}
@@ -386,6 +386,17 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 		}
 	}
 	return r
+}
+
+func getVersionFromGV(cr unstructured.Unstructured) string {
+	gv := strings.Split(cr.GetAPIVersion(), "/")
+	if len(gv) > 2 {
+		return "" // invalid apiVersion
+	}
+	if len(gv) == 2 {
+		return gv[1]
+	}
+	return cr.GetAPIVersion()
 }
 
 func wrapResult(r scapiv1alpha3.TestResult) scapiv1alpha3.TestStatus {
