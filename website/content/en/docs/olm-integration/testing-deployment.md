@@ -30,7 +30,7 @@ See the [creating a bundle][creating-bundle] guide for more information. See the
 and generate a bundle.
 
 ```
-operator-sdk run bundle <bundle-image> [--index-image=] [--kubeconfig=] [--namespace=] [--timeout=] [--install-mode=(AllNamespace|OwnNamespace|SingleNamespace=)]
+operator-sdk run bundle <bundle-image> [--index-image=] [--kubeconfig=] [--namespace=] [--timeout=] [--install-mode=(AllNamespaces|OwnNamespace|SingleNamespace=)]
 ```
 
 Let's look at the configuration shared between `run bundle`, `run
@@ -76,7 +76,7 @@ running on your cluster, and that your Operator has a valid
 and generate a package manifests format.
 
 ```
-operator-sdk run packagemanifests <packagemanifests-root-dir> [--version=] [--kubeconfig=] [--namespace=] [--timeout=] [--install-mode=(AllNamespace|OwnNamespace|SingleNamespace=)]
+operator-sdk run packagemanifests <packagemanifests-root-dir> [--version=] [--kubeconfig=] [--namespace=] [--timeout=] [--install-mode=(AllNamespaces|OwnNamespace|SingleNamespace=)]
 ```
 
 Let's look at the configuration shared between `run bundle`, `run
