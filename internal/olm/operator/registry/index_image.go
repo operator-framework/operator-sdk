@@ -451,7 +451,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// check if index image adopts File-Based Catalog or SQLite index image format
 		isFBCImage, err := fbcutil.IsFBC(ctx, c.IndexImage)
 		if err != nil {
-			return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", c.BundleImage)
+			return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
 		}
 		c.HasFBCLabel = isFBCImage
 
