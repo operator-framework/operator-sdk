@@ -16,7 +16,6 @@ package cli
 
 import (
 	hybrid "github.com/operator-framework/helm-operator-plugins/pkg/plugins/hybrid/v1alpha"
-	quarkusv1 "github.com/operator-framework/java-operator-plugins/pkg/quarkus/v1beta"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -171,7 +170,6 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			grafanav1alpha.Plugin{},
 			deployImageBundle,
 			declarativev1.Plugin{},
-			&quarkusv1.Plugin{},
 		),
 		cli.WithDefaultPlugins(cfgv2.Version, gov2Bundle),
 		cli.WithDefaultPlugins(cfgv3.Version, gov4Bundle),
