@@ -1,0 +1,35 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Remove the Quarkus plugin (java-operator-plugins integration).
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "removal"
+
+    # Is this a breaking change?
+    breaking: true
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
+
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Migrate to the Quarkus extension provided bootstrap
+      body: |
+        From now on, you can bootstrap your Quarkus-based operator
+        with the provided Quarkus tools as described in the bootstrapping
+        instructions - https://github.com/quarkiverse/quarkus-operator-sdk?tab=readme-ov-file#bootstrapping-a-project. 
