@@ -15,9 +15,12 @@
 package fbcindex
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"path"
 	"strings"
 	"time"
@@ -399,8 +402,22 @@ func (f *FBCRegistryPod) createConfigMaps(cs *v1alpha1.CatalogSource) ([]*corev1
 // properly have all the FBC contents rendered in the registry pod.
 func (f *FBCRegistryPod) partitionedConfigMaps() ([]*corev1.ConfigMap, error) {
 	var err error
-	// Split on the YAML separator `---`
-	yamlDefs := strings.Split(f.FBCContent, "---")
+
+	var yamlDefs []string
+	yamlReader := yaml.NewYAMLReader(bufio.NewReader(strings.NewReader(f.FBCContent)))
+	for {
+		doc, err := yamlReader.Read()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if len(doc) == 0 {
+			continue
+		}
+		yamlDefs = append(yamlDefs, string(doc))
+	}
 
 	configMaps, err := f.getConfigMaps(yamlDefs)
 	if err != nil {
