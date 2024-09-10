@@ -1,0 +1,23 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (hybrid.helm/v1-alpha) Remove hybrid-helm v1-alpha support, due to low adoption, in favor of maintenance simplicity. 
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "removal"
+
+    # Is this a breaking change?
+    breaking: true
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Remove hybrid-helm v1-alpha support
+      body: |
+        As an operator author you can switch to a go-based operator. 
