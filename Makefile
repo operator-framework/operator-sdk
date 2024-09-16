@@ -89,15 +89,15 @@ build/operator-sdk build/helm-operator:
 	$(GO) build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
 
 # Build scorecard binaries.
-.PHONY: build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests
-build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
+.PHONY: build/scorecard-test build/scorecard-test-kuttl build/scorecard-test-chainsaw build/custom-scorecard-tests
+build/scorecard-test build/scorecard-test-kuttl build/scorecard-test-chainsaw build/custom-scorecard-tests:
 	$(GO) build $(GO_GCFLAGS) $(GO_ASMFLAGS) -o $(BUILD_DIR)/$(@F) ./images/$(@F)
 
 ##@ Dev image build
 
 # Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
-IMAGE_TARGET_LIST = operator-sdk helm-operator scorecard-test scorecard-test-kuttl
+IMAGE_TARGET_LIST = operator-sdk helm-operator scorecard-test scorecard-test-kuttl scorecard-test-chainsaw
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 
