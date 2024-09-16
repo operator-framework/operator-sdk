@@ -84,7 +84,7 @@ func getStringArray(rd io.Reader, msg string) []string {
 	}
 }
 
-// readstdin reads a line from stdin and returns the value.
+// readLine reads a line from stdin and returns the value.
 func readLine(reader *bufio.Reader) string {
 	text, err := reader.ReadString('\n')
 	if err != nil {
