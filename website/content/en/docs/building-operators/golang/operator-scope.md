@@ -194,7 +194,9 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Port:               9443,
     LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
-    Namespace:          watchNamespace, // namespaced-scope when the value is not an empty string
+    Cache: cache.Options{
+      DefaultNamespaces: map[string]cache.Config{watchNamespace: cache.Config{}},
+    },
 })
 ...
 ```
@@ -246,7 +248,9 @@ options := ctrl.Options{
     Port:               9443,
     LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
-    Namespace:          watchNamespace, // namespaced-scope when the value is not an empty string
+    Cache: cache.Options{
+      DefaultNamespaces: map[string]cache.Config{watchNamespace: cache.Config{}},
+    },
 }
 
 // Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
