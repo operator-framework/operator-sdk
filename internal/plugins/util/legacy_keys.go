@@ -19,8 +19,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	gofunk "github.com/thoas/go-funk"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v4/pkg/config/v3"
 )
 
 const (

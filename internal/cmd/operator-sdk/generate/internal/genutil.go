@@ -28,7 +28,7 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
+	cfgv3 "sigs.k8s.io/kubebuilder/v4/pkg/config/v3"
 	"sigs.k8s.io/yaml"
 )
 
@@ -183,7 +183,7 @@ func GetPackageNameAndLayout(defaultPackageName string) (packageName string, lay
 		}
 		if packageName == "" {
 			switch {
-			case cfg.GetVersion().Compare(cfgv2.Version) == 0:
+			case cfg.GetVersion().Compare(cfgv3.Version) == 0:
 				wd, err := os.Getwd()
 				if err != nil {
 					return "", "", err

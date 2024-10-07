@@ -19,20 +19,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/iancoleman/strcase"
-	"github.com/spf13/pflag"
-	"helm.sh/helm/v3/pkg/chart"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
-	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
-
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	"helm.sh/helm/v3/pkg/chart"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v4/pkg/plugin"
 )
 
 const (
@@ -204,12 +201,6 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 	// nolint:staticcheck
 	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.Group) {
 		return fmt.Errorf("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
-	}
-
-	// Selected CRD version must match existing CRD versions.
-	// nolint:staticcheck
-	if pluginutil.HasDifferentCRDVersion(p.config, p.resource.API.CRDVersion) {
-		return fmt.Errorf("only one CRD version can be used for all resources, cannot add %q", p.resource.API.CRDVersion)
 	}
 
 	return nil

@@ -15,10 +15,9 @@
 package v2
 
 import (
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
-	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v4/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v4/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 )
@@ -27,7 +26,7 @@ const pluginName = "scorecard" + plugins.DefaultNameQualifier
 
 var (
 	pluginVersion            = plugin.Version{Number: 2}
-	supportedProjectVersions = []config.Version{cfgv2.Version, cfgv3.Version}
+	supportedProjectVersions = []config.Version{cfgv3.Version}
 	pluginKey                = plugin.KeyFor(Plugin{})
 )
 

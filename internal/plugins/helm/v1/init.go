@@ -20,10 +20,10 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/pflag"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
 	sdkpluginutil "github.com/operator-framework/operator-sdk/internal/plugins/util"
@@ -130,8 +130,7 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 }
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
-
-	if err := addInitCustomizations(p.config.GetProjectName(), p.config.IsComponentConfig()); err != nil {
+	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
 		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
@@ -147,7 +146,7 @@ func (p *initSubcommand) PostScaffold() error {
 		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	} else {
 		args := []string{"create", "api"}
-		// The following three checks should match the default values in sig.k8s.io/kubebuilder/v3/pkg/cli/resource.go
+		// The following three checks should match the default values in sig.k8s.io/kubebuilder/v4/pkg/cli/resource.go
 		if p.group != "" {
 			args = append(args, fmt.Sprintf("--%s", groupFlag), p.group)
 		}
@@ -178,46 +177,17 @@ func (p *initSubcommand) PostScaffold() error {
 }
 
 // addInitCustomizations will perform the required customizations for this plugin on the common base
-func addInitCustomizations(projectName string, componentConfig bool) error {
+func addInitCustomizations(projectName string) error {
 	managerFile := filepath.Join("config", "manager", "manager.yaml")
 
 	// todo: we ought to use afero instead. Replace this methods to insert/update
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
-	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
-	if componentConfig {
-		err := util.InsertCode(managerFile,
-			"- /manager",
-			fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
-		if err != nil {
-			return err
-		}
-
-		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-			"memory: 64Mi",
-			fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
-		if err != nil {
-			return err
-		}
-		// Remove the webhook option for the componentConfig since webhooks are not supported by helm
-		err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
-			"webhook:\n  port: 9443", "")
-		if err != nil {
-			return err
-		}
-	} else {
-		err := util.InsertCode(managerFile,
-			"--leader-elect",
-			fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
-		if err != nil {
-			return err
-		}
-		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-			"- \"--leader-elect\"",
-			fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
-		if err != nil {
-			return err
-		}
+	err := util.InsertCode(managerFile,
+		"--leader-elect",
+		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+	if err != nil {
+		return err
 	}
 
 	// Remove the call to the command as manager. Helm has not been exposing this entrypoint
@@ -225,7 +195,7 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 	const command = `command:
         - /manager
         `
-	err := util.ReplaceInFile(managerFile, command, "")
+	err = util.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
 	}

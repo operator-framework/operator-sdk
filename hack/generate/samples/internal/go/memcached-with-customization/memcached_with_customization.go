@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 )
@@ -455,7 +455,7 @@ func (mh *Memcached) implementingAPIMarkers() {
 	// Add CSV marker that shows CRD owned resources
 	err = kbutil.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
-		`//+kubebuilder:subresource:status`,
+		`// +kubebuilder:subresource:status`,
 		`
 // +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,memcached-deployment}}`)
 	pkg.CheckError("inserting CRD owned resources CSV marker", err)
@@ -671,9 +671,9 @@ func (mh *Memcached) customizingController() {
 	pkg.CheckError("adding monitoring constants", err)
 
 	err = kbutil.InsertCode(controllerPath,
-		`//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch`,
+		`// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch`,
 		`
-		//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;delete`)
+		// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;delete`)
 	pkg.CheckError("adding monitoring.coreos.com rbac", err)
 
 	err = kbutil.ReplaceInFile(controllerPath,

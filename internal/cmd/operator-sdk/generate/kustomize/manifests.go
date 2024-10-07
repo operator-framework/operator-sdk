@@ -29,9 +29,9 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v4/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
 	"sigs.k8s.io/yaml"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
@@ -259,7 +259,7 @@ func getGVKs(cfg config.Config) ([]schema.GroupVersionKind, error) {
 	for i, gvk := range resources {
 		// check if the resource has an specific domain
 		// otherwise use the config.Domain.
-		if cfg.GetVersion().Compare(cfgv2.Version) == 0 {
+		if cfg.GetVersion().Compare(cfgv3.Version) == 0 {
 			gvk.Domain = cfg.GetDomain()
 		}
 		gvks[i].Group = gvk.QualifiedGroup()

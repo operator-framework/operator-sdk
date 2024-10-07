@@ -26,10 +26,7 @@ and <PROJECT VERSION> a supported project version for these plugins.
                              Plugin keys | Supported project versions
 -----------------------------------------+----------------------------
      ansible.sdk.operatorframework.io/v1 |                          3
-        declarative.go.kubebuilder.io/v1 |                       2, 3
  deploy-image.go.kubebuilder.io/v1-alpha |                          3
-                    go.kubebuilder.io/v2 |                       2, 3
-                    go.kubebuilder.io/v3 |                          3
                     go.kubebuilder.io/v4 |                          3
          grafana.kubebuilder.io/v1-alpha |                          3
         helm.sdk.operatorframework.io/v1 |                          3
