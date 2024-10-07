@@ -18,10 +18,10 @@ import (
 	"errors"
 	"fmt"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v4/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2/templates/config/samples"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util"

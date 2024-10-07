@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
 )
 
 var (

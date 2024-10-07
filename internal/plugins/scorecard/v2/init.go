@@ -20,9 +20,9 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/afero"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/version"
@@ -77,7 +77,7 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	}
 
 	// Write "kustomization.yaml".
-	kustomizeContent := fmt.Sprintf(scorecardKustomizationFile, machinery.NewMarkerFor("kustomization.yaml", patchesJSON6902Marker))
+	kustomizeContent := fmt.Sprintf(scorecardKustomizationFile, machinery.NewMarkerFor("kustomization.yaml", patchesMarker))
 	if err := afero.WriteFile(fs.FS, filepath.Join(outputDir, "kustomization.yaml"), []byte(kustomizeContent), 0666); err != nil {
 		return fmt.Errorf("error writing scorecard kustomization.yaml: %w", err)
 	}
@@ -94,24 +94,26 @@ const (
 	// This should always be written to config/scorecard/kustomization.yaml.
 	scorecardKustomizationFile = `resources:
 - bases/config.yaml
-patchesJson6902:
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
 - path: patches/basic.config.yaml
   target:
     group: scorecard.operatorframework.io
-    version: v1alpha3
     kind: Configuration
     name: config
+    version: v1alpha3
 - path: patches/olm.config.yaml
   target:
     group: scorecard.operatorframework.io
-    version: v1alpha3
     kind: Configuration
     name: config
+    version: v1alpha3
 %[1]s
 `
 
 	// YAML file marker to append to kustomization.yaml files.
-	patchesJSON6902Marker = "patchesJson6902"
+	patchesMarker = "patches"
 
 	// configBaseFile is an empty scorecard componentconfig with parallel stages.
 	configBaseFile = `apiVersion: scorecard.operatorframework.io/v1alpha3

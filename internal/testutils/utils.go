@@ -25,8 +25,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
+	kbtestutils "sigs.k8s.io/kubebuilder/v4/test/e2e/utils"
 )
 
 const BinaryName = "operator-sdk"
