@@ -97,12 +97,12 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 
 # Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
-IMAGE_TARGET_LIST = operator-sdk helm-operator scorecard-test scorecard-test-kuttl
+IMAGE_TARGET_LIST = helm-operator 
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 
 # Build an image.
-BUILD_IMAGE_REPO = quay.io/operator-framework
+BUILD_IMAGE_REPO = quay.io/jordigilh
 # When running in a terminal, this will be false. If true (ex. CI), print plain progress.
 ifneq ($(shell test -t 0; echo $$?),0)
 DOCKER_PROGRESS = --progress plain

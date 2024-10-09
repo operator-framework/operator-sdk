@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM golang:1.21 as builder
+FROM --platform=$BUILDPLATFORM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.22  as builder
 ARG TARGETARCH
 
 WORKDIR /workspace
