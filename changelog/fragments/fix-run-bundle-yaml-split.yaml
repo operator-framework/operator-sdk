@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Fix naive YAML split in `run bundle` command.
+    kind: "bugfix"
+    breaking: false
