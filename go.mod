@@ -1,6 +1,7 @@
 module github.com/operator-framework/operator-sdk
 
-go 1.21
+go 1.21.0
+
 toolchain go1.22.5
 
 require (
