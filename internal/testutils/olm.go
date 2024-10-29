@@ -73,7 +73,20 @@ func (tc TestContext) AddPackagemanifestsTarget(operatorType projutil.OperatorTy
 	return nil
 }
 
+// DisableManifestsInteractiveMode will update the Makefile to disable the interactive mode
+func (tc TestContext) DisableManifestsInteractiveMode() error {
+	// Todo: check if we cannot improve it since the replace/content will exists in the
+	// pkgmanifest target if it be scaffolded before this call
+	content := "$(OPERATOR_SDK) generate kustomize manifests"
+	replace := content + " --interactive=false"
+	return ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), content, replace)
+}
+
 // GenerateBundle runs all commands to create an operator bundle.
 func (tc TestContext) GenerateBundle() error {
+	if err := tc.DisableManifestsInteractiveMode(); err != nil {
+		return err
+	}
+
 	return tc.Make("bundle", "IMG="+tc.ImageName)
 }
