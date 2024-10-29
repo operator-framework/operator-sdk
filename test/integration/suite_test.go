@@ -139,7 +139,7 @@ func runPackageManifests(tc *testutils.TestContext, args ...string) error {
 }
 
 func cleanup(tc *testutils.TestContext) (string, error) {
-	allArgs := []string{"cleanup", tc.ProjectName, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
+	allArgs := []string{"cleanup", fmt.Sprintf("e2e-%s", tc.TestSuffix), "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
 	output, err := tc.Run(exec.Command(tc.BinaryName, allArgs...))
 	if err == nil {
 		fmt.Fprintln(GinkgoWriter, string(output))
@@ -178,7 +178,7 @@ func writeCSV(tc *testutils.TestContext, version string, csv *v1alpha1.ClusterSe
 }
 
 func csvPath(tc *testutils.TestContext, version string, isBundle bool) string {
-	fileName := fmt.Sprintf("%s.clusterserviceversion.yaml", tc.ProjectName)
+	fileName := fmt.Sprintf("e2e-%s.clusterserviceversion.yaml", tc.TestSuffix)
 	if isBundle {
 		return filepath.Join(tc.Dir, "bundle", bundle.ManifestsDir, fileName)
 	}
