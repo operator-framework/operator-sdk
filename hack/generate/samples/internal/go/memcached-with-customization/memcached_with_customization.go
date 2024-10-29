@@ -306,7 +306,7 @@ func (mh *Memcached) uncommentManifestsKustomizationv4() {
 	log.Info("uncommenting config/manifests/kustomization.yaml to enable webhooks in OLM")
 
 	err = kbutil.UncommentCode(kustomization,
-		`#patchesJson6902:
+		`#patches:
 #- target:
 #    group: apps
 #    version: v1

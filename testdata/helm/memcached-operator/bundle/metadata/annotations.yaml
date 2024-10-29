@@ -5,3 +5,7 @@ annotations:
   operators.operatorframework.io.bundle.metadata.v1: metadata/
   operators.operatorframework.io.bundle.package.v1: memcached-operator
   operators.operatorframework.io.bundle.channels.v1: alpha
+
+  # Annotations for testing.
+  operators.operatorframework.io.test.mediatype.v1: scorecard+v1
+  operators.operatorframework.io.test.config.v1: tests/scorecard/

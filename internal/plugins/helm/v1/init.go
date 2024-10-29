@@ -185,7 +185,7 @@ func addInitCustomizations(projectName string) error {
 
 	err := util.InsertCode(managerFile,
 		"--leader-elect",
-		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+		fmt.Sprintf("\n          - --leader-election-id=%s", projectName))
 	if err != nil {
 		return err
 	}
