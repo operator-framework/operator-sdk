@@ -1,5 +1,5 @@
 # Build the operator-sdk binary
-FROM --platform=$BUILDPLATFORM golang:1.21 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.22 AS builder
 ARG TARGETARCH
 
 WORKDIR /workspace
@@ -19,7 +19,7 @@ RUN GOOS=linux GOARCH=$TARGETARCH make build/operator-sdk
 # Final image.
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1227.1726694542
 
-ENV GO_VERSION=1.19
+ENV GO_VERSION=1.22
 
 ARG TARGETARCH
 RUN microdnf install -y make gcc which tar gzip
