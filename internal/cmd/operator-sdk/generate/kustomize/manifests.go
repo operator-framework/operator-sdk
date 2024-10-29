@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v4/pkg/config"
-	cfgv3 "sigs.k8s.io/kubebuilder/v4/pkg/config/v3"
 	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
 	"sigs.k8s.io/yaml"
 
@@ -257,11 +256,6 @@ func getGVKs(cfg config.Config) ([]schema.GroupVersionKind, error) {
 	}
 	gvks := make([]schema.GroupVersionKind, len(resources))
 	for i, gvk := range resources {
-		// check if the resource has an specific domain
-		// otherwise use the config.Domain.
-		if cfg.GetVersion().Compare(cfgv3.Version) == 0 {
-			gvk.Domain = cfg.GetDomain()
-		}
 		gvks[i].Group = gvk.QualifiedGroup()
 		gvks[i].Version = gvk.Version
 		gvks[i].Kind = gvk.Kind
