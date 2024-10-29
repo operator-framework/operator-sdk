@@ -257,7 +257,7 @@ var _ = Describe("Running Helm projects", func() {
 				Expect(err).NotTo(HaveOccurred())
 				return logOutput
 			}
-			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
+			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/1.1 200 OK"))
 
 			By("getting the CR namespace token")
 			crNamespace, err := tc.Kubectl.Get(

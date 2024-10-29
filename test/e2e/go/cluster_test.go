@@ -171,7 +171,7 @@ var _ = Describe("operator-sdk", func() {
 				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				return metricsOutput
 			}
-			Eventually(getCurlLogs, 3*time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
+			Eventually(getCurlLogs, 3*time.Minute, time.Second).Should(ContainSubstring("< HTTP/1.1 200 OK"))
 
 			By("validating that pod(s) status.phase=Running")
 			getMemcachedPodStatus := func() error {
