@@ -15,7 +15,6 @@
 package integration
 
 import (
-	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -36,14 +35,14 @@ var _ = Describe("run packagemanifests", func() {
 	It("should handle existing operator deployments correctly", func() {
 		output, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(output).To(ContainSubstring(fmt.Sprintf(`package \"e2e-%s\" not found`, tc.TestSuffix)))
+		Expect(output).To(ContainSubstring(`package \"memcached-operator\" not found`))
 		Expect(runPackageManifests(&tc, "--version", "0.0.1")).To(Succeed())
 		Expect(runPackageManifests(&tc, "--version", "0.0.1")).NotTo(Succeed())
 		_, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
 		output, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(output).To(ContainSubstring(fmt.Sprintf(`package \"e2e-%s\" not found`, tc.TestSuffix)))
+		Expect(output).To(ContainSubstring(`package \"memcached-operator\" not found`))
 	})
 
 	It("should succeed with a single operator version in AllNamespaces mode", func() {
