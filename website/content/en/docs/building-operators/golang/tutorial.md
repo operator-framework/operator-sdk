@@ -519,7 +519,7 @@ Next, check out the following:
 [controller_tools]: https://sigs.k8s.io/controller-tools
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
 [create_a_webhook]: /docs/building-operators/golang/webhook
-[deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html
+[deploy-image-plugin-doc]: https://book.kubebuilder.io/plugins/available/deploy-image-plugin-v1-alpha
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
 [doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
 [doc-validation-schema]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
