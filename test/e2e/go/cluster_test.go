@@ -45,7 +45,7 @@ var _ = Describe("operator-sdk", func() {
 
 		AfterEach(func() {
 			By("deleting curl pod")
-			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(true, "pod", "curl"))
 
 			By("cleaning up permissions")
 			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))

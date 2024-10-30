@@ -47,7 +47,7 @@ var _ = Describe("Running Helm projects", func() {
 
 		AfterEach(func() {
 			By("deleting curl pod")
-			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(true, "pod", "curl"))
 
 			By("deleting test CR instances")
 			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "-f", memcachedSampleFile))
@@ -232,7 +232,7 @@ var _ = Describe("Running Helm projects", func() {
 			cmdOpts := []string{
 				"run", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
-				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
+				fmt.Sprintf("http://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
 			}
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
