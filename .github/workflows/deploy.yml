@@ -27,7 +27,7 @@ jobs:
         run: |
           REF="HEAD^"
           [[ -z "${{ github.base_ref }}" ]] || REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
-          echo "::set-output name=skip::$(.github/workflows/check-docs-only.sh $REF)"
+          echo "skip=$(.github/workflows/check-docs-only.sh $REF)" >> $GITHUB_OUTPUT
 
   # Job to test release steps. This will only create a release remotely if run on a tagged commit.
   goreleaser:
@@ -100,7 +100,7 @@ jobs:
       id: tags
       run: |
         IMG=quay.io/${{ github.repository_owner }}/${{ matrix.id }}
-        echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "v")
+        echo tags=$(.github/workflows/get_image_tags.sh "$IMG" "v") >> $GITHUB_OUTPUT
 
     - name: build and push
       uses: docker/build-push-action@v6
@@ -146,7 +146,7 @@ jobs:
       id: tags
       run: |
         IMG=quay.io/${{ github.repository_owner }}/scorecard-test-kuttl
-        echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "scorecard-kuttl/v")
+        echo tags=$(.github/workflows/get_image_tags.sh "$IMG" "scorecard-kuttl/v") >> $GITHUB_OUTPUT
 
     - name: build and push
       uses: docker/build-push-action@v6

@@ -18,7 +18,7 @@ jobs:
         run: |
           REF="HEAD^"
           [[ -z "${{ github.base_ref }}" ]] || REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
-          echo "::set-output name=skip::$(.github/workflows/check-docs-only.sh $REF)"
+          echo "skip=$(.github/workflows/check-docs-only.sh $REF)" >> $GITHUB_OUTPUT
 
   integration:
     name: integration
