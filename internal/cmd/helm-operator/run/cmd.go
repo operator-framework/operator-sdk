@@ -83,6 +83,7 @@ func NewCmd() *cobra.Command {
 
 	f.AddTo(cmd.Flags())
 	cmd.Flags().AddGoFlagSet(zapfs)
+	cmd.MarkFlagsRequiredTogether("metrics-secure", "metrics-authn-authz")
 	return cmd
 }
 

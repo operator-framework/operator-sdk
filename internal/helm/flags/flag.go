@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
@@ -38,6 +39,7 @@ type Flags struct {
 	SuppressOverrideValues  bool
 	EnableHTTP2             bool
 	SecureMetrics           bool
+	MetricsAuthNAuthZ       bool
 
 	// If not nil, used to deduce which flags were set in the CLI.
 	flagSet *pflag.FlagSet
@@ -76,14 +78,16 @@ see https://github.com/kubernetes-sigs/controller-runtime/issues/895 for more in
 	// TODO(2.0.0): remove
 	flagSet.StringVar(&f.MetricsBindAddress,
 		"metrics-addr",
-		":8080",
-		"The address the metric endpoint binds to",
+		"0",
+		"The address the metrics endpoint binds to. "+
+			"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.",
 	)
 	_ = flagSet.MarkDeprecated("metrics-addr", "use --metrics-bind-address instead")
 	flagSet.StringVar(&f.MetricsBindAddress,
 		"metrics-bind-address",
-		":8080",
-		"The address the metric endpoint binds to",
+		"0",
+		"The address the metrics endpoint binds to. "+
+			"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.",
 	)
 	// TODO(2.0.0): for Go/Helm the port used is: 8081
 	// update it to keep the project aligned to the other
@@ -133,6 +137,10 @@ see https://github.com/kubernetes-sigs/controller-runtime/issues/895 for more in
 		false,
 		"enables secure serving of the metrics endpoint",
 	)
+	flagSet.BoolVar(&f.MetricsAuthNAuthZ,
+		"metrics-authn-authz",
+		false,
+		"enables protection of the metrics endpoint with authn/authz")
 }
 
 // ToManagerOptions uses the flag set in f to configure options.
@@ -178,6 +186,14 @@ func (f *Flags) ToManagerOptions(options manager.Options) manager.Options {
 		options.Metrics.TLSOpts = append(options.Metrics.TLSOpts, disableHTTP2)
 	}
 	options.Metrics.SecureServing = f.SecureMetrics
+
+	if f.MetricsAuthNAuthZ {
+		// FilterProvider is used to protect the metrics endpoint with authn/authz.
+		// These configurations ensure that only authorized users and service accounts
+		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
+		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/metrics/filters#WithAuthenticationAndAuthorization
+		options.Metrics.FilterProvider = filters.WithAuthenticationAndAuthorization
+	}
 
 	return options
 }
