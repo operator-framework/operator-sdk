@@ -52,7 +52,7 @@ var _ = Describe("Flags", func() {
 		})
 		When("the flag is not set", func() {
 			It("uses the default flag value when corresponding option value is empty", func() {
-				expOptionValue := "0"
+				expOptionValue := ":8080"
 				options.Metrics.BindAddress = ""
 				parseArgs(flagSet)
 				Expect(f.ToManagerOptions(options).Metrics.BindAddress).To(Equal(expOptionValue))

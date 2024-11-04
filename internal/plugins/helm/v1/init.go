@@ -214,10 +214,10 @@ func addInitCustomizations(projectName string) error {
 - op: add
   path: /spec/template/spec/containers/0/args/0
   value: --metrics-secure
-# This patch adds the args to allow authn/authz the metrics endpoint
+# This patch adds the args to allow RBAC-based authn/authz the metrics endpoint
 - op: add
   path: /spec/template/spec/containers/0/args/0
-  value: --metrics-authn-authz`)
+  value: --metrics-require-rbac`)
 	if err != nil {
 		return err
 	}

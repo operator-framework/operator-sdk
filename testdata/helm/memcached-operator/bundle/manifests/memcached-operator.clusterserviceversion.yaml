@@ -267,7 +267,7 @@ spec:
             spec:
               containers:
               - args:
-                - --metrics-authn-authz
+                - --metrics-require-rbac
                 - --metrics-secure
                 - --metrics-bind-address=:8443
                 - --leader-elect
