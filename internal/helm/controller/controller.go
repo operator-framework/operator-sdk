@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 	"sync"
 	"time"
@@ -26,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -35,8 +35,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
+	"github.com/operator-framework/operator-lib/predicate"
 	"github.com/operator-framework/operator-sdk/internal/helm/release"
-	"github.com/operator-framework/operator-sdk/internal/predicate"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
@@ -82,7 +82,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
 
-	if err := c.Watch(source.Kind(mgr.GetCache(), client.Object(o), &libhandler.InstrumentedEnqueueRequestForObject[client.Object]{})); err != nil {
+	if err := c.Watch(source.Kind(mgr.GetCache(), o, &libhandler.InstrumentedEnqueueRequestForObject[*unstructured.Unstructured]{})); err != nil {
 		return err
 	}
 
@@ -98,9 +98,6 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 // watchDependentResources adds a release hook function to the HelmOperatorReconciler
 // that adds watches for resources in released Helm charts.
 func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c controller.Controller) {
-	// using predefined functions for filtering events
-	dependentPredicate := predicate.DependentPredicateFuncs()
-
 	var m sync.RWMutex
 	watches := map[schema.GroupVersionKind]struct{}{}
 	releaseHook := func(release *rpb.Release) error {
@@ -141,21 +138,21 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 
 				if useOwnerRef { // Setup watch using owner references.
 					err = c.Watch(
-						source.Kind(
+						source.Kind[client.Object](
 							mgr.GetCache(),
 							unstructuredObj,
-							crthandler.TypedEnqueueRequestForOwner[*unstructured.Unstructured](mgr.GetScheme(), mgr.GetRESTMapper(), owner, crthandler.OnlyControllerOwner()),
-							dependentPredicate))
+							crthandler.TypedEnqueueRequestForOwner[client.Object](mgr.GetScheme(), mgr.GetRESTMapper(), owner, crthandler.OnlyControllerOwner()),
+							predicate.DependentPredicate{}))
 					if err != nil {
 						return err
 					}
 				} else { // Setup watch using annotations.
 					err = c.Watch(
-						source.Kind(
+						source.Kind[client.Object](
 							mgr.GetCache(),
 							unstructuredObj,
-							&libhandler.EnqueueRequestForAnnotation[*unstructured.Unstructured]{Type: gvkDependent.GroupKind()},
-							dependentPredicate))
+							&libhandler.EnqueueRequestForAnnotation[client.Object]{Type: gvkDependent.GroupKind()},
+							predicate.DependentPredicate{}))
 					if err != nil {
 						return err
 					}
