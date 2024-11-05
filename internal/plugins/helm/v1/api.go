@@ -203,6 +203,12 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 		return fmt.Errorf("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
+	// Selected CRD version must match existing CRD versions.
+	// nolint:staticcheck
+	if hasDifferentAPIVersion(p.config.ListCRDVersions(), p.resource.API.CRDVersion) {
+		return fmt.Errorf("only one CRD version can be used for all resources, cannot add %q", p.resource.API.CRDVersion)
+	}
+
 	return nil
 }
 
@@ -222,4 +228,9 @@ func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
 	// NOTE: previous step fetches the dependencies of the chart.Chart, so reloading may be needed if used afterwards
 
 	return nil
+}
+
+// hasDifferentCRDVersion returns true if any other CRD version is tracked in the project configuration.
+func hasDifferentAPIVersion(versions []string, version string) bool {
+	return !(len(versions) == 0 || (len(versions) == 1 && versions[0] == version))
 }
