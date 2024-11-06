@@ -16,7 +16,6 @@ package controller
 
 import (
 	"fmt"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -82,7 +82,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
 
-	if err := c.Watch(source.Kind(mgr.GetCache(), o, &libhandler.InstrumentedEnqueueRequestForObject[*unstructured.Unstructured]{})); err != nil {
+	if err := c.Watch(source.Kind(mgr.GetCache(), client.Object(o), &libhandler.InstrumentedEnqueueRequestForObject[client.Object]{})); err != nil {
 		return err
 	}
 
@@ -138,9 +138,9 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 
 				if useOwnerRef { // Setup watch using owner references.
 					err = c.Watch(
-						source.Kind[client.Object](
+						source.Kind(
 							mgr.GetCache(),
-							unstructuredObj,
+							client.Object(unstructuredObj),
 							crthandler.TypedEnqueueRequestForOwner[client.Object](mgr.GetScheme(), mgr.GetRESTMapper(), owner, crthandler.OnlyControllerOwner()),
 							predicate.DependentPredicate{}))
 					if err != nil {
@@ -148,9 +148,9 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 					}
 				} else { // Setup watch using annotations.
 					err = c.Watch(
-						source.Kind[client.Object](
+						source.Kind(
 							mgr.GetCache(),
-							unstructuredObj,
+							client.Object(unstructuredObj),
 							&libhandler.EnqueueRequestForAnnotation[client.Object]{Type: gvkDependent.GroupKind()},
 							predicate.DependentPredicate{}))
 					if err != nil {
