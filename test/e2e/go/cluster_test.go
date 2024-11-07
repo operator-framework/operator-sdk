@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -45,7 +45,7 @@ var _ = Describe("operator-sdk", func() {
 
 		AfterEach(func() {
 			By("deleting curl pod")
-			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(true, "pod", "curl"))
 
 			By("cleaning up permissions")
 			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
@@ -171,7 +171,7 @@ var _ = Describe("operator-sdk", func() {
 				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				return metricsOutput
 			}
-			Eventually(getCurlLogs, 3*time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
+			Eventually(getCurlLogs, 3*time.Minute, time.Second).Should(ContainSubstring("< HTTP/1.1 200 OK"))
 
 			By("validating that pod(s) status.phase=Running")
 			getMemcachedPodStatus := func() error {

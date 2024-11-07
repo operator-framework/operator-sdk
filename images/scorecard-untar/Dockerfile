@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8:8.7
+FROM registry.access.redhat.com/ubi9/ubi:9.4-1214.1726694543
 
 ## Create a new non-root user to run as
 ENV HOME=/opt/scorecard-untar \

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 )

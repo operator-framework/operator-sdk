@@ -29,7 +29,7 @@ operator-sdk run bundle <bundle-image> [flags]
 
 ```
       --ca-secret-name string                     Name of a generic secret containing a PEM root certificate file required to pull bundle images. This secret *must* be in the namespace that this command is configured to run in, and the file *must* be encoded under the key "cert.pem"
-      --decompression-image string                image used in an init container in the registry pod to decompress the compressed catalog contents. cat and gzip binaries are expected to exist in the PATH (default "registry.access.redhat.com/ubi8:8.9")
+      --decompression-image string                image used in an init container in the registry pod to decompress the compressed catalog contents. cat and gzip binaries are expected to exist in the PATH (default "registry.access.redhat.com/ubi9/ubi:9.4")
   -h, --help                                      help for bundle
       --index-image string                        index image in which to inject bundle (default "quay.io/operator-framework/opm:latest")
       --install-mode InstallModeValue             install mode

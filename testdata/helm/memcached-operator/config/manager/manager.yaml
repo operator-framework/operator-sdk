@@ -54,8 +54,9 @@ spec:
           type: RuntimeDefault
       containers:
       - args:
-        - --leader-elect
-        - --leader-election-id=memcached-operator
+          - --leader-elect
+          - --leader-election-id=memcached-operator
+          - --health-probe-bind-address=:8081
         image: controller:latest
         name: manager
         securityContext:
