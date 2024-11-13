@@ -410,8 +410,8 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/operator-framework/ansible-operator-plugins v1.36.0 h1:EdoaRUZ/wKVSEQO5fuLiZXAmU2GkNQBJoyifiUhw93g=
-github.com/operator-framework/ansible-operator-plugins v1.36.0/go.mod h1:fYIrY1/7PSLGTH2wWOBEb6Lu9/qUu23yYv+iKJo82GI=
+github.com/operator-framework/ansible-operator-plugins v1.36.1 h1:6TNrJ04JWey/7McBzrawe9HQWGjSMtILfahC4nRKDx0=
+github.com/operator-framework/ansible-operator-plugins v1.36.1/go.mod h1:vX76IEGaJ09L83swBQrfCwN5a4KErCpH5S+YMRZKOL0=
 github.com/operator-framework/api v0.24.0 h1:fHynWEzuY/YhUTlsK9hd+QQ0bZcFakxCTdaZbFaVXbc=
 github.com/operator-framework/api v0.24.0/go.mod h1:EXKrka63NyQDDpWZ+DGTDEliNV0xRq6UMZRoUPhilVM=
 github.com/operator-framework/operator-lib v0.14.0 h1:er+BgZymZD1im2wytLJiPLZpGALAX6N0gXaHx3PKbO4=
