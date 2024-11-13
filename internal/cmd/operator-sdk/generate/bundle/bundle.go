@@ -286,7 +286,7 @@ func (c bundleCmd) runMetadata() error {
 			if !errors.As(err, &merr) {
 				return err
 			}
-		} else if !c.overwrite {
+		} else if !c.overwrite && !c.overwriteAnnotations {
 			return nil
 		}
 	}
@@ -302,6 +302,11 @@ func (c bundleCmd) runMetadata() error {
 		IsScoreConfigPresent: genutil.IsExist(scorecardConfigPath),
 	}
 
+	if c.overwriteAnnotations {
+		return bundleMetadata.GenerateAnnotations() // Overwrite only annotations.yaml
+	}
+
+	// If overwrite or metadata is generated for the first time, all files will be overwritten.
 	return bundleMetadata.GenerateMetadata()
 }
 

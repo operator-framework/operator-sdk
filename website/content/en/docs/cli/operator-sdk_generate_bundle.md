@@ -100,6 +100,7 @@ operator-sdk generate bundle [flags]
       --metadata                         Generate bundle metadata and Dockerfile
       --output-dir string                Directory to write the bundle to
       --overwrite                        Overwrite the bundle's metadata and Dockerfile if they exist (default true)
+      --overwrite-annotations            Only overwrite annotations.yaml without modifying bundle.Dockerfile
       --package string                   Bundle's package name
   -q, --quiet                            Run in quiet mode
       --stdout                           Write bundle manifest to stdout
