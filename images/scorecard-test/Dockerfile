@@ -17,7 +17,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/scorecard-test
 
 # Final image.
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1227.1726694542
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
 
 ENV HOME=/opt/scorecard-test \
     USER_NAME=scorecard-test \
