@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Add `--overwrite-annotations` option to the `operator-sdk generate bundle` command.
+      This allows developers to overwrite `annotations.yaml` without modifying `bundle.Dockerfile`.
+    kind: "addition"
+    breaking: false
