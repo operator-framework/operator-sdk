@@ -151,34 +151,15 @@ run: manifests generate fmt vet
 
 ### Setting flags when deploying to a cluster
 
-When deploying your operator to a cluster you can set additional flags using an `args` array in your operator's `container` spec in the file `config/default/manager_auth_proxy_patch.yaml` For example:
+When deploying your operator to a cluster you can set additional flags using an `args` array in your operator's `container` spec in the file `config/default/manager_metrics_patch.yaml` For example:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: controller-manager
-  namespace: system
-spec:
-  template:
-    spec:
-      containers:
-      - name: kube-rbac-proxy
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
-        args:
-        - "--secure-listen-address=0.0.0.0:8443"
-        - "--upstream=http://127.0.0.1:8080/"
-        - "--logtostderr=true"
-        - "--v=10"
-        ports:
-        - containerPort: 8443
-          name: https
-      - name: manager
-        args:
-        - "--metrics-bind-address=127.0.0.1:8080"
-        - "--leader-elect"
-        - "--zap-encoder=console"
-        - "--zap-log-level=debug"
+- op: add
+  path: /spec/template/spec/containers/0/args/0
+  value: --zap-log-level=debug 
+- op: add
+  path: /spec/template/spec/containers/0/args/0
+  value: --zap-encoder=console
 ```
 
 ## Creating a structured log statement
