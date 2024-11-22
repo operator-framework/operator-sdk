@@ -1,5 +1,14 @@
 <img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
 
+> ⚠️ **IMPORTANT NOTICE:** Images under `gcr.io/kubebuilder/` Will Be Unavailable Soon
+>
+> **If your project uses `gcr.io/kubebuilder/kube-rbac-proxy`** it will be affected.
+> Your project may fail to work if the image cannot be pulled. **You must move as soon as possible**, sometime from early 2025, the GCR will go away.
+>
+> The usage of the project [kube-rbac-proxy](https://github.com/brancz/kube-rbac-proxy) was discontinued from Kubebuilder and Operator-SDK.
+> It was replaced for similar protection using `authn/authz` via Controller-Runtime's feature [WithAuthenticationAndAuthorization](https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/metrics/filters#WithAuthenticationAndAuthorization).
+>
+> For more information and guidance see the discussion https://github.com/kubernetes-sigs/kubebuilder/discussions/3907
 
 [![Build Status](https://github.com/operator-framework/operator-sdk/workflows/deploy/badge.svg)](https://github.com/operator-framework/operator-sdk/actions)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
