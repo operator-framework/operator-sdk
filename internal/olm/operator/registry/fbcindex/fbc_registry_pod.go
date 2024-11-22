@@ -60,6 +60,9 @@ type FBCRegistryPod struct { //nolint:maligned
 	// BundleItems contains all bundles to be added to a registry pod.
 	BundleItems []index.BundleItem
 
+	// ImagePullPolicy is the image pull policy for the registry pod, default is PullAlways
+	ImagePullPolicy corev1.PullPolicy
+
 	// Index image contains a database of pointers to operator manifest content that is queriable via an API.
 	// new version of an operator bundle when published can be added to an index image
 	IndexImage string
@@ -155,6 +158,11 @@ func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration
 			},
 		}
 	}
+
+	if f.ImagePullPolicy == "" {
+		f.ImagePullPolicy = corev1.PullAlways
+	}
+	f.pod.Spec.Containers[0].ImagePullPolicy = f.ImagePullPolicy
 
 	if err := f.cfg.Client.Create(ctx, f.pod); err != nil {
 		return nil, fmt.Errorf("error creating pod: %w", err)

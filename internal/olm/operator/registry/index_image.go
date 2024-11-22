@@ -97,6 +97,7 @@ type IndexImageCatalogCreator struct {
 	HasFBCLabel     bool
 	FBCContent      string
 	PackageName     string
+	ImagePullPolicy string
 	IndexImage      string
 	InitImage       string
 	BundleImage     string
@@ -138,6 +139,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 		"while pulling bundles")
 	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
 		"while pulling bundles")
+	fs.StringVar(&c.ImagePullPolicy, "image-pull-policy", string(corev1.PullAlways), "image pull policy for the registry pod")
 
 	// default to Legacy
 	c.SecurityContext = SecurityContext{ContextType: Legacy}
@@ -531,6 +533,7 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 			InitImage:       c.InitImage,
 			FBCContent:      c.FBCContent,
 			SecurityContext: c.SecurityContext.String(),
+			ImagePullPolicy: corev1.PullPolicy(c.ImagePullPolicy),
 		}
 
 		pod, err = fbcRegistryPod.Create(ctx, c.cfg, cs)
@@ -548,6 +551,7 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 			SkipTLSVerify:   c.SkipTLSVerify,
 			UseHTTP:         c.UseHTTP,
 			SecurityContext: c.SecurityContext.String(),
+			ImagePullPolicy: corev1.PullPolicy(c.ImagePullPolicy),
 		}
 
 		if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
