@@ -111,7 +111,7 @@ It should be possible to backup and restore the operand from the operator itself
 - Operator is able to restore a backup of an Operand
 - Operator orchestrates complex re-configuration flows on the Operand
 - Operator implements fail-over and fail-back of clustered Operands
-- Operator supports add/removing members to a clustered Operand
+- Operator supports adding/removing members to a clustered Operand
 - Operator enables application-aware scaling of the Operand
 
 **Example:** an Operator managing a database provides the ability to create an application consistent backup of the data by flushing the database log and quiescing the write activity to the database files.
