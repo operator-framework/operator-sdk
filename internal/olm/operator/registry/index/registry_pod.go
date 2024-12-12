@@ -58,6 +58,9 @@ type SQLiteRegistryPod struct { //nolint:maligned
 	// BundleItems contains all bundles to be added to a registry pod.
 	BundleItems []BundleItem
 
+	// ImagePullPolicy is the image pull policy for the registry pod, default is PullAlways
+	ImagePullPolicy corev1.PullPolicy
+
 	// Index image contains a database of pointers to operator manifest content that is queriable via an API.
 	// new version of an operator bundle when published can be added to an index image
 	IndexImage string
@@ -150,6 +153,11 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 			},
 		}
 	}
+
+	if rp.ImagePullPolicy == "" {
+		rp.ImagePullPolicy = corev1.PullAlways
+	}
+	rp.pod.Spec.Containers[0].ImagePullPolicy = rp.ImagePullPolicy
 
 	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
 		return nil, fmt.Errorf("error creating pod: %w", err)

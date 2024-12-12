@@ -21,6 +21,7 @@ operator-sdk run bundle-upgrade <bundle-image> [flags]
 ```
       --ca-secret-name string                     Name of a generic secret containing a PEM root certificate file required to pull bundle images. This secret *must* be in the namespace that this command is configured to run in, and the file *must* be encoded under the key "cert.pem"
   -h, --help                                      help for bundle-upgrade
+      --image-pull-policy string                  image pull policy for the registry pod (default "Always")
       --kubeconfig string                         Path to the kubeconfig file to use for CLI requests.
   -n, --namespace string                          If present, namespace scope for this CLI request
       --pull-secret-name string                   Name of image pull secret ("type: kubernetes.io/dockerconfigjson") required to pull bundle images. This secret *must* be both in the namespace and an imagePullSecret of the service account that this command is configured to run in
