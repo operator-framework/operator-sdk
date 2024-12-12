@@ -121,7 +121,7 @@ func NewCmd() *cobra.Command {
 		Short:   "Validate an operator bundle",
 		Long:    longHelp,
 		Example: examples,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(_ *cobra.Command, args []string) (err error) {
 			// Always print non-output logs to stderr as to not pollute actual command output.
 			// Note that it allows the JSON result be redirected to the Stdout. E.g
 			// if we run the command with `| jq . > result.json` the command will print just the logs

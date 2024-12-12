@@ -66,10 +66,10 @@ func NewCmd() *cobra.Command {
 		Long: `Has flags to configure dsl, bundle, and selector. This command takes
 one argument, either a bundle image or directory containing manifests and metadata.
 If the argument holds an image tag, it must be present remotely.`,
-		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
+		PreRunE: func(_ *cobra.Command, args []string) (err error) {
 			return c.validate(args)
 		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(_ *cobra.Command, args []string) (err error) {
 			c.bundle = args[0]
 			return c.run()
 		},

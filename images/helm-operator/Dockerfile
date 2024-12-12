@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM golang:1.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.23 AS builder
 ARG TARGETARCH
 
 WORKDIR /workspace
@@ -17,7 +17,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/helm-operator
 
 # Final image.
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1227.1726694542
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
 
 ENV HOME=/opt/helm \
     USER_NAME=helm \
