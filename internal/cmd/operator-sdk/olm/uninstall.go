@@ -26,7 +26,7 @@ func newUninstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "uninstall",
 		Short: "Uninstall Operator Lifecycle Manager from your cluster",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := mgr.Uninstall(); err != nil {
 				log.Fatalf("Failed to uninstall OLM: %s", err)
 			}

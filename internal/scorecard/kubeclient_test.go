@@ -25,7 +25,7 @@ func TestGetKubeNamespace(t *testing.T) {
 	// create temp kubeconfig file
 	file, err := os.CreateTemp("/tmp", "")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	defer os.Remove(file.Name())
 
@@ -62,7 +62,7 @@ func TestGetKubeNamespaceEnvVar(t *testing.T) {
 	// create temp kubeconfig file
 	file, err := os.CreateTemp("/tmp", "")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	defer os.Remove(file.Name())
 

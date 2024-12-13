@@ -1,5 +1,5 @@
 # Build the scorecard-test-kuttl binary
-FROM --platform=$BUILDPLATFORM golang:1.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.23 AS builder
 ARG TARGETARCH
 ARG BUILDPLATFORM
 
