@@ -17,7 +17,7 @@ package manifests
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
 )
 
 var _ machinery.Template = &Kustomization{}
@@ -64,7 +64,7 @@ resources:
 # [WEBHOOK] To enable webhooks, uncomment all the sections with [WEBHOOK] prefix.
 # Do NOT uncomment sections with prefix [CERTMANAGER], as OLM does not support cert-manager.
 # These patches remove the unnecessary "cert" volume and its manager container volumeMount.
-#patchesJson6902:
+#patches:
 #- target:
 #    group: apps
 #    version: v1

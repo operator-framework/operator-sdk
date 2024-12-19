@@ -44,8 +44,8 @@ internally to version your Kubernetes resources and are thus used for many thing
 name your domain to group your resource types in meaningful group(s) for ease of understanding and because these
 groups determine how access can be controlled to your resource types using RBAC. For more information, see [the core Kubernetes docs](https://kubernetes.io/docs/reference/using-api/#api-groups) and [the Kubebuilder docs](https://book.kubebuilder.io/cronjob-tutorial/gvks.html).
 
-**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4-alpha`
-plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4-alpha`
+**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4`
+plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4`
 
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
 
@@ -519,7 +519,7 @@ Next, check out the following:
 [controller_tools]: https://sigs.k8s.io/controller-tools
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
 [create_a_webhook]: /docs/building-operators/golang/webhook
-[deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html
+[deploy-image-plugin-doc]: https://book.kubebuilder.io/plugins/available/deploy-image-plugin-v1-alpha
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
 [doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
 [doc-validation-schema]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema

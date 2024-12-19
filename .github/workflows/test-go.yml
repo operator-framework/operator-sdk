@@ -12,7 +12,7 @@ jobs:
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: check_docs_only
@@ -21,7 +21,7 @@ jobs:
         run: |
           REF="HEAD^"
           [[ -z "${{ github.base_ref }}" ]] || REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
-          echo "::set-output name=skip::$(.github/workflows/check-docs-only.sh $REF)"
+          echo "skip=$(.github/workflows/check-docs-only.sh $REF)" >> $GITHUB_OUTPUT
 
   e2e:
     name: e2e
@@ -29,7 +29,7 @@ jobs:
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v5
@@ -44,7 +44,7 @@ jobs:
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v5

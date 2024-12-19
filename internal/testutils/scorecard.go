@@ -21,7 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 )
 
 const scorecardImage = "quay.io/operator-framework/scorecard-test:.*"

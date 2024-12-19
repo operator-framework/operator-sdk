@@ -27,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachruntime "k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -76,6 +75,12 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run the operator",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flag("metrics-require-rbac").Value.String() == "true" && cmd.Flag("metrics-secure").Value.String() == "false" {
+				return errors.New("--metrics-secure flag is required when --metrics-require-rbac is present")
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, _ []string) {
 			logf.SetLogger(zapf.New(zapf.UseFlagOptions(opts)))
 			run(cmd, f)
@@ -97,19 +102,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		options manager.Options
 		err     error
 	)
-	// TODO: This flag has been deprecated since controller-runtime has deprecated
-	// the component config package. This check and the associated flag
-	// should be removed when upgrading to a version of controller-runtime where the
-	// component config package has been removed.
-	// For tracking see https://github.com/kubernetes-sigs/controller-runtime/issues/895
-	// Until this has been done, ignore the linting errors
-	if f.ManagerConfigPath != "" {
-		cfgLoader := ctrl.ConfigFile().AtPath(f.ManagerConfigPath) // nolint:staticcheck
-		if options, err = options.AndFrom(cfgLoader); err != nil { // nolint:staticcheck
-			log.Error(err, "Unable to load the manager config file")
-			os.Exit(1)
-		}
-	}
+
 	exitIfUnsupported(options)
 
 	cfg, err := config.GetConfig()

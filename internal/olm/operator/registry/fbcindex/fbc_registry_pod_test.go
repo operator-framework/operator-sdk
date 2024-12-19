@@ -200,7 +200,7 @@ var _ = Describe("FBCRegistryPod", func() {
 				largeYaml := largeYamlBuilder.String()
 				rp.FBCContent = largeYaml
 
-				expectedYaml := strings.TrimPrefix(strings.TrimSpace(largeYaml), "---\n")
+				expectedYaml := strings.TrimSpace(largeYaml)
 				expectedYaml = regexp.MustCompile(`\n\n+`).ReplaceAllString(expectedYaml, "\n")
 
 				cms, err := rp.partitionedConfigMaps()

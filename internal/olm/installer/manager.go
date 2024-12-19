@@ -26,7 +26,9 @@ import (
 )
 
 const (
-	DefaultVersion = "latest"
+	// TODO: switch back to latest once olm fixes their releases
+	// https://github.com/operator-framework/operator-lifecycle-manager/issues/3419
+	DefaultVersion = "0.28.0"
 	DefaultTimeout = time.Minute * 2
 	// DefaultOLMNamespace is the namespace where OLM is installed
 	DefaultOLMNamespace = "olm"

@@ -59,8 +59,8 @@ type MemcachedStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,memcached-deployment}}
 
 // Memcached is the Schema for the memcacheds API
@@ -72,7 +72,7 @@ type Memcached struct {
 	Status MemcachedStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // MemcachedList contains a list of Memcached
 type MemcachedList struct {

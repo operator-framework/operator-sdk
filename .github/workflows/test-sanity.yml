@@ -9,7 +9,7 @@ jobs:
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - id: check_docs_only
@@ -26,7 +26,7 @@ jobs:
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - uses: actions/setup-go@v5
@@ -40,12 +40,12 @@ jobs:
     name: docs
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive
     - run: make test-docs
-    - uses: gaurav-nelson/github-action-markdown-link-check@1.0.13
+    - uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         max-depth: 1
         config-file: '.github/workflows/markdown-link-check-config.json'

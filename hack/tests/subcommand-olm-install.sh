@@ -36,5 +36,5 @@ test_version() {
     echo $commandoutput | grep -F "Successfully uninstalled OLM"
 }
 
-test_version "latest"
+test_version "0.28.0"
 test_version "0.17.0" # Check installation of OLM for locally stored version of binaries

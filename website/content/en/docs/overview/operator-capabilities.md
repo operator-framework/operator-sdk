@@ -230,6 +230,6 @@ The highest capability level aims to significantly reduce/eliminate any remainin
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [metrics]: https://book.kubebuilder.io/reference/metrics.html
 [metric-reference]: https://book.kubebuilder.io/reference/metrics-reference.html
-[grafana-plugin-docs]: https://book.kubebuilder.io/plugins/grafana-v1-alpha.html
+[grafana-plugin-docs]: https://book.kubebuilder.io/plugins/available/grafana-v1-alpha
 [k8s-api-events]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#events
 [k8s-api-status]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status

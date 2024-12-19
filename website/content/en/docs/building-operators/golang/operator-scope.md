@@ -194,7 +194,9 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Port:               9443,
     LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
-    Namespace:          watchNamespace, // namespaced-scope when the value is not an empty string
+    Cache: cache.Options{
+      DefaultNamespaces: map[string]cache.Config{watchNamespace: cache.Config{}},
+    },
 })
 ...
 ```
@@ -246,7 +248,9 @@ options := ctrl.Options{
     Port:               9443,
     LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
-    Namespace:          watchNamespace, // namespaced-scope when the value is not an empty string
+    Cache: cache.Options{
+      DefaultNamespaces: map[string]cache.Config{watchNamespace: cache.Config{}},
+    },
 }
 
 // Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
@@ -311,7 +315,6 @@ If the operator can watch multiple namespaces, set the following in your `spec.i
 [ctrl-manager]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
 [ctrl-options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
 [k8s-rbac]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[kube-rbac-proxy]: https://github.com/brancz/kube-rbac-proxy
 [rbac-clusterrole]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole
 [crd-scope-doc]: /docs/building-operators/golang/crds-scope/
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html

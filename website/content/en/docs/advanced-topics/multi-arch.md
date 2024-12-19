@@ -211,7 +211,7 @@ $ operator-sdk bundle validate ./bundle --select-optional name=multiarch
 [buildx]: https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
 [buildx_multiarch]: https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
 [bundle]: https://olm.operatorframework.io/docs/glossary/#bundle
-[goarch]: https://github.com/golang/go/blob/master/src/go/build/syslist.go
+[goarch]: https://github.com/golang/go/blob/master/src/internal/syslist/syslist.go
 [image_index]: https://github.com/opencontainers/image-spec/blob/main/image-index.md
 [kubebuilder]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/docs/book/src/reference/platform.md#producing-projects-that-support-multiple-platforms
 [manifest_list]: https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list

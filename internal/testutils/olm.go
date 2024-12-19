@@ -19,14 +19,13 @@ import (
 	"os"
 	"path/filepath"
 
-	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v2" // Register config/v2 for `config.New`
-	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v3" // Register config/v3 for `config.New`
+	_ "sigs.k8s.io/kubebuilder/v4/pkg/config/v3" // Register config/v3 for `config.New`
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 const (
-	OlmVersionForTestSuite = "0.27.0"
+	OlmVersionForTestSuite = "0.28.0"
 )
 
 var makefilePackagemanifestsFragment = `

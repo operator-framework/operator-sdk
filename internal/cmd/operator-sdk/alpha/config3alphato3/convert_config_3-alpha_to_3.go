@@ -25,7 +25,7 @@ import (
 	"text/template"
 
 	"golang.org/x/mod/modfile"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v4/pkg/model/resource"
 	"sigs.k8s.io/yaml"
 )
 

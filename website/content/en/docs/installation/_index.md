@@ -36,7 +36,7 @@ export OS=$(uname | awk '{print tolower($0)}')
 Download the binary for your platform:
 
 ```sh
-export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.35.0
+export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.38.0
 curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 ```
 
@@ -88,7 +88,7 @@ chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/l
 #### Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version 1.21
+- [go][go_tool] version 1.22
   - Ensure that your `GOPROXY` is set to `"https://proxy.golang.org|direct"`
 
 ```sh

@@ -23,7 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/test/common"
@@ -47,7 +47,7 @@ var _ = Describe("Running Helm projects", func() {
 
 		AfterEach(func() {
 			By("deleting curl pod")
-			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(true, "pod", "curl"))
 
 			By("deleting test CR instances")
 			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "-f", memcachedSampleFile))
@@ -257,7 +257,7 @@ var _ = Describe("Running Helm projects", func() {
 				Expect(err).NotTo(HaveOccurred())
 				return logOutput
 			}
-			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
+			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/1.1 200 OK"))
 
 			By("getting the CR namespace token")
 			crNamespace, err := tc.Kubectl.Get(

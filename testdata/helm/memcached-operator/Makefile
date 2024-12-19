@@ -48,7 +48,7 @@ endif
 
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
-OPERATOR_SDK_VERSION ?= v1.34.0
+OPERATOR_SDK_VERSION ?= v1.38.0
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -131,7 +131,7 @@ ifeq (,$(shell which kustomize 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(KUSTOMIZE)) ;\
-	curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.2.1/kustomize_v5.2.1_$(OS)_$(ARCH).tar.gz | \
+	curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.4.2/kustomize_v5.4.2_$(OS)_$(ARCH).tar.gz | \
 	tar xzf - -C bin/ ;\
 	}
 else
@@ -147,7 +147,7 @@ ifeq (,$(shell which helm-operator 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(HELM_OPERATOR)) ;\
-	curl -sSLo $(HELM_OPERATOR) https://github.com/operator-framework/operator-sdk/releases/download/v1.35.0/helm-operator_$(OS)_$(ARCH) ;\
+	curl -sSLo $(HELM_OPERATOR) https://github.com/operator-framework/operator-sdk/releases/download/v1.38.0/helm-operator_$(OS)_$(ARCH) ;\
 	chmod +x $(HELM_OPERATOR) ;\
 	}
 else

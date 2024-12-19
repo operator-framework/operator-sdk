@@ -22,11 +22,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	yamlstore "sigs.k8s.io/kubebuilder/v3/pkg/config/store/yaml"
-	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v2" // Register config/v2 for `config.New`
-	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v3" // Register config/v3 for `config.New`
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v4/pkg/config"
+	yamlstore "sigs.k8s.io/kubebuilder/v4/pkg/config/store/yaml"
+	_ "sigs.k8s.io/kubebuilder/v4/pkg/config/v3" // Register config/v3 for `config.New`
+	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
 )
 
 const (
@@ -54,8 +53,6 @@ const (
 	OperatorTypeAnsible OperatorType = "ansible"
 	// OperatorTypeHelm - helm type of operator.
 	OperatorTypeHelm OperatorType = "helm"
-	// OperatorTypeHybrid - hybrid type of operator.
-	operatorTypeHybridHelm OperatorType = "hybridHelm"
 	// OperatorTypeUnknown - unknown type of operator.
 	OperatorTypeUnknown OperatorType = "unknown"
 )
@@ -106,8 +103,6 @@ func PluginChainToOperatorType(pluginKeys []string) OperatorType {
 			return OperatorTypeHelm
 		case strings.HasPrefix(pluginKey, "ansible"):
 			return OperatorTypeAnsible
-		case strings.HasPrefix(pluginKey, "hybrid"):
-			return operatorTypeHybridHelm
 		}
 	}
 	return OperatorTypeUnknown
