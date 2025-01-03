@@ -151,7 +151,8 @@ func (f *Flags) ToManagerOptions(options manager.Options) manager.Options {
 		return f.flagSet.Changed(flagName)
 	}
 	if f.flagSet == nil {
-		changed = func(flagName string) bool { return false }
+		//nolint:golint
+		changed = func(_ string) bool { return false }
 	}
 
 	// TODO(2.0.0): remove metrics-addr

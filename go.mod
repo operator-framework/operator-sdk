@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-sdk
 
-go 1.22.5
+go 1.23.4
 
 require (
 	github.com/blang/semver/v4 v4.0.0

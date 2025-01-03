@@ -26,7 +26,7 @@ func newStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Get the status of the Operator Lifecycle Manager installation in your cluster",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := mgr.Status(); err != nil {
 				log.Fatalf("Failed to get OLM status: %s", err)
 			}

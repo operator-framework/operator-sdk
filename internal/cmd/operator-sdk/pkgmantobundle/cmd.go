@@ -127,10 +127,10 @@ func NewCmd() *cobra.Command {
 		Short:   "Migrates packagemanifests to bundles",
 		Long:    longHelp,
 		Example: examples,
-		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
+		PreRunE: func(_ *cobra.Command, args []string) (err error) {
 			return p.validate(args)
 		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(_ *cobra.Command, args []string) (err error) {
 			p.pkgmanifestDir = args[0]
 			return p.run()
 		},

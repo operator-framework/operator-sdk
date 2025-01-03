@@ -175,7 +175,7 @@ func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus
 func CheckResources(crd operatorsv1alpha1.CustomResourceDefinitions,
 	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 	for _, description := range crd.Owned {
-		if description.Resources == nil || len(description.Resources) == 0 {
+		if len(description.Resources) == 0 {
 			r.State = scapiv1alpha3.FailState
 			r.Errors = append(r.Errors, "Owned CRDs do not have resources specified")
 			return r
