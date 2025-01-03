@@ -81,7 +81,7 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GetObjectKind().GroupVersionKind())
 			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
-			err := handler.SetOwnerAnnotations(u, c.owner)
+			err := handler.SetOwnerAnnotations(c.owner, u)
 			if err != nil {
 				return err
 			}
