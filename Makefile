@@ -9,7 +9,7 @@ export IMAGE_VERSION = v1.38.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe --tags)" = "$(shell git describe --tags --abbrev=0)" && echo $(shell git describe --tags)) || echo $(shell git describe --tags --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.30.0
+export K8S_VERSION = 1.31.0
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -176,12 +176,12 @@ cluster-create::
 
 .PHONY: dev-install
 dev-install::
-	$(SCRIPTS_DIR)/fetch kind 0.23.0
+	$(SCRIPTS_DIR)/fetch kind 0.24.0
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
-	$(SCRIPTS_DIR)/fetch kind 0.23.0
+	$(SCRIPTS_DIR)/fetch kind 0.24.0
 	$(TOOLS_DIR)/kind delete cluster --name $(KIND_CLUSTER)
 	rm -f $(KUBECONFIG)
 
