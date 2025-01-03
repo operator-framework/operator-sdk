@@ -107,7 +107,7 @@ func (tc TestContext) UninstallOLM() {
 
 // ReplaceInFile replaces all instances of old with new in the file at path.
 // todo(camilamacedo86): this func can be pushed to upstream/kb
-func ReplaceInFile(path, old, new string) error {
+func ReplaceInFile(path, o, n string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		return err
@@ -116,10 +116,10 @@ func ReplaceInFile(path, old, new string) error {
 	if err != nil {
 		return err
 	}
-	if !strings.Contains(string(b), old) {
+	if !strings.Contains(string(b), o) {
 		return errors.New("unable to find the content to be replaced")
 	}
-	s := strings.Replace(string(b), old, new, -1)
+	s := strings.Replace(string(b), o, n, -1)
 	err = os.WriteFile(path, []byte(s), info.Mode())
 	if err != nil {
 		return err

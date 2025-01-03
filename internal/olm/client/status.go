@@ -91,7 +91,7 @@ func (s Status) HasInstalledResources() (bool, error) {
 	}
 	// Sort resources by whether they're installed or not to get consistent
 	// return values.
-	sort.Slice(s.Resources, func(i int, j int) bool {
+	sort.Slice(s.Resources, func(i int, _ int) bool {
 		return s.Resources[i].Resource != nil
 	})
 	for _, r := range s.Resources {

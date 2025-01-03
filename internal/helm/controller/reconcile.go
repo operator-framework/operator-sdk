@@ -467,7 +467,7 @@ func readBoolAnnotationWithDefault(obj *unstructured.Unstructured, annotation st
 	r, err := strconv.ParseBool(val)
 	if err != nil {
 		log.Error(
-			fmt.Errorf(strings.ToLower(err.Error())), "error parsing annotation", "annotation", annotation)
+			fmt.Errorf("%s", strings.ToLower(err.Error())), "error parsing annotation", "annotation", annotation)
 		return fallback
 	}
 
