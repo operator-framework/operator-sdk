@@ -344,8 +344,6 @@ github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxU
 github.com/mattn/go-sqlite3 v1.14.23 h1:gbShiuAP1W5j9UOksQ06aiiqPMxYecovVGwmTxWtuw0=
 github.com/mattn/go-sqlite3 v1.14.23/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
-github.com/maxbrunsfeld/counterfeiter/v6 v6.10.0 h1:9WsegDYiSKtZXru+NcOB4z7iqb00n4atjmQlyy5TRXI=
-github.com/maxbrunsfeld/counterfeiter/v6 v6.10.0/go.mod h1:TeVdzh+5QB5IpWDJAU/uviXA6kOg9yXzLrrjeLKJXqY=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2 h1:yVCLo4+ACVroOEr4iFU1iH46Ldlzz2rTuu18Ra7M8sU=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2/go.mod h1:VzB2VoMh1Y32/QqDfg9ZJYHj99oM4LiGtqPZydTiQSQ=
 github.com/miekg/dns v1.1.57 h1:Jzi7ApEIzwEPLHWRcafCN9LZSBbqQpxjt/wpgvg7wcM=
