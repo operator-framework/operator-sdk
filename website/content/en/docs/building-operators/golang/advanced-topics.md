@@ -513,7 +513,7 @@ Authors may decide to distribute their bundles for various architectures: x86_64
 [Prometheus Golang client]:https://pkg.go.dev/github.com/prometheus/client_golang/prometheus
 [kube-prometheus]:https://github.com/prometheus-operator/kube-prometheus
 [memcached-operator]:https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4/monitoring/memcached-operator
-[prometheus-operator API]:https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md
+[prometheus-operator API]:https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md
 [PrometheusRule example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/monitoring/alerts.go
 [PrometheusRule reconciliation example]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v4/monitoring/memcached-operator/internal/controller/memcached_controller.go
 [unit testing documentation]:https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
