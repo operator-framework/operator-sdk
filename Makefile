@@ -4,7 +4,7 @@ SHELL = /bin/bash
 # This value must be updated to the release tag of the most recent release, a change that must
 # occur in the release commit. IMAGE_VERSION will be removed once each subproject that uses this
 # version is moved to a separate repo and release process.
-export IMAGE_VERSION = v1.38.0
+export IMAGE_VERSION = v1.39.0
 # Build-time variables to inject into binaries
 export SIMPLE_VERSION = $(shell (test "$(shell git describe --tags)" = "$(shell git describe --tags --abbrev=0)" && echo $(shell git describe --tags)) || echo $(shell git describe --tags --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
