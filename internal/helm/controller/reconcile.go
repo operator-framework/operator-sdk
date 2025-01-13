@@ -105,7 +105,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	}
 
 	status := types.StatusFor(o)
-	originalStatus := o.DeepCopy().Object["status"]
+	originalStatus := types.StatusFor(o.DeepCopy())
 	log = log.WithValues("release", manager.ReleaseName())
 
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
