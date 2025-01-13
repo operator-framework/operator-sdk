@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -104,6 +105,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	}
 
 	status := types.StatusFor(o)
+	originalStatus := o.DeepCopy().Object["status"]
 	log = log.WithValues("release", manager.ReleaseName())
 
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
@@ -421,7 +423,10 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		Manifest: expectedRelease.Manifest,
 	}
 
-	err = r.updateResourceStatus(ctx, o, status)
+	if !reflect.DeepEqual(status, originalStatus) {
+		err = r.updateResourceStatus(ctx, o, status)
+	}
+
 	return reconcileResult, err
 }
 
