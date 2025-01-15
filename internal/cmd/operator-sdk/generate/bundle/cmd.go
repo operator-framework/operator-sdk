@@ -52,6 +52,8 @@ type bundleCmd struct {
 
 	// Use Image Digests flag to toggle using traditional Image tags vs SHA Digests
 	useImageDigests bool
+	// Tool to use when resolving image digests. Defaults to crane.
+	imageDigestResolver string
 }
 
 // NewCmd returns the 'bundle' command configured for the new project layout.
@@ -144,6 +146,7 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.packageName, "package", "", "Bundle's package name")
 
 	fs.BoolVar(&c.useImageDigests, "use-image-digests", false, "Use SHA Digest for images")
+	fs.StringVar(&c.imageDigestResolver, "image-digest-resolver", "crane", "Resolver for image digests. Options are crane, skopeo, or script")
 }
 
 func (c bundleCmd) println(a ...interface{}) {
