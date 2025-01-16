@@ -100,7 +100,7 @@ var _ = Describe("memcached", Ordered, func() {
 		utils.UninstallCertManager()
 
 		By("removing manager namespace")
-		cmd := exec.Command("kubectl", "create", "ns", namespace)
+		cmd := exec.Command("kubectl", "delete", "ns", namespace)
 		_, _ = utils.Run(cmd)
 	})
 
