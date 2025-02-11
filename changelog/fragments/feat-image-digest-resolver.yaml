@@ -1,0 +1,10 @@
+entries:
+  - description: >
+      Add `--image-digest-resolver` option to the operator-sdk
+      `generate bundle` command. When using image digests in operator bundles,
+      this lets developers choose `crane`, `skopeo` or a custom script to
+      resolve image SHAs.
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
