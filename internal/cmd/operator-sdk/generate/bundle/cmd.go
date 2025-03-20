@@ -42,9 +42,10 @@ type bundleCmd struct {
 	extraServiceAccounts []string
 
 	// Metadata options.
-	channels       string
-	defaultChannel string
-	overwrite      bool
+	channels             string
+	defaultChannel       string
+	overwrite            bool
+	overwriteAnnotations bool
 
 	// These are set if a PROJECT config is not present.
 	layout      string
@@ -63,6 +64,11 @@ func NewCmd() *cobra.Command {
 		Long:    longHelp,
 		Example: examples,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if c.overwriteAnnotations {
+				// Priority control, when checking --overwrite-annotations, set --overwrite to false
+				c.overwrite = false
+			}
+
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 			}
@@ -138,6 +144,7 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"Names of service accounts, outside of the operator's Deployment account, "+
 			"that have bindings to {Cluster}Roles that should be added to the CSV")
 	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
+	fs.BoolVar(&c.overwriteAnnotations, "overwrite-annotations", false, "Only overwrite annotations.yaml without modifying bundle.Dockerfile")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 	fs.BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
 
