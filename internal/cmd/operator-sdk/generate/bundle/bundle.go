@@ -117,6 +117,7 @@ func (c *bundleCmd) setDefaults() (err error) {
 	if c.packageName, c.layout, err = genutil.GetPackageNameAndLayout(c.packageName); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -146,6 +147,23 @@ func (c bundleCmd) validateManifests() (err error) {
 		if c.outputDir != "" {
 			return errors.New("--output-dir cannot be set if writing to stdout")
 		}
+	}
+
+	if c.useImageDigests {
+		if len(c.imageDigestResolver) == 0 {
+			return errors.New("--image-digest-resolver cannot be empty when using image digests")
+		}
+		isValid := false
+		for _, r := range imageresolver.GetResolverOptions() {
+			if c.imageDigestResolver == string(r) {
+				isValid = true
+				break
+			}
+		}
+		if !isValid {
+			return fmt.Errorf("--image-digest-resolver must be one of: %s", imageresolver.GetResolverOptions())
+		}
+
 	}
 
 	return nil
@@ -311,9 +329,8 @@ func (c bundleCmd) pinImages(manifestPath string) error {
 	if err != nil {
 		return err
 	}
-	resolverArgs := make(map[string]string)
-	resolverArgs["usedefault"] = "true"
-	resolver, err := imageresolver.GetResolver(imageresolver.ResolverCrane, resolverArgs)
+
+	resolver, err := imageresolver.GetResolver(imageresolver.ResolverOption(c.imageDigestResolver), c.resolverArgs())
 	if err != nil {
 		return err
 	}
@@ -328,4 +345,17 @@ func (c bundleCmd) pinImages(manifestPath string) error {
 	}
 
 	return nil
+}
+
+func (c bundleCmd) resolverArgs() map[string]string {
+	resolverArgs := make(map[string]string)
+
+	switch c.imageDigestResolver {
+	case string(imageresolver.ResolverCrane):
+		resolverArgs["usedefault"] = "true"
+	case string(imageresolver.ResolverSkopeo):
+	case string(imageresolver.ResolverScript):
+	default:
+	}
+	return resolverArgs
 }
