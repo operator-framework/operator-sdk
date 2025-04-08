@@ -80,11 +80,14 @@ type actionConfigGetter struct {
 
 // Creates a new watcher for each namespace to not require cluster-wide secret access
 func (acg *actionConfigGetter) getWatchedSecretsForNamespace(namespace string) *WatchedSecrets {
+	fmt.Println("LOCK_SPECIFIC_LOG getWatchedSecretsForNamespace", namespace)
 	acg.watchedSecretsMutex.Lock()
+	fmt.Println("LOCK_SPECIFIC_LOG getWatchedSecretsForNamespace", namespace, "locked")
 	if _, found := acg.watchedSecrets[namespace]; !found {
 		acg.watchedSecrets[namespace] = NewWatchedSecrets(acg.kubeClientSet, namespace)
 		acg.watchedSecrets[namespace].Run()
 	}
+	fmt.Println("LOCK_SPECIFIC_LOG getWatchedSecretsForNamespace", namespace, "unlocked")
 	acg.watchedSecretsMutex.Unlock()
 	return acg.watchedSecrets[namespace]
 }
