@@ -50,16 +50,18 @@ operator-sdk create api [flags]
 ### Options
 
 ```
-      --controller           if set, generate the controller without prompting the user (default true)
-      --force                attempt to create resource even if it already exists
-      --group string         resource Group
-  -h, --help                 help for api
-      --kind string          resource Kind
-      --make make generate   if true, run make generate after generating files (default true)
-      --namespaced           resource is namespaced (default true)
-      --plural string        resource irregular plural form
-      --resource             if set, generate the resource without prompting the user (default true)
-      --version string       resource Version
+      --controller                   if set, generate the controller without prompting the user (default true)
+      --external-api-domain string   Specify the domain name for the external API. This domain is used to generate accurate RBAC markers and permissions for the external resources (e.g., cert-manager.io).
+      --external-api-path string     Specify the Go package import path for the external API. This is used to scaffold controllers for resources defined outside this project (e.g., github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1).
+      --force                        attempt to create resource even if it already exists
+      --group string                 resource Group
+  -h, --help                         help for api
+      --kind string                  resource Kind
+      --make make generate           if true, run make generate after generating files (default true)
+      --namespaced                   resource is namespaced (default true)
+      --plural string                resource irregular plural form
+      --resource                     if set, generate the resource without prompting the user (default true)
+      --version string               resource Version
 ```
 
 ### Options inherited from parent commands

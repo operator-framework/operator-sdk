@@ -2,21 +2,10 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: memcached-operator-system/memcached-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.17.2
   creationTimestamp: null
   name: memcacheds.cache.example.com
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: memcached-operator-webhook-service
-          namespace: memcached-operator-system
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: cache.example.com
   names:
     kind: Memcached

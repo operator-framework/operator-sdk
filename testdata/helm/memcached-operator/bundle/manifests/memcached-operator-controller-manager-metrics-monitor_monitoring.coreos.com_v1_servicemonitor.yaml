@@ -16,4 +16,5 @@ spec:
       insecureSkipVerify: true
   selector:
     matchLabels:
+      app.kubernetes.io/name: memcached-operator
       control-plane: controller-manager

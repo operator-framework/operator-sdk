@@ -8,6 +8,10 @@ metadata:
           "apiVersion": "cache.example.com/v1alpha1",
           "kind": "Memcached",
           "metadata": {
+            "labels": {
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "memcached-operator"
+            },
             "name": "memcached-sample"
           },
           "spec": {
@@ -55,6 +59,21 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - apps
           resources:
           - deployments
@@ -93,21 +112,6 @@ spec:
           - patch
           - update
         - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - patch
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
           - monitoring.coreos.com
           resources:
           - prometheusrules
@@ -141,6 +145,7 @@ spec:
           replicas: 1
           selector:
             matchLabels:
+              app.kubernetes.io/name: memcached-operator
               control-plane: controller-manager
           strategy: {}
           template:
@@ -148,6 +153,7 @@ spec:
               annotations:
                 kubectl.kubernetes.io/default-container: manager
               labels:
+                app.kubernetes.io/name: memcached-operator
                 control-plane: controller-manager
             spec:
               containers:
@@ -155,6 +161,8 @@ spec:
                 - --metrics-bind-address=:8443
                 - --leader-elect
                 - --health-probe-bind-address=:8081
+                - --metrics-cert-path=/tmp/k8s-metrics-server/metrics-certs
+                - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
                 command:
                 - /manager
                 env:
@@ -190,12 +198,20 @@ spec:
                   capabilities:
                     drop:
                     - ALL
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: webhook-certs
+                  readOnly: true
               securityContext:
                 runAsNonRoot: true
                 seccompProfile:
                   type: RuntimeDefault
               serviceAccountName: memcached-operator-controller-manager
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: webhook-certs
+                secret:
+                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -257,20 +273,9 @@ spec:
   - admissionReviewVersions:
     - v1
     containerPort: 443
-    conversionCRDs:
-    - memcacheds.cache.example.com
-    deploymentName: memcached-operator-controller-manager
-    generateName: cmemcacheds.kb.io
-    sideEffects: None
-    targetPort: 9443
-    type: ConversionWebhook
-    webhookPath: /convert
-  - admissionReviewVersions:
-    - v1
-    containerPort: 443
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
-    generateName: mmemcached.kb.io
+    generateName: mmemcached-v1alpha1.kb.io
     rules:
     - apiGroups:
       - cache.example.com
@@ -285,23 +290,3 @@ spec:
     targetPort: 9443
     type: MutatingAdmissionWebhook
     webhookPath: /mutate-cache-example-com-v1alpha1-memcached
-  - admissionReviewVersions:
-    - v1
-    containerPort: 443
-    deploymentName: memcached-operator-controller-manager
-    failurePolicy: Fail
-    generateName: vmemcached.kb.io
-    rules:
-    - apiGroups:
-      - cache.example.com
-      apiVersions:
-      - v1alpha1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - memcacheds
-    sideEffects: None
-    targetPort: 9443
-    type: ValidatingAdmissionWebhook
-    webhookPath: /validate-cache-example-com-v1alpha1-memcached

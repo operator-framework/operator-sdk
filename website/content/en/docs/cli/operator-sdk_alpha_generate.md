@@ -22,8 +22,8 @@ operator-sdk alpha generate [flags]
 
 ```
   -h, --help                help for generate
-      --input-dir string    path to a Kubebuilder project file if not in the current working directory
-      --output-dir string   path to output the scaffolding. defaults a directory in the current working directory
+      --input-dir string    Specifies the full path to a Kubebuilder project file. If not provided, the current working directory is used.
+      --output-dir string   Specifies the full path where the scaffolded files will be output. Defaults to a directory within the current working directory.
 ```
 
 ### Options inherited from parent commands

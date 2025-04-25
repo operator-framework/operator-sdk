@@ -12,6 +12,7 @@ spec:
     protocol: TCP
     targetPort: 9443
   selector:
+    app.kubernetes.io/name: memcached-operator
     control-plane: controller-manager
 status:
   loadBalancer: {}
