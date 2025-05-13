@@ -6,16 +6,13 @@ aliases:
   # This role is a subset of the approver role.
   sdk-admins:
   - joelanford
-  - everettraven
   - oceanc80
 
   # Contributors who can approve any PRs in the repo.
   sdk-approvers:
-  - fabianvf
+  - camilamacedo86
   - jberkhahn
   - rashmigottipati
-  - theishshah
-  - varshaprasad96
   - grokspawn
   - anik120
   - acornett21
@@ -26,12 +23,16 @@ aliases:
 
   # Contributors who were approvers that are no longer directly involved with the project.
   # This role is symbolic.
+  sdk-emeritus-admins:
+  - everettraven
   sdk-emeritus-approvers:
   - bharathi-tenneti
+  - fabianvf
   - hasbro17
   - shawn-hurley
   - estroz
-  - camilamacedo86
   - marc-obrien
   - asmacdo
   - jmrodri
+  - theishshah
+  - varshaprasad96
