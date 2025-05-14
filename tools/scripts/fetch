@@ -28,7 +28,7 @@ fetch() {
       ;;
     "kubectl")
       ver_cmd="${DEST}/kubectl version 2>/dev/null | grep Client | cut -d' ' -f5 | sed 's/\w\+:\"v\(.*\)\",/\1/'"
-      fetch_cmd="(curl -sSfLo '${DEST}/kubectl' 'https://storage.googleapis.com/kubernetes-release/release/v${ver}/bin/${os}/${arch}/kubectl' && chmod +x ${DEST}/kubectl)"
+      fetch_cmd="(curl -sSfLo '${DEST}/kubectl' 'https://dl.k8s.io/release/v${ver}/bin/${os}/${arch}/kubectl' && chmod +x ${DEST}/kubectl)"
       ;;
     "goreleaser")
       ver_cmd="${DEST}/goreleaser --version 2>/dev/null | grep version | cut -d' ' -f3"
