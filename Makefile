@@ -58,7 +58,7 @@ fix: ## Fixup files in the repo.
 
 .PHONY: setup-lint
 setup-lint: ## Setup the lint
-	$(SCRIPTS_DIR)/fetch golangci-lint 1.62.2
+	$(SCRIPTS_DIR)/fetch golangci-lint 1.64.8
 
 .PHONY: lint
 lint: setup-lint ## Run the lint check

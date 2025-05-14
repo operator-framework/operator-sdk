@@ -430,7 +430,7 @@ func (m manager) CleanupRelease(manifest string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to build resources from manifests: %w", err)
 	}
-	if resources == nil || len(resources) <= 0 {
+	if len(resources) <= 0 {
 		return true, nil
 	}
 	for _, resource := range resources {
