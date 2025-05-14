@@ -14,6 +14,8 @@ spec:
     scheme: https
     tlsConfig:
       insecureSkipVerify: true
+      serverName: memcached-operator-controller-manager-metrics-service.memcached-operator-system
   selector:
     matchLabels:
+      app.kubernetes.io/name: memcached-operator
       control-plane: controller-manager
