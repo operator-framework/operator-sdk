@@ -13,7 +13,7 @@ on:
 
 jobs:
   git_tags:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       git_tags: ${{ steps.tags.outputs.git_tags }}
     steps:
@@ -27,7 +27,7 @@ jobs:
   build:
     name: build
     needs: git_tags
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     environment: deploy
     strategy:
       matrix:
