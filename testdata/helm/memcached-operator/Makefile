@@ -171,6 +171,9 @@ OPERATOR_SDK = $(shell which operator-sdk)
 endif
 endif
 
+# Container tool to use for building and pushing images
+CONTAINER_TOOL ?= docker
+
 .PHONY: bundle
 bundle: kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests --interactive=false -q
