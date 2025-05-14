@@ -6,7 +6,7 @@ jobs:
   rerun_tests:
     name: rerun_pr_tests
     if: ${{ github.event.issue.pull_request }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: operator-framework/rerun-actions@v0.4.0
       with:
