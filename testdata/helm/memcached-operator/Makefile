@@ -171,7 +171,7 @@ OPERATOR_SDK = $(shell which operator-sdk)
 endif
 endif
 
-# Container tool to use for building and pushing images
+# Container tool to use for building images
 CONTAINER_TOOL ?= docker
 
 .PHONY: bundle
