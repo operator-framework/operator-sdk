@@ -85,7 +85,7 @@ import (
     "k8s.io/apimachinery/pkg/runtime/schema"
     "sigs.k8s.io/controller-runtime/pkg/scheme"
     ...
-    // DNSEndoints
+    // DNSEndpoints
     externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
  )
