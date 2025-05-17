@@ -230,8 +230,6 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 `
 
 	makefileBundleFragmentNonGo = `
-# Container tool to use for building images
-CONTAINER_TOOL ?= docker
 
 .PHONY: bundle
 bundle: kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
