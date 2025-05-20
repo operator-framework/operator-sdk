@@ -148,24 +148,6 @@ func warn(output string, err error) {
 	}
 }
 
-func runPackageManifests(tc *testutils.TestContext, args ...string) error {
-	allArgs := []string{"run", "packagemanifests", "--timeout", "6m", "--namespace", tc.Kubectl.Namespace}
-	output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
-	if err == nil {
-		fmt.Fprintln(GinkgoWriter, string(output))
-	}
-	return err
-}
-
-func cleanup(tc *testutils.TestContext) (string, error) {
-	allArgs := []string{"cleanup", tc.ProjectName, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
-	output, err := tc.Run(exec.Command(tc.BinaryName, allArgs...))
-	if err == nil {
-		fmt.Fprintln(GinkgoWriter, string(output))
-	}
-	return string(output), err
-}
-
 func readCSV(tc *testutils.TestContext, version string, isBundle bool) (*v1alpha1.ClusterServiceVersion, error) {
 	b, err := os.ReadFile(csvPath(tc, version, isBundle))
 	if err != nil {
