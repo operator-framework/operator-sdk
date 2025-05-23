@@ -73,6 +73,41 @@ func UpdateKustomizationsInit() error {
 	}
 
 	if err := kbutil.ReplaceInFile(defaultKFile,
+		`# Uncomment the patches line if you enable Metrics and CertManager
+# [METRICS-WITH-CERTS] To enable metrics protected with certManager, uncomment the following line.
+# This patch will protect the metrics with certManager self-signed certs.
+#- path: cert_metrics_manager_patch.yaml
+#  target:
+#    kind: Deployment`, ""); err != nil {
+		return fmt.Errorf("remove %s resources: %v", defaultKFile, err)
+	}
+
+	// Remove the file not used for Helm projects since we do not scaffold the cert-manager
+	certPatchPath := filepath.Join("config", "default", "cert_metrics_manager_patch.yaml")
+	if err := os.Remove(certPatchPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove unused file %s: %v", certPatchPath, err)
+	}
+
+	// Remove the file not used for Helm projects since we do not scaffold the cert-manager
+	monitorTLSPatchPath := filepath.Join("config", "prometheus", "monitor_tls_patch.yaml")
+	if err := os.Remove(monitorTLSPatchPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove unused file %s: %v", monitorTLSPatchPath, err)
+	}
+
+	prometheusKustomize := filepath.Join("config", "prometheus", "kustomization.yaml")
+	if err := kbutil.ReplaceInFile(prometheusKustomize,
+		`# [PROMETHEUS-WITH-CERTS] The following patch configures the ServiceMonitor in ../prometheus
+# to securely reference certificates created and managed by cert-manager.
+# Additionally, ensure that you uncomment the [METRICS WITH CERTMANAGER] patch under config/default/kustomization.yaml
+# to mount the "metrics-server-cert" secret in the Manager Deployment.
+#patches:
+#  - path: monitor_tls_patch.yaml
+#    target:
+#      kind: ServiceMonitor`, ""); err != nil {
+		return fmt.Errorf("remove %s resources: %v", defaultKFile, err)
+	}
+
+	if err := kbutil.ReplaceInFile(defaultKFile,
 		`
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml
