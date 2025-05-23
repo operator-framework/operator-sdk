@@ -29,6 +29,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 )
 
 // TestIntegration tests operator-sdk projects with OLM.
@@ -73,6 +74,20 @@ var _ = BeforeSuite(func() {
 	By("installing prometheus-operator")
 	Expect(tc.InstallPrometheusOperManager()).To(Succeed())
 
+	// Previously, we used kube-rbac-proxy, which generated TLS certificates on the fly —
+	// a practice not recommended and also deprecated on it due this reason.
+	//
+	// Newer versions of the scaffolding support passing real certificates to the metrics server
+	// using cert-manager. However, the `packagemanifests` command does not support this capability.
+	// Since `packagemanifests` is deprecated and will be removed in the future, we are choosing
+	// not to implement support for cert-manager in this context.
+	//
+	// Therefore, for testing purposes — specifically when using `packagemanifests` — we are
+	// disabling the metrics server with cert-manager.
+	By("Disabling metrics with certs - no supported by packagemanifests")
+	// nolint: errcheck
+	kbutil.CommentCode(filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"), targetMetricsCertFragment, "#")
+
 	By("building the manager image")
 	Expect(tc.Make("docker-build", "IMG="+tc.ImageName)).To(Succeed())
 
@@ -108,6 +123,10 @@ var _ = BeforeSuite(func() {
 	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
 	Expect(err).NotTo(HaveOccurred())
 })
+
+const targetMetricsCertFragment = `- path: cert_metrics_manager_patch.yaml
+  target:
+    kind: Deployment`
 
 var _ = AfterSuite(func() {
 	By("uninstalling OLM")
