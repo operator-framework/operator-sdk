@@ -28,6 +28,8 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.KubernetesVersion=v$(K8S_VERSION)' \
     -X '$(REPO)/internal/version.ImageVersion=$(IMAGE_VERSION)' \
   " \
+# containers_image_openpgp for containers/image
+GO_BUILD_TAGS = containers_image_openpgp
 
 export GO111MODULE = on
 export CGO_ENABLED = 0
@@ -39,7 +41,7 @@ export PATH := $(PWD)/$(BUILD_DIR):$(PWD)/$(TOOLS_DIR):$(PATH)
 generate: build # Generate CLI docs and samples
 	rm -rf testdata
 	$(GO) run ./hack/generate/cncf-maintainers/main.go
-	$(GO) run ./hack/generate/cli-doc/gen-cli-doc.go
+	$(GO) run -tags=$(GO_BUILD_TAGS) ./hack/generate/cli-doc/gen-cli-doc.go
 	$(GO) run ./hack/generate/samples/generate_testdata.go
 	$(GO) generate ./...
 
@@ -54,7 +56,7 @@ fix: ## Fixup files in the repo.
 	$(GO) mod tidy
 	$(GO) fmt ./...
 	make setup-lint
-	$(TOOLS_DIR)/golangci-lint run --fix
+	$(TOOLS_DIR)/golangci-lint run --fix --build-tags $(GO_BUILD_TAGS)
 
 .PHONY: setup-lint
 setup-lint: ## Setup the lint
@@ -62,7 +64,7 @@ setup-lint: ## Setup the lint
 
 .PHONY: lint
 lint: setup-lint ## Run the lint check
-	$(TOOLS_DIR)/golangci-lint run
+	$(TOOLS_DIR)/golangci-lint run --build-tags $(GO_BUILD_TAGS)
 
 
 .PHONY: clean
@@ -89,11 +91,11 @@ install: ## Install operator-sdk and helm-operator.
 .PHONY: build
 build: ## Build operator-sdk and helm-operator.
 	@mkdir -p $(BUILD_DIR)
-	$(GO) build $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/{operator-sdk,helm-operator}
+	$(GO) build $(GO_BUILD_ARGS) -tags=$(GO_BUILD_TAGS) -o $(BUILD_DIR) ./cmd/{operator-sdk,helm-operator}
 
 .PHONY: build/operator-sdk build/helm-operator
 build/operator-sdk build/helm-operator:
-	$(GO) build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
+	$(GO) build $(GO_BUILD_ARGS) -tags=$(GO_BUILD_TAGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
 
 # Build scorecard binaries.
 .PHONY: build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests
@@ -151,7 +153,7 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	git diff --exit-code # fast-fail if generate or fix produced changes
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
-	$(GO) vet ./...
+	$(GO) vet -tags=$(GO_BUILD_TAGS) ./...
 	make setup-lint
 	make lint
 	git diff --exit-code # diff again to ensure other checks don't change repo
@@ -165,7 +167,7 @@ test-docs: ## Test doc links
 .PHONY: test-unit
 TEST_PKGS = $(shell $(GO) list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 test-unit: ## Run unit tests
-	$(GO) test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
+	$(GO) test -tags=$(GO_BUILD_TAGS) -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
 
 e2e_tests := test-e2e-go test-e2e-helm test-e2e-integration
 e2e_targets := test-e2e $(e2e_tests)

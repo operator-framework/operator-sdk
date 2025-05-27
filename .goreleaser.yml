@@ -4,6 +4,7 @@ env:
   - GO111MODULE=on
   - GOPROXY=https://proxy.golang.org|direct
   - REPO=github.com/operator-framework/operator-sdk
+  - GO_BUILD_TAGS=containers_image_openpgp
 
 # Hooks to run before any build is run.
 before:
@@ -18,6 +19,9 @@ builds:
     main: ./cmd/operator-sdk
     binary: operator-sdk
     mod_timestamp: "{{ .CommitTimestamp }}"
+    # containers_image_openpgp for containers/image
+    flags: &build-flags
+      - -tags=containers_image_openpgp
     asmflags: &build-asmflags
       - all=-trimpath={{ .Env.PWD }}
     gcflags: &build-gcflags
@@ -41,6 +45,7 @@ builds:
     main: ./cmd/helm-operator
     binary: helm-operator
     mod_timestamp: "{{ .CommitTimestamp }}"
+    flags: *build-flags
     asmflags: *build-asmflags
     gcflags: *build-gcflags
     ldflags: *build-ldflags
