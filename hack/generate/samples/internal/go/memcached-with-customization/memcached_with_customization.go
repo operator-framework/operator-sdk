@@ -134,7 +134,6 @@ func (mh *Memcached) Run() {
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
 		"--kind", mh.ctx.Kind,
-		"--defaulting",
 		"--defaulting")
 	pkg.CheckError("scaffolding webhook", err)
 
@@ -198,105 +197,144 @@ func (mh *Memcached) uncommentDefaultKustomizationV4() {
 	err = kbutil.UncommentCode(kustomization, "#- ../prometheus", "#")
 	pkg.CheckError("uncomment prometheus", err)
 
+	err = kbutil.UncommentCode(kustomization, `#- path: cert_metrics_manager_patch.yaml
+#  target:
+#    kind: Deployment`, "#")
+	pkg.CheckError("uncomment metrics with certmanager", err)
+
 	err = kbutil.UncommentCode(kustomization,
 		`#replacements:
-#  - source: # Add cert-manager annotation to ValidatingWebhookConfiguration, MutatingWebhookConfiguration and CRDs
-#      kind: Certificate
-#      group: cert-manager.io
-#      version: v1
-#      name: serving-cert # this name should match the one in certificate.yaml
-#      fieldPath: .metadata.namespace # namespace of the certificate CR
-#    targets:
-#      - select:
-#          kind: ValidatingWebhookConfiguration
-#        fieldPaths:
-#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
-#        options:
-#          delimiter: '/'
-#          index: 0
-#          create: true
-#      - select:
-#          kind: MutatingWebhookConfiguration
-#        fieldPaths:
-#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
-#        options:
-#          delimiter: '/'
-#          index: 0
-#          create: true
-#      - select:
-#          kind: CustomResourceDefinition
-#        fieldPaths:
-#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
-#        options:
-#          delimiter: '/'
-#          index: 0
-#          create: true
-#  - source:
-#      kind: Certificate
-#      group: cert-manager.io
-#      version: v1
-#      name: serving-cert # this name should match the one in certificate.yaml
-#      fieldPath: .metadata.name
-#    targets:
-#      - select:
-#          kind: ValidatingWebhookConfiguration
-#        fieldPaths:
-#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
-#        options:
-#          delimiter: '/'
-#          index: 1
-#          create: true
-#      - select:
-#          kind: MutatingWebhookConfiguration
-#        fieldPaths:
-#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
-#        options:
-#          delimiter: '/'
-#          index: 1
-#          create: true
-#      - select:
-#          kind: CustomResourceDefinition
-#        fieldPaths:
-#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
-#        options:
-#          delimiter: '/'
-#          index: 1
-#          create: true
-#  - source: # Add cert-manager annotation to the webhook Service
-#      kind: Service
-#      version: v1
-#      name: webhook-service
-#      fieldPath: .metadata.name # namespace of the service
-#    targets:
-#      - select:
-#          kind: Certificate
-#          group: cert-manager.io
-#          version: v1
-#        fieldPaths:
-#          - .spec.dnsNames.0
-#          - .spec.dnsNames.1
-#        options:
-#          delimiter: '.'
-#          index: 0
-#          create: true
-#  - source:
-#      kind: Service
-#      version: v1
-#      name: webhook-service
-#      fieldPath: .metadata.namespace # namespace of the service
-#    targets:
-#      - select:
-#          kind: Certificate
-#          group: cert-manager.io
-#          version: v1
-#        fieldPaths:
-#          - .spec.dnsNames.0
-#          - .spec.dnsNames.1
-#        options:
-#          delimiter: '.'
-#          index: 1
-#          create: true`, "#")
-	pkg.CheckError("uncommented certificate CR", err)
+# - source: # Uncomment the following block to enable certificates for metrics
+#     kind: Service
+#     version: v1
+#     name: controller-manager-metrics-service
+#     fieldPath: metadata.name
+#   targets:
+#     - select:
+#         kind: Certificate
+#         group: cert-manager.io
+#         version: v1
+#         name: metrics-certs
+#       fieldPaths:
+#         - spec.dnsNames.0
+#         - spec.dnsNames.1
+#       options:
+#         delimiter: '.'
+#         index: 0
+#         create: true
+#     - select: # Uncomment the following to set the Service name for TLS config in Prometheus ServiceMonitor
+#         kind: ServiceMonitor
+#         group: monitoring.coreos.com
+#         version: v1
+#         name: controller-manager-metrics-monitor
+#       fieldPaths:
+#         - spec.endpoints.0.tlsConfig.serverName
+#       options:
+#         delimiter: '.'
+#         index: 0
+#         create: true
+#
+# - source:
+#     kind: Service
+#     version: v1
+#     name: controller-manager-metrics-service
+#     fieldPath: metadata.namespace
+#   targets:
+#     - select:
+#         kind: Certificate
+#         group: cert-manager.io
+#         version: v1
+#         name: metrics-certs
+#       fieldPaths:
+#         - spec.dnsNames.0
+#         - spec.dnsNames.1
+#       options:
+#         delimiter: '.'
+#         index: 1
+#         create: true
+#     - select: # Uncomment the following to set the Service namespace for TLS in Prometheus ServiceMonitor
+#         kind: ServiceMonitor
+#         group: monitoring.coreos.com
+#         version: v1
+#         name: controller-manager-metrics-monitor
+#       fieldPaths:
+#         - spec.endpoints.0.tlsConfig.serverName
+#       options:
+#         delimiter: '.'
+#         index: 1
+#         create: true
+#
+# - source: # Uncomment the following block if you have any webhook
+#     kind: Service
+#     version: v1
+#     name: webhook-service
+#     fieldPath: .metadata.name # Name of the service
+#   targets:
+#     - select:
+#         kind: Certificate
+#         group: cert-manager.io
+#         version: v1
+#         name: serving-cert
+#       fieldPaths:
+#         - .spec.dnsNames.0
+#         - .spec.dnsNames.1
+#       options:
+#         delimiter: '.'
+#         index: 0
+#         create: true
+# - source:
+#     kind: Service
+#     version: v1
+#     name: webhook-service
+#     fieldPath: .metadata.namespace # Namespace of the service
+#   targets:
+#     - select:
+#         kind: Certificate
+#         group: cert-manager.io
+#         version: v1
+#         name: serving-cert
+#       fieldPaths:
+#         - .spec.dnsNames.0
+#         - .spec.dnsNames.1
+#       options:
+#         delimiter: '.'
+#         index: 1
+#         create: true
+#`, "#")
+	pkg.CheckError("uncommented kustomize default config for webhooks and certmanager", err)
+
+	err = kbutil.UncommentCode(kustomization, `# - source: # Uncomment the following block if you have a DefaultingWebhook (--defaulting )
+#     kind: Certificate
+#     group: cert-manager.io
+#     version: v1
+#     name: serving-cert
+#     fieldPath: .metadata.namespace # Namespace of the certificate CR
+#   targets:
+#     - select:
+#         kind: MutatingWebhookConfiguration
+#       fieldPaths:
+#         - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#       options:
+#         delimiter: '/'
+#         index: 0
+#         create: true
+# - source:
+#     kind: Certificate
+#     group: cert-manager.io
+#     version: v1
+#     name: serving-cert
+#     fieldPath: .metadata.name
+#   targets:
+#     - select:
+#         kind: MutatingWebhookConfiguration
+#       fieldPaths:
+#         - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#       options:
+#         delimiter: '/'
+#         index: 1
+#         create: true
+#`, "#")
+	pkg.CheckError("uncommented kustomize default config for defaulting webhooks ", err)
 }
 
 // uncommentManifestsKustomization will uncomment code in config/manifests/kustomization.yaml
@@ -329,25 +367,13 @@ func (mh *Memcached) uncommentManifestsKustomizationv4() {
 // implementingWebhooks will customize the kind wekbhok file
 func (mh *Memcached) implementingWebhooks() {
 	log.Infof("implementing webhooks")
-	webhookPath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_webhook.go",
+	webhookPath := filepath.Join(mh.ctx.Dir, "internal", "webhook", mh.ctx.Version, fmt.Sprintf("%s_webhook.go",
 		strings.ToLower(mh.ctx.Kind)))
 
-	// Add webhook methods
-	err := kbutil.InsertCode(webhookPath,
-		"// TODO(user): fill in your defaulting logic.\n}",
-		webhooksFragment)
-	pkg.CheckError("replacing webhook validate implementation", err)
-
-	err = kbutil.ReplaceInFile(webhookPath,
-		"// TODO(user): fill in your defaulting logic.", "if r.Spec.Size == 0 {\n\t\tr.Spec.Size = 3\n\t}")
-	pkg.CheckError("replacing webhook default implementation", err)
-
-	// Add imports
-	err = kbutil.InsertCode(webhookPath,
-		"import (",
-		// TODO(estroz): remove runtime dep when --programmatic-validation is added to `ccreate webhook` above.
-		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"\n\n\"sigs.k8s.io/controller-runtime/pkg/webhook/admission\"")
-	pkg.CheckError("adding imports", err)
+	err := kbutil.ReplaceInFile(webhookPath,
+		"// TODO(user): fill in your defaulting logic.",
+		"if memcached.Spec.Size == 0 {\n\t\tmemcached.Spec.Size = 3\n\t}")
+	pkg.CheckError("injecting defaulting logic", err)
 }
 
 // implementingController will customizations in the Controller
@@ -360,7 +386,7 @@ func (mh *Memcached) implementingController() {
 	pkg.CheckError("adding warning comment for UserID", err)
 
 	err = kbutil.InsertCode(controllerPath,
-		`							RunAsNonRoot:             &[]bool{true}[0],`, runAsUserCommentFragment)
+		`						RunAsNonRoot: ptr.To(true),`, runAsUserCommentFragment)
 	pkg.CheckError("adding comment regarding RunAsUser field in Security Context", err)
 }
 
@@ -727,10 +753,9 @@ func (mh *Memcached) customizingDockerfile() {
 	dockerfilePath := filepath.Join(mh.ctx.Dir, "Dockerfile")
 
 	// Copy monitoring
-	ctrlCopy := "internal/controller/"
-
 	err := kbutil.InsertCode(dockerfilePath,
-		fmt.Sprintf("COPY %s %s", ctrlCopy, ctrlCopy),
+		`COPY internal/ internal/
+`,
 		"\nCOPY monitoring/ monitoring/")
 	pkg.CheckError("adding COPY monitoring/", err)
 }
@@ -1271,40 +1296,6 @@ const metricsdocsMakefileFragment = `
 generate-metricsdocs:
 	mkdir -p $(shell pwd)/docs/monitoring
 	go run -ldflags="${LDFLAGS}" ./monitoring/metricsdocs > docs/monitoring/metrics.md
-`
-
-const webhooksFragment = `
-// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Validator = &Memcached{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateCreate() (admission.Warnings, error) {
-	memcachedlog.Info("validate create", "name", r.Name)
-
-	return nil, validateOdd(r.Spec.Size)
-}
-
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	memcachedlog.Info("validate update", "name", r.Name)
-
-	return nil, validateOdd(r.Spec.Size)
-}
-
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateDelete() (admission.Warnings, error) {
-	memcachedlog.Info("validate delete", "name", r.Name)
-
-	return nil, nil
-}
-func validateOdd(n int32) error {
-	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
-	}
-	return nil
-}
 `
 
 const userIDWarningFragment = `

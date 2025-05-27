@@ -40,14 +40,6 @@ func (mh *Memcached) addTestE2eMakefileTarget() {
 	)
 	pkg.CheckError("replacing test target", err)
 
-	err = kbutil.InsertCode(filepath.Join(mh.ctx.Dir, "Makefile"),
-		`.PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out
-`,
-		targetTemplate,
-	)
-	pkg.CheckError("insert e2e target", err)
 }
 
 func (mh *Memcached) addContent(testE2eDir string, testUtilsDir string) {
@@ -882,8 +874,3 @@ func ReplaceInFile(path, old, new string) error {
 	return nil
 }
 `
-
-const targetTemplate = `
-.PHONY: test-e2e # You will need to have a Kind cluster up in running to run this target
-test-e2e:
-	go test ./test/e2e/ -v -ginkgo.v`

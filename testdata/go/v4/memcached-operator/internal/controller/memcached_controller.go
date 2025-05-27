@@ -31,10 +31,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 )
@@ -77,9 +78,9 @@ type MemcachedReconciler struct {
 // For further info:
 // - About Operator Pattern: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 // - About Controllers: https://kubernetes.io/docs/concepts/architecture/controller/
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/reconcile
 func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	// Fetch the Memcached instance
 	// The purpose is check if the Custom Resource for the Kind Memcached
@@ -99,7 +100,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Let's just set the status as Unknown when no status is available
-	if memcached.Status.Conditions == nil || len(memcached.Status.Conditions) == 0 {
+	if len(memcached.Status.Conditions) == 0 {
 		meta.SetStatusCondition(&memcached.Status.Conditions, metav1.Condition{Type: typeAvailableMemcached, Status: metav1.ConditionUnknown, Reason: "Reconciling", Message: "Starting reconciliation"})
 		if err = r.Status().Update(ctx, memcached); err != nil {
 			log.Error(err, "Failed to update Memcached status")
@@ -123,8 +124,9 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if !controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
 		log.Info("Adding Finalizer for Memcached")
 		if ok := controllerutil.AddFinalizer(memcached, memcachedFinalizer); !ok {
-			log.Error(err, "Failed to add finalizer into the custom resource")
-			return ctrl.Result{Requeue: true}, nil
+			err = fmt.Errorf("finalizer for Memcached was not added")
+			log.Error(err, "Failed to add finalizer for Memcached")
+			return ctrl.Result{}, err
 		}
 
 		if err = r.Update(ctx, memcached); err != nil {
@@ -178,8 +180,9 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 			log.Info("Removing Finalizer for Memcached after successfully perform the operations")
 			if ok := controllerutil.RemoveFinalizer(memcached, memcachedFinalizer); !ok {
+				err = fmt.Errorf("finalizer for Memcached was not removed")
 				log.Error(err, "Failed to remove finalizer for Memcached")
-				return ctrl.Result{Requeue: true}, nil
+				return ctrl.Result{}, err
 			}
 
 			if err := r.Update(ctx, memcached); err != nil {
@@ -226,7 +229,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Deployment")
-		// Let's return the error for the reconciliation be re-trigged again
+		// Let's return the error for the reconciliation be re-triggered again
 		return ctrl.Result{}, err
 	}
 
@@ -305,7 +308,7 @@ func (r *MemcachedReconciler) doFinalizerOperationsForMemcached(cr *cachev1alpha
 // deploymentForMemcached returns a Memcached Deployment object
 func (r *MemcachedReconciler) deploymentForMemcached(
 	memcached *cachev1alpha1.Memcached) (*appsv1.Deployment, error) {
-	ls := labelsForMemcached(memcached.Name)
+	ls := labelsForMemcached()
 	replicas := memcached.Spec.Size
 
 	// Get the Operand image
@@ -335,30 +338,35 @@ func (r *MemcachedReconciler) deploymentForMemcached(
 					// makefile target docker-buildx. Also, you can use docker manifest inspect <image>
 					// to check what are the platforms supported.
 					// More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
-					//Affinity: &corev1.Affinity{
-					//	NodeAffinity: &corev1.NodeAffinity{
-					//		RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-					//			NodeSelectorTerms: []corev1.NodeSelectorTerm{
-					//				{
-					//					MatchExpressions: []corev1.NodeSelectorRequirement{
-					//						{
-					//							Key:      "kubernetes.io/arch",
-					//							Operator: "In",
-					//							Values:   []string{"amd64", "arm64", "ppc64le", "s390x"},
-					//						},
-					//						{
-					//							Key:      "kubernetes.io/os",
-					//							Operator: "In",
-					//							Values:   []string{"linux"},
-					//						},
-					//					},
-					//				},
-					//			},
-					//		},
-					//	},
-					//},
+					// Affinity: &corev1.Affinity{
+					//	 NodeAffinity: &corev1.NodeAffinity{
+					//		 RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					//			 NodeSelectorTerms: []corev1.NodeSelectorTerm{
+					//				 {
+					//					 MatchExpressions: []corev1.NodeSelectorRequirement{
+					//						 {
+					//							 Key:      "kubernetes.io/arch",
+					//							 Operator: "In",
+					//							 Values:   []string{"amd64", "arm64", "ppc64le", "s390x"},
+					//						 },
+					//						 {
+					//							 Key:      "kubernetes.io/os",
+					//							 Operator: "In",
+					//							 Values:   []string{"linux"},
+					//						 },
+					//					 },
+					//				 },
+					//		 	 },
+					//		 },
+					//	 },
+					// },
 					SecurityContext: &corev1.PodSecurityContext{
-						RunAsNonRoot: &[]bool{true}[0],
+						RunAsNonRoot: ptr.To(true),
+						// The memcached image does not use a non-zero numeric user as the default user.
+						// Due to RunAsNonRoot field being set to true, we need to force the user in the
+						// container to a non-zero numeric user. We do this using the RunAsUser field.
+						// However, if you are looking to provide solution for K8s vendors like OpenShift
+						// be aware that you cannot run under its restricted-v2 SCC if you set this value.
 						// IMPORTANT: seccomProfile was introduced with Kubernetes 1.19
 						// If you are looking for to produce solutions to be supported
 						// on lower versions you must remove this option.
@@ -378,14 +386,9 @@ func (r *MemcachedReconciler) deploymentForMemcached(
 							// If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
 							// then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the "RunAsNonRoot" and
 							// "RunAsUser" fields empty.
-							RunAsNonRoot: &[]bool{true}[0],
-							// The memcached image does not use a non-zero numeric user as the default user.
-							// Due to RunAsNonRoot field being set to true, we need to force the user in the
-							// container to a non-zero numeric user. We do this using the RunAsUser field.
-							// However, if you are looking to provide solution for K8s vendors like OpenShift
-							// be aware that you cannot run under its restricted-v2 SCC if you set this value.
-							RunAsUser:                &[]int64{1001}[0],
-							AllowPrivilegeEscalation: &[]bool{false}[0],
+							RunAsNonRoot:             ptr.To(true),
+							RunAsUser:                ptr.To(int64(1001)),
+							AllowPrivilegeEscalation: ptr.To(false),
 							Capabilities: &corev1.Capabilities{
 								Drop: []corev1.Capability{
 									"ALL",
@@ -413,13 +416,14 @@ func (r *MemcachedReconciler) deploymentForMemcached(
 
 // labelsForMemcached returns the labels for selecting the resources
 // More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
-func labelsForMemcached(name string) map[string]string {
+func labelsForMemcached() map[string]string {
 	var imageTag string
 	image, err := imageForMemcached()
 	if err == nil {
 		imageTag = strings.Split(image, ":")[1]
 	}
-	return map[string]string{"app.kubernetes.io/name": "memcached-operator",
+	return map[string]string{
+		"app.kubernetes.io/name":       "memcached-operator",
 		"app.kubernetes.io/version":    imageTag,
 		"app.kubernetes.io/managed-by": "MemcachedController",
 	}
@@ -437,11 +441,23 @@ func imageForMemcached() (string, error) {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-// Note that the Deployment will be also watched in order to ensure its
-// desirable state on the cluster
+// The whole idea is to be watching the resources that matter for the controller.
+// When a resource that the controller is interested in changes, the Watch triggers
+// the controller’s reconciliation loop, ensuring that the actual state of the resource
+// matches the desired state as defined in the controller’s logic.
+//
+// Notice how we configured the Manager to monitor events such as the creation, update,
+// or deletion of a Custom Resource (CR) of the Memcached kind, as well as any changes
+// to the Deployment that the controller manages and owns.
 func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		// Watch the Memcached CR(s) and trigger reconciliation whenever it
+		// is created, updated, or deleted
 		For(&cachev1alpha1.Memcached{}).
+		Named("memcached").
+		// Watch the Deployment managed by the MemcachedReconciler. If any changes occur to the Deployment
+		// owned and managed by this controller, it will trigger reconciliation, ensuring that the cluster
+		// state aligns with the desired state. See that the ownerRef was set when the Deployment was created.
 		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }

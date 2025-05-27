@@ -12,33 +12,7 @@ webhooks:
       namespace: system
       path: /mutate-cache-example-com-v1alpha1-memcached
   failurePolicy: Fail
-  name: mmemcached.kb.io
-  rules:
-  - apiGroups:
-    - cache.example.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - memcacheds
-  sideEffects: None
----
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: validating-webhook-configuration
-webhooks:
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /validate-cache-example-com-v1alpha1-memcached
-  failurePolicy: Fail
-  name: vmemcached.kb.io
+  name: mmemcached-v1alpha1.kb.io
   rules:
   - apiGroups:
     - cache.example.com
