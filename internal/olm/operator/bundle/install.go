@@ -32,6 +32,7 @@ import (
 
 type Install struct {
 	BundleImage string
+	CatalogOnly bool
 
 	*registry.IndexImageCatalogCreator
 	*registry.OperatorInstaller
@@ -55,6 +56,7 @@ func (i *Install) BindFlags(fs *pflag.FlagSet) {
 		"the registry pod to decompress the compressed catalog contents. cat and gzip binaries are expected to exist "+
 		"in the PATH")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
+	fs.BoolVar(&i.CatalogOnly, "catalog-only", false, "create only the catalog source without creating a subscription")
 
 	// --mode is hidden so only users who know what they're doing can alter add mode.
 	fs.StringVar((*string)(&i.BundleAddMode), "mode", "", "mode to use for adding bundle to index")
@@ -67,7 +69,25 @@ func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 	if err := i.setup(ctx); err != nil {
 		return nil, err
 	}
+
+	// If catalog-only mode is enabled, create only the catalog source
+	if i.CatalogOnly {
+		return i.RunCatalogOnly(ctx)
+	}
+
 	return i.InstallOperator(ctx)
+}
+
+func (i *Install) RunCatalogOnly(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {
+	cs, err := i.CatalogCreator.CreateCatalog(ctx, i.CatalogSourceName)
+	if err != nil {
+		return nil, fmt.Errorf("create catalog: %v", err)
+	}
+	log.Infof("Created CatalogSource: %s", cs.GetName())
+	log.Infof("Catalog-only mode: skipping subscription creation")
+
+	// Return nil CSV since we're not installing the operator
+	return nil, nil
 }
 
 func (i *Install) setup(ctx context.Context) error {
