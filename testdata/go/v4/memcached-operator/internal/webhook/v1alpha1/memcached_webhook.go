@@ -55,7 +55,7 @@ type MemcachedCustomDefaulter struct {
 var _ webhook.CustomDefaulter = &MemcachedCustomDefaulter{}
 
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind Memcached.
-func (d *MemcachedCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+func (d *MemcachedCustomDefaulter) Default(_ context.Context, obj runtime.Object) error {
 	memcached, ok := obj.(*cachev1alpha1.Memcached)
 
 	if !ok {
