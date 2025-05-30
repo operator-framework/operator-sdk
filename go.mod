@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-sdk
 
-go 1.23.6
+go 1.24.3
 
 require (
 	github.com/blang/semver/v4 v4.0.0
@@ -41,7 +41,7 @@ require (
 	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/controller-tools v0.17.2
-	sigs.k8s.io/kubebuilder/v4 v4.5.2
+	sigs.k8s.io/kubebuilder/v4 v4.6.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
