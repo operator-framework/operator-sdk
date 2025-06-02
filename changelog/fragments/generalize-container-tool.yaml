@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      The bundle build target now respects the CONTAINER_TOOL variable, allowing users to use alternative container tools like podman instead of docker.
-    kind: "change"
-    breaking: false 
