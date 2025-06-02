@@ -13,7 +13,7 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/operator-framework/ansible-operator-plugins v1.38.0
+	github.com/operator-framework/ansible-operator-plugins v1.38.1
 	github.com/operator-framework/api v0.31.0
 	github.com/operator-framework/operator-lib v0.18.0
 	github.com/operator-framework/operator-manifest-tools v0.9.0
