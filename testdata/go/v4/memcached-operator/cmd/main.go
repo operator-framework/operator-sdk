@@ -39,7 +39,7 @@ import (
 
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	"github.com/example/memcached-operator/internal/controller"
-	webhookcachev1alpha1 "github.com/example/memcached-operator/internal/webhook/v1alpha1"
+	webhookv1alpha1 "github.com/example/memcached-operator/internal/webhook/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -136,7 +136,7 @@ func main() {
 
 	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
 	// More info:
-	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/metrics/server
+	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/server
 	// - https://book.kubebuilder.io/reference/metrics.html
 	metricsServerOptions := metricsserver.Options{
 		BindAddress:   metricsAddr,
@@ -148,7 +148,7 @@ func main() {
 		// FilterProvider is used to protect the metrics endpoint with authn/authz.
 		// These configurations ensure that only authorized users and service accounts
 		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
-		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/metrics/filters#WithAuthenticationAndAuthorization
+		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/filters#WithAuthenticationAndAuthorization
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
@@ -203,7 +203,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.MemcachedReconciler{
+	if err := (&controller.MemcachedReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		// Add a Recorder to the reconciler.
@@ -215,7 +215,7 @@ func main() {
 	}
 	// nolint:goconst
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = webhookcachev1alpha1.SetupMemcachedWebhookWithManager(mgr); err != nil {
+		if err := webhookv1alpha1.SetupMemcachedWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Memcached")
 			os.Exit(1)
 		}
