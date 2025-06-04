@@ -20,6 +20,7 @@ The follow tables describes the fields in an entry in `watches.yaml`:
 | watchDependentResources | Enable watching resources that are created by helm (default: `true`). |
 | overrideValues          | Values to be used for overriding Helm chart's defaults. For additional information see the [reference doc][override-values]. |
 | selector                | The conditions that a resource's labels must satisfy in order to get reconciled. For additional information see [labels and selectors documentation][label-selector-doc]. |
+| dryRunOption            | The helm dry-run method to use when comparing manifests. Set to `server` to ensure `lookup()` functions are evaluated (default: `client/none`) |
 
 
 For reference, here is an example of a simple `watches.yaml` file:
@@ -36,6 +37,7 @@ For reference, here is an example of a simple `watches.yaml` file:
   selector:
     matchExpressions:
      - {key: testLabel, operator: Exists, values: []}
+  dryRunOption: server
 ```
 
 [override-values]: /docs/building-operators/helm/reference/advanced_features/override_values/
