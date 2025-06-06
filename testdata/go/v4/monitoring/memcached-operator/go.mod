@@ -1,8 +1,8 @@
 module github.com/example/memcached-operator
 
-go 1.23.0
+go 1.25.0
 
-godebug default=go1.23
+godebug default=go1.25
 
 require (
 	github.com/onsi/ginkgo/v2 v2.22.0
