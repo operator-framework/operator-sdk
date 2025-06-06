@@ -498,7 +498,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
 **Go version**
 
-- Ensure that you are using a go version 1.13+
+- Ensure that you are using a go version 1.25+
 
 **dep**
 

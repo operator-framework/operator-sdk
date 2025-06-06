@@ -35,7 +35,7 @@ Scaffolded projects now use:
 - Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
 - A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions
 - A new option to create projects using ComponentConfig. For more info, see the [enhancement proposal][component-proposal] and the [Component config tutorial][component-config-tutorial]
-- Go version `1.15` (previously it was `1.13`)
+- Go version `1.25` (previously it was `1.15`)
 
 Generated files with the default API versions:
 
