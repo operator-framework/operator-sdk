@@ -1,0 +1,23 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Upgraded to Go 1.25.0.
+
+    # kind is one of:
+    # - breaking: Breaking changes - major version bump
+    # - deprecation: Deprecations, but no breaking change - minor version bump
+    # - bugfix: Bug fixes - patch version bump
+    # - feature: New features - minor version bump
+    # - addition: Miscellaneous feature additions - patch version bump
+    # - change: Miscellaneous changes - patch version bump
+    kind: change
+
+    # Is this a migration entry that should be included in the migration guide?
+    migration:
+      header: Updated Go version
+      body: >
+        All Operator SDK components now use Go 1.25.0. Any projects created or
+        maintained using this version of the SDK should update their Go version
+        to 1.25.0 for compatibility. Update your go.mod file to use `go 1.25.0`
+        and update all Dockerfiles to use the golang:1.25 base image for builds.
