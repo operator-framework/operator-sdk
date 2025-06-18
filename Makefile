@@ -86,7 +86,7 @@ install: ## Install operator-sdk and helm-operator.
 		echo "Error: GOBIN is not set"; \
 		exit 1; \
 	fi
-	$(GO) install $(GO_BUILD_ARGS) ./cmd/{operator-sdk,helm-operator}
+	$(GO) install $(GO_BUILD_ARGS) -tags=$(GO_BUILD_TAGS) ./cmd/{operator-sdk,helm-operator}
 
 .PHONY: build
 build: ## Build operator-sdk and helm-operator.
