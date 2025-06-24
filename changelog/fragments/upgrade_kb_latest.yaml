@@ -1,0 +1,130 @@
+entries:
+  - description: >
+      For Go-based operators, upgrade the Go version from `1.23` to `1.24`
+    kind: "change"
+    breaking: true
+    migration:
+      header: Upgrade Go version to 1.24
+      body: |
+        Update the Go version used to `1.24`. This affects:
+
+        **Dockerfile:**
+        ```dockerfile
+        -FROM golang:1.23 AS builder
+        +FROM golang:1.24 AS builder
+        ```
+
+        **.devcontainer/devcontainer.json:**
+        ```json
+        -  "image": "golang:1.23",
+        +  "image": "golang:1.24",
+        ```
+
+        **go.mod:**
+        ```go
+        -go 1.23.0
+        +go 1.24.0
+        ```
+
+  - description: >
+      For Go-based operators, upgrade golangci-lint to `v2.1.0` and update `.golangci.yml` 
+      to the v2 config format with enhanced structure and controls.
+    kind: "change"
+    breaking: false
+    migration:
+      header: Upgrade golangci-lint and use v2 config
+      body: |
+        Update golangci-lint usage across the project:
+
+        **Makefile:**
+        ```makefile
+        -GOLANGCI_LINT_VERSION ?= v1.63.4
+        +GOLANGCI_LINT_VERSION ?= v2.1.0
+
+        -$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
+        +$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
+        ```
+
+        **GitHub Actions Workflow:**
+        ```yaml
+        -  uses: golangci/golangci-lint-action@v6
+        +  uses: golangci/golangci-lint-action@v8
+        ```
+
+        **.golangci.yml:**  
+        Convert to v2 layout with keys like `version`, `linters`, `settings`, `formatters`, `exclusions`.
+        You might want to copy and paste the file from the Memcached sample from the tag release `v1.40.0`: [testdata/go/v4/memcached-operator/.golangci.yml](https://github.com/operator-framework/operator-sdk/tree/v1.40.0/testdata/go/v4/memcached-operator/.golangci.yml)
+
+  - description: >
+      For Go-based operators, upgrade controller-gen from `v0.17.2` to `v0.18.0`.
+    kind: "change"
+    breaking: false
+    migration:
+      header: Upgrade controller-gen to `v0.18.0`
+      body: |
+        Update controller-gen tooling and annotations:
+
+        **Makefile:**
+        ```makefile
+        -CONTROLLER_TOOLS_VERSION ?= v0.17.2
+        +CONTROLLER_TOOLS_VERSION ?= v0.18.0
+        ```
+
+        Run `make generate` to regenerate code and manifests with the new version.
+
+  - description: >
+      For Go-based operators, upgrade controller-runtime from `v0.20.4` to `v0.21.0` 
+      and kubernetes dependencies to `v0.33`.
+    kind: "change"
+    breaking: false
+    migration:
+      header: Upgrade controller-runtime to `v0.21.0`
+      body: |
+        Update the `go.mod` import:
+        ```go
+        -sigs.k8s.io/controller-runtime v0.20.4
+        +sigs.k8s.io/controller-runtime v0.21.0
+        ```
+        
+        Run `go mod tidy` to upgrade the k8s dependencies.
+
+  - description: >
+      For Go-based operators, add new target to setup/teardown Kind cluster for E2E tests 
+      and remove Kind setup from CI workflows.
+    kind: "addition"
+    breaking: false
+    migration:
+      header: Add cluster setup for e2e tests in Makefile and update CI workflow
+      body: |
+        Remove direct Kind commands in GitHub workflows:
+
+        **Removed:**
+        ```yaml
+        - name: Create kind cluster
+          run: kind create cluster
+        ```
+
+        **Added to Makefile:**
+        ```makefile
+        KIND_CLUSTER ?= <project-name>-test-e2e
+
+        .PHONY: setup-test-e2e
+        setup-test-e2e: ## Set up a Kind cluster for e2e tests if it does not exist
+          @command -v $(KIND) >/dev/null 2>&1 || { \
+            echo "Kind is not installed. Please install Kind manually."; \
+            exit 1; \
+          }
+          @case "$$($(KIND) get clusters)" in \
+            *"$(KIND_CLUSTER)"*) \
+              echo "Kind cluster '$(KIND_CLUSTER)' already exists. Skipping creation." ;; \
+            *) \
+            echo "Creating Kind cluster '$(KIND_CLUSTER)'..."; \
+            $(KIND) create cluster --name $(KIND_CLUSTER) ;; \
+          esac
+
+        .PHONY: cleanup-test-e2e
+        cleanup-test-e2e:
+        	$(KIND) delete cluster --name $(KIND_CLUSTER)
+        ```
+
+        Update `test-e2e` target to call these appropriately.

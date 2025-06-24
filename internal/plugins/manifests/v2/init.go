@@ -130,7 +130,7 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	// TODO: remove this when we bump kubebuilder to v5.x
 	// Not adopt changes introduced by mistake in the default Makefile of kubebuilder v4.x.
 	if operatorType == projutil.OperatorTypeGo {
-		err = util.ReplaceInFile("Makefile", makefileTestE2ETarget, "")
+		err = util.ReplaceInFile("Makefile", "$(KIND) create cluster --name $(KIND_CLUSTER)", makefileTestFix)
 		if err != nil {
 			return fmt.Errorf("error replacing Makefile: %w", err)
 		}
@@ -323,16 +323,14 @@ catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 `
 
-	// TODO: remove it when we bump kubebuilder to v5.x
+	// TODO: remove it when we bump kubebuilder to v4.x
 	// We will not adopt this change since it did not work and was a bug introduced in the
 	// default Makefile of kubebuilder v4.x.
-	makefileTestE2ETarget = `@command -v $(KIND) >/dev/null 2>&1 || { \
-		echo "Kind is not installed. Please install Kind manually."; \
-		exit 1; \
-	}
-	@$(KIND) get clusters | grep -q 'kind' || { \
-		echo "No Kind cluster is running. Please start a Kind cluster before running the e2e tests."; \
-		exit 1; \
-	}
-	`
+	makefileTestFix = `@case "$$($(KIND) get clusters)" in \
+		*"$(KIND_CLUSTER)"*) \
+			echo "Kind cluster '$(KIND_CLUSTER)' already exists. Skipping creation." ;; \
+		*) \
+			echo "Creating Kind cluster '$(KIND_CLUSTER)'..."; \
+			$(KIND) create cluster --name $(KIND_CLUSTER) ;; \
+	esac`
 )
