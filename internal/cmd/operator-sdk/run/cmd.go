@@ -19,7 +19,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/bundleupgrade"
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/packagemanifests"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
@@ -35,7 +34,6 @@ func NewCmd() *cobra.Command {
 	cmd.AddCommand(
 		bundle.NewCmd(cfg),
 		bundleupgrade.NewCmd(cfg),
-		packagemanifests.NewCmd(cfg),
 	)
 
 	return cmd
