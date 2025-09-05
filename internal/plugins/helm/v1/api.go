@@ -108,6 +108,9 @@ func (p *createAPISubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdM
 
   $ %[1]s create api \
       --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
+
+  $ %[1]s create api \
+      --helm-chart=oci://charts.mycompany.com/example-namespace/app:1.2.3
 `, cliMeta.CommandName)
 }
 
