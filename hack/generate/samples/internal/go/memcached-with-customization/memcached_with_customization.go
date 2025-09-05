@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/memcached-with-customization/manifests"
 	log "github.com/sirupsen/logrus"
 	kbutil "sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
 
@@ -138,6 +139,9 @@ func (mh *Memcached) Run() {
 	pkg.CheckError("scaffolding webhook", err)
 
 	mh.implementingWebhooks()
+
+	log.Infof("implementing the aggregated cluster rule")
+	mh.implementingAggregatedClusterRules()
 
 	mh.uncommentDefaultKustomizationV4()
 	mh.uncommentManifestsKustomizationv4()
@@ -777,6 +781,40 @@ func (mh *Memcached) customizingMakefile() {
 	err = kbutil.InsertCode(makefilePath,
 		`$(MAKE) docker-push IMG=$(CATALOG_IMG)`,
 		metricsdocsMakefileFragment)
+	pkg.CheckError("adding metrics documentation", err)
+}
+
+func (mh *Memcached) implementingAggregatedClusterRules() {
+	rbacDirPath := filepath.Join(mh.ctx.Dir, "config", "rbac")
+
+	var filePerm os.FileMode = 0600
+
+	err := os.WriteFile(
+		filepath.Join(rbacDirPath, "aggregation.clusterrole.yaml"),
+		[]byte(manifests.AggregationClusterRoleString),
+		filePerm,
+	)
+	pkg.CheckError("creating aggregation clusterrole", err)
+
+	err = os.WriteFile(
+		filepath.Join(rbacDirPath, "aggregation-subrole.clusterrole.yaml"),
+		[]byte(manifests.AggregationSubroleClusterRoleString),
+		filePerm,
+	)
+	pkg.CheckError("creating aggregation clusterrole subrole", err)
+
+	err = os.WriteFile(
+		filepath.Join(rbacDirPath, "aggregation.clusterrolebinding.yaml"),
+		[]byte(manifests.AggregationClusterRoleBindingString),
+		filePerm,
+	)
+	pkg.CheckError("creating aggregation clusterrolebinding", err)
+
+	kustomizationPath := filepath.Join(rbacDirPath, "kustomization.yaml")
+	err = kbutil.InsertCode(kustomizationPath,
+		`- memcached_viewer_role.yaml`,
+		manifests.AggregationKustomizationPatchString,
+	)
 	pkg.CheckError("adding metrics documentation", err)
 }
 
