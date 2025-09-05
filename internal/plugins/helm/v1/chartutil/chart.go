@@ -27,6 +27,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
@@ -126,11 +127,19 @@ func LoadChart(opts Options) (*chart.Chart, error) {
 func downloadChart(destDir string, opts Options) (string, error) {
 	settings := cli.New()
 	getters := getter.All(settings)
+
+	// Create registry client for OCI registry support
+	registryClient, err := registry.NewClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to create registry client: %w", err)
+	}
+
 	c := downloader.ChartDownloader{
 		Out:              os.Stderr,
 		Getters:          getters,
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		RegistryClient:   registryClient,
 	}
 
 	if opts.Repo != "" {
@@ -182,6 +191,12 @@ func fetchChartDependencies(chartPath string) error {
 	settings := cli.New()
 	getters := getter.All(settings)
 
+	// Create registry client for OCI registry support
+	registryClient, err := registry.NewClient()
+	if err != nil {
+		return fmt.Errorf("failed to create registry client: %w", err)
+	}
+
 	out := &bytes.Buffer{}
 	man := &downloader.Manager{
 		Out:              out,
@@ -189,6 +204,7 @@ func fetchChartDependencies(chartPath string) error {
 		Getters:          getters,
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		RegistryClient:   registryClient,
 	}
 	if err := man.Build(); err != nil {
 		fmt.Println(out.String())
