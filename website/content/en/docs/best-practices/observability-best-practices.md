@@ -88,7 +88,15 @@ See [Alerts, Metrics and Recording Rules Tests](#alerts-metrics-and-recording-ru
 As per [Prometheus](https://prometheus.io/docs/prometheus) documentation, [Recording rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) allow you to pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series.
 
 **Note:** The Prometheus recording rules appear in Prometheus UI as metrics.
-In order to easily identify your operator recording rules, their names should usually follow the same naming guidelines as the metrics.
+Recording rule names should follow the `level:metric:operations` format as specified in the [Prometheus recording rules best practices](https://prometheus.io/docs/practices/rules/). This naming convention makes it clear that the metric is a recording rule and helps consumers understand they need to examine the underlying query to fully understand what the metric provides.
+
+- **level:** represents the aggregation level and labels of the rule output
+- **metric:** is the metric name  
+- **operations:** is a list of operations that were applied to the metric, newest operation first
+
+For example: `job:up:avg_over_time` or `instance:node_cpu_utilisation:rate5m`
+
+In addition to this format, your operator recording rules should also follow the same naming guidelines as metrics for consistency within your operator's observability stack.
 
 See [Alerts, Metrics and Recording Rules Tests](#alerts-metrics-and-recording-rules-tests) section for recording rules testing recommendations. 
 
