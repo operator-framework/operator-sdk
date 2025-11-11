@@ -95,7 +95,7 @@ url_latest_version = "https://sdk.operatorframework.io"
   ##LATEST_RELEASE_KUBE_VERSION##
   kube_version = "1.33.1"
   ##LATEST_RELEASE_CLIENT_GO_VERSION##
-  client_go_version = "v0.33.2"
+  client_go_version = "v0.33.5"
 
 [[params.versions]]
   version = "Latest Release"
@@ -103,9 +103,15 @@ url_latest_version = "https://sdk.operatorframework.io"
   ##LATEST_RELEASE_KUBE_VERSION##
   kube_version = "1.33.1"
   ##LATEST_RELEASE_CLIENT_GO_VERSION##
-  client_go_version = "v0.33.2"
+  client_go_version = "v0.33.5"
 
 ##RELEASE_ADDME##
+
+[[params.versions]]
+  version = "v1.42"
+  url = "https://v1-42-x.sdk.operatorframework.io"
+  kube_version = "1.33.1"
+  client_go_version = "v0.33.5"
 
 [[params.versions]]
   version = "v1.41"
