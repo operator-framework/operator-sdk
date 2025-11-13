@@ -52,6 +52,7 @@ operator-sdk create api [flags]
 ```
       --controller                   if set, generate the controller without prompting the user (default true)
       --external-api-domain string   Specify the domain name for the external API. This domain is used to generate accurate RBAC markers and permissions for the external resources (e.g., cert-manager.io).
+      --external-api-module string   external API module with optional version (e.g., github.com/cert-manager/cert-manager@v1.18.2)
       --external-api-path string     Specify the Go package import path for the external API. This is used to scaffold controllers for resources defined outside this project (e.g., github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1).
       --force                        attempt to create resource even if it already exists
       --group string                 resource Group
