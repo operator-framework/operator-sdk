@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -31,6 +32,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -57,8 +61,14 @@ func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion,
 	switch strategy.StrategyName {
 	case operatorsv1alpha1.InstallStrategyNameDeployment:
 		inPerms, inCPerms, _ := c.SplitCSVPermissionsObjects(extraSAs)
-		applyRoles(c, inPerms, &strategy.StrategySpec, extraSAs)
-		applyClusterRoles(c, inCPerms, &strategy.StrategySpec, extraSAs)
+		err := applyRoles(c, inPerms, &strategy.StrategySpec, extraSAs)
+		if err != nil {
+			return fmt.Errorf("can't apply roles: %w", err)
+		}
+		err = applyClusterRoles(c, inCPerms, &strategy.StrategySpec, extraSAs)
+		if err != nil {
+			return fmt.Errorf("can't apply cluster roles: %w", err)
+		}
 		applyDeployments(c, &strategy.StrategySpec)
 	}
 	csv.Spec.InstallStrategy = strategy
@@ -88,7 +98,7 @@ const defaultServiceAccountName = "default"
 
 // applyRoles applies Roles to strategy's permissions field by combining Roles bound to ServiceAccounts
 // into one set of permissions.
-func applyRoles(c *collector.Manifests, objs []client.Object, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) { //nolint:dupl
+func applyRoles(c *collector.Manifests, objs []client.Object, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) error { //nolint:dupl
 	roleSet := make(map[string]rbacv1.Role)
 	cRoleSet := make(map[string]rbacv1.ClusterRole)
 	for i := range objs {
@@ -120,8 +130,16 @@ func applyRoles(c *collector.Manifests, objs []client.Object, strategy *operator
 				hasRole = has
 			case "ClusterRole":
 				role, has := cRoleSet[binding.RoleRef.Name]
-				rules = role.Rules
+
 				hasRole = has
+				if has {
+					var err error
+					rules, err = getClusterRoleRules(role, c.ClusterRoles)
+					if err != nil {
+						return fmt.Errorf("can't get ClusterRole rules: %w", err)
+					}
+				}
+
 			default:
 				continue
 			}
@@ -143,11 +161,13 @@ func applyRoles(c *collector.Manifests, objs []client.Object, strategy *operator
 		return perms[i].ServiceAccountName < perms[j].ServiceAccountName
 	})
 	strategy.Permissions = perms
+
+	return nil
 }
 
 // applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
 // bound to ServiceAccounts into one set of clusterPermissions.
-func applyClusterRoles(c *collector.Manifests, objs []client.Object, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) { //nolint:dupl
+func applyClusterRoles(c *collector.Manifests, objs []client.Object, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) error { //nolint:dupl
 	roleSet := make(map[string]rbacv1.ClusterRole)
 	for i := range objs {
 		switch t := objs[i].(type) {
@@ -166,7 +186,12 @@ func applyClusterRoles(c *collector.Manifests, objs []client.Object, strategy *o
 				continue
 			}
 			if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
-				perm.Rules = append(perm.Rules, role.Rules...)
+				rules, err := getClusterRoleRules(role, c.ClusterRoles)
+				if err != nil {
+					return fmt.Errorf("can't get ClusterRole rules: %w", err)
+				}
+
+				perm.Rules = append(perm.Rules, rules...)
 				saToPermissions[subject.Name] = perm
 			}
 		}
@@ -183,6 +208,48 @@ func applyClusterRoles(c *collector.Manifests, objs []client.Object, strategy *o
 		return perms[i].ServiceAccountName < perms[j].ServiceAccountName
 	})
 	strategy.ClusterPermissions = perms
+
+	return nil
+}
+
+// getClusterRoleRules returns all PolicyRules for a given ClusterRole, including rules from aggregated ClusterRoles
+// as specified by the AggregationRule, ensuring no duplicate rules are added.
+func getClusterRoleRules(clusterRole rbacv1.ClusterRole, clusterRoles []rbacv1.ClusterRole) ([]rbacv1.PolicyRule, error) {
+	rules := make([]rbacv1.PolicyRule, 0, len(clusterRole.Rules))
+	rules = append(rules, clusterRole.Rules...)
+
+	if clusterRole.AggregationRule == nil {
+		return rules, nil
+	}
+
+	for _, crSelector := range clusterRole.AggregationRule.ClusterRoleSelectors {
+		labelSelector, err := metav1.LabelSelectorAsSelector(&crSelector)
+		if err != nil {
+			return nil, fmt.Errorf("can't create label selector from ClusterRole %q AggregationRule: %w", clusterRole.Name, err)
+		}
+
+		for _, cr := range clusterRoles {
+			if cr.Name == clusterRole.Name {
+				continue
+			}
+
+			if !labelSelector.Matches(labels.Set(cr.Labels)) {
+				continue
+			}
+
+			for _, rule := range cr.Rules {
+				ruleExists := slices.ContainsFunc(rules, func(r rbacv1.PolicyRule) bool {
+					return equality.Semantic.DeepEqual(rule, r)
+				})
+
+				if !ruleExists {
+					rules = append(rules, rule)
+				}
+			}
+		}
+	}
+
+	return rules, nil
 }
 
 // initPermissionSet initializes a map of ServiceAccount name to permissions, which are empty.
