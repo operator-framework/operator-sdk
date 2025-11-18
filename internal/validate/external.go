@@ -64,12 +64,16 @@ func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot
 		dec := json.NewDecoder(stdout)
 		dec.DisallowUnknownFields()
 
-		if err := dec.Decode(&manifestresults[i]); err != nil {
-			fmt.Printf("decode failed: %v\n", err)
-			return nil, err
-		}
+		decodeErr := dec.Decode(&manifestresults[i])
+		// Always wait for the command to finish to ensure stderr is fully written
+		// and all goroutines complete before returning.
 		if err := cmd.Wait(); err != nil {
 			return nil, err
+		}
+		// Return decode error after waiting for command to complete
+		if decodeErr != nil {
+			fmt.Printf("decode failed: %v\n", decodeErr)
+			return nil, decodeErr
 		}
 	}
 	return manifestresults, nil

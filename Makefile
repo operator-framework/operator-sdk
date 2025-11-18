@@ -168,7 +168,7 @@ test-docs: ## Test doc links
 .PHONY: test-unit
 TEST_PKGS = $(shell $(GO) list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 test-unit: ## Run unit tests
-	$(GO) test -tags=$(GO_BUILD_TAGS) -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
+	CGO_ENABLED=1 $(GO) test -race -tags=$(GO_BUILD_TAGS) -coverprofile=coverage.out -covermode=atomic -short $(TEST_PKGS)
 
 e2e_tests := test-e2e-go test-e2e-helm test-e2e-integration
 e2e_targets := test-e2e $(e2e_tests)
