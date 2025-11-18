@@ -45,7 +45,7 @@ func main() {
 	recreateDocDir(cliRoot, cliDocsPath)
 }
 
-// htmlFormatter will replace angular brackets (`<` and `>`) with its character entitites
+// htmlFormatter will replace angular brackets (`<` and `>`) with its character entities
 // `&lt;` and `&gt;`
 func htmlFormatter(rootCmd *cobra.Command) {
 
