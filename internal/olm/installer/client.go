@@ -56,13 +56,13 @@ type Client struct {
 	BaseDownloadURL string
 }
 
-func ClientForConfig(cfg *rest.Config) (*Client, error) {
+func ClientForConfig(cfg *rest.Config, opts ...olmresourceclient.Option) (*Client, error) {
 	httpClient, err := rest.HTTPClientFor(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build an HTTP client for the kubeconfig: %v", err)
 	}
 
-	cl, err := olmresourceclient.NewClientForConfig(cfg, httpClient)
+	cl, err := olmresourceclient.NewClientForConfig(cfg, httpClient, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get OLM resource client: %v", err)
 	}
