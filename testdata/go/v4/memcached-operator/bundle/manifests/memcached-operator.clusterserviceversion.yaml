@@ -61,6 +61,12 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - pods
+          verbs:
+          - update
+        - apiGroups:
+          - ""
+          resources:
           - events
           verbs:
           - create
