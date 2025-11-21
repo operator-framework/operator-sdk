@@ -116,7 +116,6 @@ replacements:
          delimiter: '.'
          index: 1
          create: true
-
  - source: # Uncomment the following block if you have any webhook
      kind: Service
      version: v1
@@ -184,7 +183,7 @@ replacements:
 #         delimiter: '/'
 #         index: 1
 #         create: true
-#
+
  - source: # Uncomment the following block if you have a DefaultingWebhook (--defaulting )
      kind: Certificate
      group: cert-manager.io

@@ -63,8 +63,9 @@ func (d *MemcachedCustomDefaulter) Default(_ context.Context, obj runtime.Object
 	}
 	memcachedlog.Info("Defaulting for Memcached", "name", memcached.GetName())
 
-	if memcached.Spec.Size == 0 {
-		memcached.Spec.Size = 3
+	if memcached.Spec.Size == nil {
+		size := int32(3)
+		memcached.Spec.Size = &size
 	}
 
 	return nil

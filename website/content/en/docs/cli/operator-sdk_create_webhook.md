@@ -26,6 +26,21 @@ operator-sdk create webhook [flags]
   # and Kind: Frigate
   operator-sdk create webhook --group ship --version v1beta1 --kind Frigate --conversion --spoke v1
 
+  # Create defaulting webhook with custom path for Group: ship, Version: v1beta1
+  # and Kind: Frigate
+  operator-sdk create webhook --group ship --version v1beta1 --kind Frigate --defaulting \
+    --defaulting-path=/my-custom-mutate-path
+  
+  # Create validation webhook with custom path for Group: ship, Version: v1beta1
+  # and Kind: Frigate
+  operator-sdk create webhook --group ship --version v1beta1 --kind Frigate \
+    --programmatic-validation --validation-path=/my-custom-validate-path
+  
+  # Create both defaulting and validation webhooks with different custom paths
+  operator-sdk create webhook --group ship --version v1beta1 --kind Frigate \
+    --defaulting --programmatic-validation \
+    --defaulting-path=/custom-mutate --validation-path=/custom-validate
+
 ```
 
 ### Options
@@ -33,8 +48,10 @@ operator-sdk create webhook [flags]
 ```
       --conversion                   if set, scaffold the conversion webhook
       --defaulting                   if set, scaffold the defaulting webhook
+      --defaulting-path string       Custom path for the defaulting/mutating webhook (only valid with --defaulting)
       --external-api-domain string   Specify the domain name for the external API. This domain is used to generate accurate RBAC markers and permissions for the external resources (e.g., cert-manager.io).
-      --external-api-path string     Specify the Go package import path for the external API. This is used to scaffold controllers for resources defined outside this project (e.g., github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1).
+      --external-api-module string   external API module with optional version (e.g., github.com/cert-manager/cert-manager@v1.18.2)
+      --external-api-path string     Specify the Go package import path for the external API. This is used to scaffold webhooks for resources defined outside this project (e.g., github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1).
       --force                        attempt to create resource even if it already exists
       --group string                 resource Group
   -h, --help                         help for webhook
@@ -44,6 +61,7 @@ operator-sdk create webhook [flags]
       --plural string                resource irregular plural form
       --programmatic-validation      if set, scaffold the validating webhook
       --spoke strings                Comma-separated list of spoke versions to be added to the conversion webhook (e.g., --spoke v1,v2)
+      --validation-path string       Custom path for the validation webhook (only valid with --programmatic-validation)
       --version string               resource Version
 ```
 
