@@ -87,10 +87,25 @@ func init() {
 }
 
 type Client struct {
-	KubeClient client.Client
+	KubeClient      client.Client
+	ignoredKindsMap map[string]struct{}
 }
 
-func NewClientForConfig(cfg *rest.Config, httpClient *http.Client) (*Client, error) {
+// Option is a function that configures a Client.
+type Option func(*Client)
+
+// WithIgnoredKinds returns an Option that sets the ignored resource kinds
+func WithIgnoredKinds(ignoredKinds []string) Option {
+	return func(c *Client) {
+		// Create a map for O(1) lookup of ignored kinds
+		c.ignoredKindsMap = make(map[string]struct{})
+		for _, kind := range ignoredKinds {
+			c.ignoredKindsMap[kind] = struct{}{}
+		}
+	}
+}
+
+func NewClientForConfig(cfg *rest.Config, httpClient *http.Client, opts ...Option) (*Client, error) {
 	rm, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)
@@ -115,6 +130,9 @@ func NewClientForConfig(cfg *rest.Config, httpClient *http.Client) (*Client, err
 	c := &Client{
 		KubeClient: cl,
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
 	return c, nil
 }
 
@@ -122,6 +140,11 @@ func (c Client) DoCreate(ctx context.Context, objs ...client.Object) error {
 	for _, obj := range objs {
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		resourceName := getName(obj.GetNamespace(), obj.GetName())
+
+		if _, ignored := c.ignoredKindsMap[kind]; ignored {
+			log.Infof("  Skipping %s %q (kind ignored)", kind, resourceName)
+			continue
+		}
 
 		log.Infof("  Creating %s %q", kind, resourceName)
 

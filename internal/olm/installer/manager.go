@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -39,6 +40,7 @@ type Manager struct {
 	Version      string
 	Timeout      time.Duration
 	OLMNamespace string
+	IgnoreKinds  []string
 	once         sync.Once
 }
 
@@ -51,7 +53,7 @@ func (m *Manager) initialize() (err error) {
 				return
 			}
 
-			client, cerr := ClientForConfig(cfg)
+			client, cerr := ClientForConfig(cfg, olmresourceclient.WithIgnoredKinds(m.IgnoreKinds))
 			if cerr != nil {
 				err = fmt.Errorf("failed to create manager client: %v", cerr)
 				return

@@ -35,6 +35,7 @@ func newInstallCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&mgr.Version, "version", installer.DefaultVersion, "version of OLM resources to install")
+	cmd.Flags().StringSliceVar(&mgr.IgnoreKinds, "ignore-kinds", nil, "list of resource kinds to ignore during installation (e.g., \"Deployment,Service\")")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }

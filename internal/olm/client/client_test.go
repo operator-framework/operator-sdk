@@ -273,18 +273,24 @@ var _ = Describe("Client", func() {
 			fakeClient.(*errClient).reset()
 		})
 
-		It("should create all the resources successfully", func() {
-			cli := Client{KubeClient: fakeClient}
+		It("should create all the resources successfully, unless ignored", func() {
+			cli := Client{KubeClient: fakeClient, ignoredKindsMap: map[string]struct{}{"Service": {}}}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
 			Expect(cli.DoCreate(ctx,
 				&corev1.Namespace{
+					TypeMeta:   metav1.TypeMeta{Kind: "Namespace"},
 					ObjectMeta: metav1.ObjectMeta{Name: "test-ns"},
 				},
 				&corev1.Pod{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod"},
 					ObjectMeta: metav1.ObjectMeta{Name: "test-pod", Namespace: "test-ns"},
+				},
+				&corev1.Service{
+					TypeMeta:   metav1.TypeMeta{Kind: "Service"},
+					ObjectMeta: metav1.ObjectMeta{Name: "ignored", Namespace: "test-ns"},
 				},
 			)).To(Succeed())
 
@@ -293,6 +299,9 @@ var _ = Describe("Client", func() {
 
 			pod := &corev1.Pod{}
 			Expect(fakeClient.Get(context.Background(), client.ObjectKey{Namespace: "test-ns", Name: "test-pod"}, pod)).To(Succeed())
+
+			svc := &corev1.Service{}
+			Expect(fakeClient.Get(context.Background(), client.ObjectKey{Namespace: "test-ns", Name: "ignored"}, svc)).ToNot(Succeed())
 		})
 
 		It("should eventually create all the resources successfully", func() {
