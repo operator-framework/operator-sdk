@@ -196,8 +196,8 @@ func Convertv1beta1Tov1CustomResourceDefinition(in *apiextv1beta1.CustomResource
 	}
 
 	var out apiextv1.CustomResourceDefinition
-	out.TypeMeta.APIVersion = apiextv1.SchemeGroupVersion.String()
-	out.TypeMeta.Kind = "CustomResourceDefinition"
+	out.APIVersion = apiextv1.SchemeGroupVersion.String()
+	out.Kind = "CustomResourceDefinition"
 	if err := apiextv1.Convert_apiextensions_CustomResourceDefinition_To_v1_CustomResourceDefinition(&unversioned, &out, nil); err != nil {
 		return nil, err
 	}

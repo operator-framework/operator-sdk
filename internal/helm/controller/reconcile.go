@@ -121,8 +121,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	reconcileResult.RequeueAfter = finalReconcilePeriod
 
 	if o.GetDeletionTimestamp() != nil {
-		if !(controllerutil.ContainsFinalizer(o, uninstallFinalizer) ||
-			controllerutil.ContainsFinalizer(o, uninstallFinalizerLegacy)) {
+		if !controllerutil.ContainsFinalizer(o, uninstallFinalizer) && !controllerutil.ContainsFinalizer(o, uninstallFinalizerLegacy) {
 
 			log.Info("Resource is terminated, skipping reconciliation")
 			return reconcile.Result{}, nil
@@ -296,8 +295,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		return reconcileResult, err
 	}
 
-	if !(controllerutil.ContainsFinalizer(o, uninstallFinalizer) ||
-		controllerutil.ContainsFinalizer(o, uninstallFinalizerLegacy)) {
+	if !controllerutil.ContainsFinalizer(o, uninstallFinalizer) && !controllerutil.ContainsFinalizer(o, uninstallFinalizerLegacy) {
 
 		log.V(1).Info("Adding finalizer", "finalizer", uninstallFinalizer)
 		controllerutil.AddFinalizer(o, uninstallFinalizer)

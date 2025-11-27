@@ -95,15 +95,15 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// check if index image adopts File-Based Catalog or SQLite index image format
-	isFBCImage, err := fbcutil.IsFBC(ctx, i.IndexImageCatalogCreator.IndexImage)
+	isFBCImage, err := fbcutil.IsFBC(ctx, i.IndexImage)
 	if err != nil {
-		return fmt.Errorf("error determining whether index %q is FBC or SQLite based: %v", i.IndexImageCatalogCreator.IndexImage, err)
+		return fmt.Errorf("error determining whether index %q is FBC or SQLite based: %v", i.IndexImage, err)
 	}
-	i.IndexImageCatalogCreator.HasFBCLabel = isFBCImage
+	i.HasFBCLabel = isFBCImage
 
 	// set the field to true if FBC label is on the image or for a default index image.
-	if i.IndexImageCatalogCreator.HasFBCLabel {
-		if i.IndexImageCatalogCreator.BundleAddMode != "" {
+	if i.HasFBCLabel {
+		if i.BundleAddMode != "" {
 			return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 		}
 
@@ -122,26 +122,26 @@ func (i *Install) setup(ctx context.Context) error {
 		f.ChannelName = fbcutil.DefaultChannel
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
-		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
+		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImage)
 		if err != nil {
 			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
 		}
 
-		i.IndexImageCatalogCreator.FBCContent = content
-		i.OperatorInstaller.Channel = fbcutil.DefaultChannel
+		i.FBCContent = content
+		i.Channel = fbcutil.DefaultChannel
 	} else {
 		// index image is of the SQLite index format.
-		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImageCatalogCreator.IndexImage)
+		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImage)
 		log.Warn(deprecationMsg)
 
 		// set the channel the old way
-		i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+		i.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 	}
 
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
-	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
-	i.OperatorInstaller.StartingCSV = csv.Name
-	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
+	i.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
+	i.StartingCSV = csv.Name
+	i.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage

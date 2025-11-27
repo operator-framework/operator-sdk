@@ -75,15 +75,15 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	csv := bundle.CSV
 
 	u.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
-	u.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(u.OperatorInstaller.PackageName)
-	u.OperatorInstaller.StartingCSV = csv.Name
-	u.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
+	u.CatalogSourceName = operator.CatalogNameForPackage(u.OperatorInstaller.PackageName)
+	u.StartingCSV = csv.Name
+	u.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
 
 	// Since an existing CatalogSource will have an annotation containing the existing index image,
 	// defer defaulting the bundle add mode to after the existing CatalogSource is retrieved.
 	u.IndexImageCatalogCreator.PackageName = u.OperatorInstaller.PackageName
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
-	u.IndexImageCatalogCreator.IndexImage = fbcutil.DefaultIndexImage
+	u.IndexImage = fbcutil.DefaultIndexImage
 
 	return nil
 }

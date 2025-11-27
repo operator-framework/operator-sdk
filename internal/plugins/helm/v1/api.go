@@ -235,5 +235,5 @@ func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
 
 // hasDifferentCRDVersion returns true if any other CRD version is tracked in the project configuration.
 func hasDifferentAPIVersion(versions []string, version string) bool {
-	return !(len(versions) == 0 || (len(versions) == 1 && versions[0] == version))
+	return len(versions) != 0 && (len(versions) != 1 || versions[0] != version)
 }

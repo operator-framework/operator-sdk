@@ -82,7 +82,7 @@ func recreateDocDir(rootCmd *cobra.Command, docPath string) {
 	filePrepender := func(filename string) string {
 		name := filepath.Base(filename)
 		base := strings.TrimSuffix(name, path.Ext(name))
-		return fmt.Sprintf(fmTemplate, strings.Replace(base, "_", " ", -1))
+		return fmt.Sprintf(fmTemplate, strings.ReplaceAll(base, "_", " "))
 	}
 	linkHandler := func(name string) string {
 		base := strings.TrimSuffix(name, path.Ext(name))

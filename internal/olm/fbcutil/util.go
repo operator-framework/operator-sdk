@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-registry/alpha/action"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
 	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
@@ -55,9 +54,9 @@ const (
 // This struct only consists of one Package, Bundle, and Channel blob. It is used to
 // represent the bundle image in the File-Based Catalog format.
 type BundleDeclcfg struct {
-	Package declcfg.Package
-	Channel declcfg.Channel
-	Bundle  declcfg.Bundle
+	Package declarativeconfig.Package
+	Channel declarativeconfig.Channel
+	Bundle  declarativeconfig.Bundle
 }
 
 // FBCContext is a struct that stores all the required information while constructing

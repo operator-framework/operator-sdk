@@ -112,7 +112,7 @@ func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 }
 
 func (c packagemanifestsCmd) println(a ...interface{}) {
-	if !(c.quiet || c.stdout) {
+	if !c.quiet && !c.stdout {
 		fmt.Println(a...)
 	}
 }

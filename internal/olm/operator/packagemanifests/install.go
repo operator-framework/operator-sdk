@@ -43,7 +43,7 @@ func NewInstall(cfg *operator.Configuration) Install {
 		OperatorInstaller:       registry.NewOperatorInstaller(cfg),
 		cfg:                     cfg,
 	}
-	i.OperatorInstaller.CatalogCreator = i.ConfigMapCatalogCreator
+	i.CatalogCreator = i.ConfigMapCatalogCreator
 	return i
 }
 
@@ -73,22 +73,22 @@ func (i *Install) setup() error {
 		return err
 	}
 
-	i.OperatorInstaller.PackageName = pkg.PackageName
-	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
-	i.OperatorInstaller.StartingCSV = bundle.CSV.GetName()
-	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(bundle.CSV.Spec.InstallModes)
+	i.PackageName = pkg.PackageName
+	i.CatalogSourceName = operator.CatalogNameForPackage(i.PackageName)
+	i.StartingCSV = bundle.CSV.GetName()
+	i.SupportedInstallModes = operator.GetSupportedInstallModes(bundle.CSV.Spec.InstallModes)
 
-	if i.OperatorInstaller.SupportedInstallModes.Len() == 0 {
+	if i.SupportedInstallModes.Len() == 0 {
 		return fmt.Errorf("operator %q is not installable: no supported install modes", bundle.CSV.GetName())
 	}
 
-	i.OperatorInstaller.Channel, err = getChannelForCSVName(pkg, i.OperatorInstaller.StartingCSV)
+	i.Channel, err = getChannelForCSVName(pkg, i.StartingCSV)
 	if err != nil {
 		return err
 	}
 
-	i.ConfigMapCatalogCreator.Package = pkg
-	i.ConfigMapCatalogCreator.Bundles = bundles
+	i.Package = pkg
+	i.Bundles = bundles
 
 	return nil
 }

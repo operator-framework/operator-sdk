@@ -467,7 +467,7 @@ func newDeploymentWithServiceAccount(name, saName string) (d appsv1.Deployment) 
 // newDeploymentWithLabels returns a deployment with the given labels
 func newDeploymentWithLabels(name string, labels labels.Set) appsv1.Deployment {
 	d := newDeployment(name, nil)
-	d.ObjectMeta.Labels = labels
+	d.Labels = labels
 	return d
 }
 
