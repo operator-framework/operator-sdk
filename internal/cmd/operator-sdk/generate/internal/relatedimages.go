@@ -147,5 +147,5 @@ func (c *relatedImageCollector) collectedRelatedImages() []operatorsv1alpha1.Rel
 
 // formatName transforms RELATED_IMAGE_This_IS_a_cool_image to this-is-a-cool-image
 func (c *relatedImageCollector) formatName(name string) string {
-	return strings.ToLower(strings.Replace(strings.TrimPrefix(name, relatedImagePrefix), "_", "-", -1))
+	return strings.ToLower(strings.ReplaceAll(strings.TrimPrefix(name, relatedImagePrefix), "_", "-"))
 }

@@ -374,7 +374,7 @@ func createJSONMergePatch(existingJSON, expectedJSON []byte) ([]byte, error) {
 	// All "add" operations without a value (null) can be ignored
 	patchOps := make([]jsonpatch.JsonPatchOperation, 0)
 	for _, op := range ops {
-		if op.Operation != "remove" && !(op.Operation == "add" && op.Value == nil) {
+		if op.Operation != "remove" && (op.Operation != "add" || op.Value != nil) {
 			patchOps = append(patchOps, op)
 		}
 	}

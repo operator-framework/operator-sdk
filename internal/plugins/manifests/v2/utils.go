@@ -37,10 +37,10 @@ func HasSupportForKustomizeV4(c config.Config) bool {
 	// we have data only into the pluginChain
 	for _, pluginKey := range c.GetPluginChain() {
 		if strings.HasPrefix(pluginKey, "go") {
-			switch {
-			case pluginKey == kubebuilderGoV3:
+			switch pluginKey {
+			case kubebuilderGoV3:
 				return false
-			case pluginKey == kubebuilderGoV2:
+			case kubebuilderGoV2:
 				return false
 			}
 		}

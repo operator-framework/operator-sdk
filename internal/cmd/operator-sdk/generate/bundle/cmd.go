@@ -147,7 +147,7 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 }
 
 func (c bundleCmd) println(a ...interface{}) {
-	if !(c.quiet || c.stdout) {
+	if !c.quiet && !c.stdout {
 		fmt.Println(a...)
 	}
 }

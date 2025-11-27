@@ -33,7 +33,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 	var (
 		p         pkgManToBundleCmd
 		pkgManDir string
-		outputDir string = "bundle-output"
+		outputDir = "bundle-output"
 	)
 
 	BeforeEach(func() {

@@ -23,7 +23,7 @@ func (mh *Memcached) implementingE2ETests() {
 	testUtilsDir := filepath.Join(testDir, "utils")
 
 	// Following we will create the directories
-	// Create the golang files with a string replace inside onlu
+	// Create the golang files with a string replace inside only
 	// Then, replace the string replace by the template contents
 	mh.createDirs(testDir, testE2eDir, testUtilsDir)
 	mh.createGoFiles(testE2eDir, testUtilsDir)

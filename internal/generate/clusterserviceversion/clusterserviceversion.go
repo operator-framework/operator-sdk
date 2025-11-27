@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/blang/semver/v4"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 
@@ -128,7 +127,7 @@ func (g *Generator) Generate(opts ...Option) (err error) {
 }
 
 // setSDKAnnotations adds SDK metric labels to the base if they do not exist.
-func (g Generator) setAnnotations(csv *v1alpha1.ClusterServiceVersion) {
+func (g Generator) setAnnotations(csv *operatorsv1alpha1.ClusterServiceVersion) {
 	annotations := csv.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)

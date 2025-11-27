@@ -134,7 +134,7 @@ func (c bundleCmd) validateManifests() (err error) {
 	isInputDir := c.inputDir != ""
 	isLegacyDirs := c.deployDir != "" || c.crdsDir != ""
 	switch {
-	case !(isPipeReader || isInputDir || isLegacyDirs):
+	case !isPipeReader && !isInputDir && !isLegacyDirs:
 		return errors.New("one of stdin, --input-dir, or --deploy-dir (and optionally --crds-dir) must be set")
 	case isPipeReader && (isInputDir || isLegacyDirs):
 		return errors.New("none of --input-dir, --deploy-dir, or --crds-dir may be set if reading from stdin")

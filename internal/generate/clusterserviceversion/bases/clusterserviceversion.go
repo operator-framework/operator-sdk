@@ -69,7 +69,7 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 		// Auto-migrate bases with names matching "<operator name>.vX.Y.Z", which
 		// may cause problems with the CSV validator.
 		if base.GetName() == b.OperatorName+".vX.Y.Z" {
-			base.SetName(fmt.Sprintf("%s.v%s", b.OperatorName, base.Spec.Version.Version.String()))
+			base.SetName(fmt.Sprintf("%s.v%s", b.OperatorName, base.Spec.Version.String()))
 		}
 	} else {
 		b.setDefaults()

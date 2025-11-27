@@ -64,7 +64,7 @@ func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion,
 	csv.Spec.InstallStrategy = strategy
 
 	// Update createdAt timestamp annotation since the CSV has been updated.
-	csv.ObjectMeta.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
+	csv.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 
 	applyCustomResourceDefinitions(c, csv)
 	if err := applyCustomResources(c, csv); err != nil {
