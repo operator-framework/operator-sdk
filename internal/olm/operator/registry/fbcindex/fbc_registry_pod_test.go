@@ -38,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 const testIndexImageTag = "some-image:v1.2.3"
@@ -303,6 +304,79 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(rp.pod.Spec.Containers[0].Command).Should(ContainElements("sh", "-c", containerCommandFor(rp.FBCIndexRootDir, rp.GRPCPort)))
 				Expect(rp.pod.Spec.InitContainers).Should(HaveLen(1))
 				Expect(rp.pod.Spec.InitContainers[0].VolumeMounts).Should(HaveLen(2))
+			})
+		})
+
+		Context("with SecurityContext set to restricted", func() {
+			It("should apply restrictive security context to pod, containers, and init containers", func() {
+				schm := runtime.NewScheme()
+				Expect(v1alpha1.AddToScheme(schm)).ShouldNot(HaveOccurred())
+				Expect(corev1.AddToScheme(schm)).ShouldNot(HaveOccurred())
+
+				// Use an interceptor to make the pod appear Running on Get calls
+				fakeClient := fakeclient.NewClientBuilder().
+					WithScheme(schm).
+					WithInterceptorFuncs(interceptor.Funcs{
+						Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+							if err := c.Get(ctx, key, obj, opts...); err != nil {
+								return err
+							}
+							if pod, ok := obj.(*corev1.Pod); ok {
+								pod.Status.Phase = corev1.PodRunning
+							}
+							return nil
+						},
+					}).
+					Build()
+
+				restrictedCfg := &operator.Configuration{
+					Client:    fakeClient,
+					Namespace: "test-default",
+					Scheme:    schm,
+				}
+
+				cs := &v1alpha1.CatalogSource{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-catalogsource",
+					},
+				}
+
+				restrictedRp := &FBCRegistryPod{
+					BundleItems:     defaultBundleItems,
+					IndexImage:      testIndexImageTag,
+					SecurityContext: "restricted",
+				}
+
+				pod, err := restrictedRp.Create(context.Background(), restrictedCfg, cs)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(pod).NotTo(BeNil())
+
+				By("verifying pod-level security context")
+				Expect(pod.Spec.SecurityContext).NotTo(BeNil())
+				Expect(pod.Spec.SecurityContext.SeccompProfile).NotTo(BeNil())
+				Expect(pod.Spec.SecurityContext.SeccompProfile.Type).To(Equal(corev1.SeccompProfileTypeRuntimeDefault))
+
+				By("verifying main container security context")
+				Expect(pod.Spec.Containers).To(HaveLen(1))
+				sc := pod.Spec.Containers[0].SecurityContext
+				Expect(sc).NotTo(BeNil())
+				Expect(*sc.Privileged).To(BeFalse())
+				Expect(*sc.ReadOnlyRootFilesystem).To(BeFalse())
+				Expect(*sc.AllowPrivilegeEscalation).To(BeFalse())
+				Expect(sc.Capabilities).NotTo(BeNil())
+				Expect(sc.Capabilities.Drop).To(ContainElement(corev1.Capability("ALL")))
+
+				By("verifying init container security contexts")
+				Expect(pod.Spec.InitContainers).NotTo(BeEmpty())
+				for i, initContainer := range pod.Spec.InitContainers {
+					isc := initContainer.SecurityContext
+					Expect(isc).NotTo(BeNil(), "init container %d (%s) should have security context", i, initContainer.Name)
+					Expect(*isc.Privileged).To(BeFalse(), "init container %d should not be privileged", i)
+					Expect(*isc.ReadOnlyRootFilesystem).To(BeFalse(), "init container %d ReadOnlyRootFilesystem", i)
+					Expect(*isc.AllowPrivilegeEscalation).To(BeFalse(), "init container %d should not allow privilege escalation", i)
+					Expect(isc.Capabilities).NotTo(BeNil(), "init container %d should have capabilities", i)
+					Expect(isc.Capabilities.Drop).To(ContainElement(corev1.Capability("ALL")), "init container %d should drop ALL capabilities", i)
+				}
 			})
 		})
 	})
