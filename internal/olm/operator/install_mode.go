@@ -38,8 +38,8 @@ func (i *InstallMode) Set(str string) error {
 	split := strings.SplitN(str, "=", 2)
 	i.InstallModeType = v1alpha1.InstallModeType(split[0])
 	if len(split) == 2 {
-		namespaces := strings.Split(split[1], ",")
-		for _, ns := range namespaces {
+		namespaces := strings.SplitSeq(split[1], ",")
+		for ns := range namespaces {
 			i.TargetNamespaces = append(i.TargetNamespaces, strings.TrimSpace(ns))
 		}
 		sort.Strings(i.TargetNamespaces)
