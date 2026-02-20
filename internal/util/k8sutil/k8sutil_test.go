@@ -83,20 +83,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			name:       "Returns false when owner is Namespaced and dependent resource is Clusterscoped.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyClusterKind",
 					"apiVersion": "rbac/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
 					},
@@ -108,20 +108,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			name:       "Returns true for owner and dependant are both ClusterScoped.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyClusterKind",
 					"apiVersion": "rbac/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyClusterKind",
 					"apiVersion": "rbac/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
 					},
@@ -133,20 +133,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			name:       "Returns true when owner and dependant are Namespaced with in same namespace.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
 					},
@@ -158,20 +158,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			name:       "Returns false when owner,and dependant are Namespaced, with different namespaces.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns1",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
 					},
@@ -183,20 +183,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			name:       "Returns false for invalid Owner Kind.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "Dummy",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns1",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
 					},
@@ -208,20 +208,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			name:       "Returns false for invalid dependant Kind.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns1",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "Dummy",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
 					},
@@ -234,20 +234,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			restMapper:   restMapper,
 			depNamespace: "ns",
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name": "example-nginx-role",
 					},
 				},
@@ -259,20 +259,20 @@ func TestSupportsOwnerReference(t *testing.T) {
 			restMapper:   restMapper,
 			depNamespace: "ns1",
 			owner: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "example-nginx-controller",
 						"namespace": "ns",
 					},
 				},
 			},
 			dependent: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"kind":       "MyNamespaceKind",
 					"apiVersion": "apps/v1alpha1",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name": "example-nginx-role",
 					},
 				},

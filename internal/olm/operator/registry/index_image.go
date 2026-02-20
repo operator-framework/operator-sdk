@@ -402,7 +402,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 		// search for the list of the previous injected bundles using the catalog source's annotations
 		if value, hasAnnotation := annotations[injectedBundlesAnnotation]; hasAnnotation && value != "" {
-			var injectedBundles []map[string]interface{}
+			var injectedBundles []map[string]any
 			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &injectedBundles); err != nil {
 				return fmt.Errorf("unable to unmarshal injected bundles json: %v", err)
 			}

@@ -79,7 +79,7 @@ func makeConfigMapsForPackageManifests(pkg *apimanifests.PackageManifest,
 
 // makeObjectBinaryData creates a ConfigMap's binary data, indexed by a file
 // name key containing names.
-func makeObjectBinaryData(obj interface{}, names ...string) (map[string][]byte, error) {
+func makeObjectBinaryData(obj any, names ...string) (map[string][]byte, error) {
 	binaryData := make(map[string][]byte)
 	err := addObjectToBinaryData(binaryData, obj, names...)
 	return binaryData, err
@@ -100,7 +100,7 @@ func makeBundleBinaryData(bundle *apimanifests.Bundle) (map[string][]byte, error
 
 // addObjectToBinaryData adds an object's bytes to binaryData indexed by a
 // file name key containing names.
-func addObjectToBinaryData(binaryData map[string][]byte, obj interface{}, names ...string) error {
+func addObjectToBinaryData(binaryData map[string][]byte, obj any, names ...string) error {
 	b, err := yaml.Marshal(obj)
 	if err != nil {
 		return fmt.Errorf("error creating %s binary data: %w", names, err)

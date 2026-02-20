@@ -25,9 +25,9 @@ import (
 func TestDetermineReconcilePeriod(t *testing.T) {
 	testPeriod1, _ := time.ParseDuration("10s")
 	obj1 := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"annotations": map[string]interface{}{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"annotations": map[string]any{
 					"name":                        "test-obj-1",
 					helmReconcilePeriodAnnotation: "3s",
 				},
@@ -41,9 +41,9 @@ func TestDetermineReconcilePeriod(t *testing.T) {
 
 	testPeriod2, _ := time.ParseDuration("1h3m4s")
 	obj2 := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"annotations": map[string]interface{}{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"annotations": map[string]any{
 					"name": "test-obj-2",
 				},
 			},
@@ -56,9 +56,9 @@ func TestDetermineReconcilePeriod(t *testing.T) {
 
 	testPeriod3, _ := time.ParseDuration("5m15s")
 	obj3 := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"annotations": map[string]interface{}{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"annotations": map[string]any{
 					"name":                        "test-obj-3",
 					helmReconcilePeriodAnnotation: "4x",
 				},
@@ -73,48 +73,48 @@ func TestDetermineReconcilePeriod(t *testing.T) {
 
 func TestHasAnnotation(t *testing.T) {
 	upgradeForceTests := []struct {
-		input       map[string]interface{}
+		input       map[string]any
 		expectedVal bool
 		expectedOut string
 		name        string
 	}{
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/upgrade-force": "True",
 			},
 			expectedVal: true,
 			name:        "upgrade force base case true",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/upgrade-force": "False",
 			},
 			expectedVal: false,
 			name:        "upgrade force base case false",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/upgrade-force": "1",
 			},
 			expectedVal: true,
 			name:        "upgrade force true as int",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/upgrade-force": "0",
 			},
 			expectedVal: false,
 			name:        "upgrade force false as int",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/wrong-annotation": "true",
 			},
 			expectedVal: false,
 			name:        "upgrade force annotation not set",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/upgrade-force": "invalid",
 			},
 			expectedVal: false,
@@ -127,48 +127,48 @@ func TestHasAnnotation(t *testing.T) {
 	}
 
 	uninstallWaitTests := []struct {
-		input       map[string]interface{}
+		input       map[string]any
 		expectedVal bool
 		expectedOut string
 		name        string
 	}{
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/uninstall-wait": "True",
 			},
 			expectedVal: true,
 			name:        "uninstall wait base case true",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/uninstall-wait": "False",
 			},
 			expectedVal: false,
 			name:        "uninstall wait base case false",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/uninstall-wait": "1",
 			},
 			expectedVal: true,
 			name:        "uninstall wait true as int",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/uninstall-wait": "0",
 			},
 			expectedVal: false,
 			name:        "uninstall wait false as int",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/wrong-annotation": "true",
 			},
 			expectedVal: false,
 			name:        "uninstall wait annotation not set",
 		},
 		{
-			input: map[string]interface{}{
+			input: map[string]any{
 				"helm.sdk.operatorframework.io/uninstall-wait": "invalid",
 			},
 			expectedVal: false,
@@ -181,10 +181,10 @@ func TestHasAnnotation(t *testing.T) {
 	}
 }
 
-func annotations(m map[string]interface{}) *unstructured.Unstructured {
+func annotations(m map[string]any) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
+		Object: map[string]any{
+			"metadata": map[string]any{
 				"annotations": m,
 			},
 		},

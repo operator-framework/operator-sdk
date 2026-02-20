@@ -118,7 +118,7 @@ func makeObjectFileName(obj client.Object) string {
 }
 
 // writeObjectToFile marshals crd to bytes and writes them to dir in file.
-func writeObjectToFile(dir string, obj interface{}, fileName string) error {
+func writeObjectToFile(dir string, obj any, fileName string) error {
 	f, err := os.Create(filepath.Join(dir, fileName))
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func writeObjectToFile(dir string, obj interface{}, fileName string) error {
 }
 
 // writeObject marshals crd to bytes and writes them to w.
-func writeObject(w io.Writer, obj interface{}) error {
+func writeObject(w io.Writer, obj any) error {
 	b, err := yaml.Marshal(obj)
 	if err != nil {
 		return err

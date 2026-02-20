@@ -36,8 +36,8 @@ type TestSuites struct {
 
 // Preperty is a named property that will be formatted as an XML tag.
 type Property struct {
-	Name  string      `xml:"name,attr"`
-	Value interface{} `xml:"value,attr"`
+	Name  string `xml:"name,attr"`
+	Value any    `xml:"value,attr"`
 }
 
 // TestSuite contains for details about a test beyond the final status

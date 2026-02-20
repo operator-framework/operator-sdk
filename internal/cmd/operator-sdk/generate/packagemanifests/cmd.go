@@ -111,7 +111,7 @@ func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.packageName, "package", "", "Package name")
 }
 
-func (c packagemanifestsCmd) println(a ...interface{}) {
+func (c packagemanifestsCmd) println(a ...any) {
 	if !c.quiet && !c.stdout {
 		fmt.Println(a...)
 	}

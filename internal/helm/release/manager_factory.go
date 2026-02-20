@@ -67,7 +67,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		return nil, fmt.Errorf("failed to get helm release name: %w", err)
 	}
 
-	crValues, ok := cr.Object["spec"].(map[string]interface{})
+	crValues, ok := cr.Object["spec"].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to get spec: expected map[string]interface{}")
 	}
@@ -148,8 +148,8 @@ func releaseHistory(storageBackend *storage.Storage, releaseName string) ([]*hel
 	return releaseHistory, len(releaseHistory) > 0, nil
 }
 
-func parseOverrides(in map[string]string) (map[string]interface{}, error) {
-	out := make(map[string]interface{})
+func parseOverrides(in map[string]string) (map[string]any, error) {
+	out := make(map[string]any)
 	for k, v := range in {
 		val := fmt.Sprintf("%s=%s", k, v)
 		if err := strvals.ParseIntoString(val, out); err != nil {
@@ -159,15 +159,15 @@ func parseOverrides(in map[string]string) (map[string]interface{}, error) {
 	return out, nil
 }
 
-func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{}, len(a))
+func mergeMaps(a, b map[string]any) map[string]any {
+	out := make(map[string]any, len(a))
 	for k, v := range a {
 		out[k] = v
 	}
 	for k, v := range b {
-		if v, ok := v.(map[string]interface{}); ok {
+		if v, ok := v.(map[string]any); ok {
 			if bv, ok := out[k]; ok {
-				if bv, ok := bv.(map[string]interface{}); ok {
+				if bv, ok := bv.(map[string]any); ok {
 					out[k] = mergeMaps(bv, v)
 					continue
 				}

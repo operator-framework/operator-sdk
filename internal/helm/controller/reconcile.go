@@ -433,8 +433,8 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 // will be returned. An error will be thrown if the custom resource time period is not in proper format.
 func determineReconcilePeriod(currentPeriod time.Duration, o *unstructured.Unstructured) (time.Duration, error) {
 	// If custom resource annotations are present, they will take precedence over the command-line flag
-	if annot, exists := o.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"]; exists {
-		if timeDuration, present := annot.(map[string]interface{})[helmReconcilePeriodAnnotation]; present {
+	if annot, exists := o.UnstructuredContent()["metadata"].(map[string]any)["annotations"]; exists {
+		if timeDuration, present := annot.(map[string]any)[helmReconcilePeriodAnnotation]; present {
 			annotationsPeriod, err := time.ParseDuration(timeDuration.(string))
 			if err != nil {
 				return currentPeriod, err // First return value does not matter, since err != nil

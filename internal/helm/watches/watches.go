@@ -50,7 +50,7 @@ type Watch struct {
 // watches.yaml data. To ensure the correct defaults are applied when loading
 // watches.yaml, use Load() or LoadReader() instead of this function and/or
 // yaml.Unmarshal().
-func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (w *Watch) UnmarshalYAML(unmarshal func(any) error) error {
 	// by default, the operator will watch dependent resources
 	trueVal := true
 	w.WatchDependentResources = &trueVal

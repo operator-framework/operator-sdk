@@ -42,7 +42,7 @@ type templObj struct {
 // convertConfig3AlphaTo3 returns cfgBytes converted to 3 iff cfgBytes is version 3-alpha.
 func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
 	tObj := templObj{}
-	cfgObj := make(map[string]interface{}, 5)
+	cfgObj := make(map[string]any, 5)
 	if err := yaml.Unmarshal(cfgBytes, &cfgObj); err != nil {
 		return nil, err
 	}
@@ -72,13 +72,13 @@ func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
 			domain = domainObj.(string)
 		}
 
-		resObjs := obj.([]interface{})
+		resObjs := obj.([]any)
 		resources := make([]resource.Resource, len(resObjs))
 
 		for i, resObj := range resObjs {
 			resources[i].Domain = domain
 
-			res := resObj.(map[string]interface{})
+			res := resObj.(map[string]any)
 			if groupObj, ok := res["group"]; ok {
 				resources[i].Group = groupObj.(string)
 			}

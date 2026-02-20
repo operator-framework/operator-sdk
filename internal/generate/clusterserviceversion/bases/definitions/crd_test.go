@@ -34,7 +34,7 @@ import (
 var _ = Describe("getTypedDescriptors", func() {
 	var (
 		markedFields map[crd.TypeIdent][]*fieldInfo
-		out          []interface{}
+		out          []any
 	)
 
 	BeforeEach(func() {
@@ -50,7 +50,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{
+						"": []any{
 							Descriptor{"spec", "Foo", []string{"urn:alm:descriptor:com.tectonic.ui:text"}, nil},
 						},
 					},
@@ -59,7 +59,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}
 		out = getTypedDescriptors(markedFields, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
 		Expect(out).To(HaveLen(1))
-		Expect(out).To(BeEquivalentTo([]interface{}{
+		Expect(out).To(BeEquivalentTo([]any{
 			v1alpha1.SpecDescriptor{
 				DisplayName:  "Foo",
 				XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:text"},
@@ -71,7 +71,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{
+						"": []any{
 							Descriptor{"status", "Foo", []string{"urn:alm:descriptor:com.tectonic.ui:text"}, nil},
 						},
 					},
@@ -86,7 +86,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{
+						"": []any{
 							Descriptor{"status", "Foo", []string{"urn:alm:descriptor:com.tectonic.ui:text"}, nil},
 						},
 					},
@@ -95,7 +95,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}
 		out = getTypedDescriptors(markedFields, reflect.TypeOf(v1alpha1.StatusDescriptor{}), status)
 		Expect(out).To(HaveLen(1))
-		Expect(out).To(BeEquivalentTo([]interface{}{
+		Expect(out).To(BeEquivalentTo([]any{
 			v1alpha1.StatusDescriptor{
 				DisplayName:  "Foo",
 				XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:text"},
@@ -107,7 +107,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{
+						"": []any{
 							Descriptor{"spec", "Foo", nil, nil},
 							Descriptor{"spec", "", nil, intPtr(2)},
 							Descriptor{"spec", "", []string{"urn:alm:descriptor:com.tectonic.ui:text"}, nil},
@@ -120,7 +120,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}
 		out = getTypedDescriptors(markedFields, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
 		Expect(out).To(HaveLen(1))
-		Expect(out).To(BeEquivalentTo([]interface{}{
+		Expect(out).To(BeEquivalentTo([]any{
 			v1alpha1.SpecDescriptor{
 				DisplayName:  "Foo",
 				XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:text"},
@@ -133,7 +133,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{Descriptor{"spec", "Foo", nil, intPtr(1)}},
+						"": []any{Descriptor{"spec", "Foo", nil, intPtr(1)}},
 					},
 				},
 				pathSegments: []string{"foo"},
@@ -141,7 +141,7 @@ var _ = Describe("getTypedDescriptors", func() {
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{Descriptor{"spec", "Bar", nil, intPtr(0)}},
+						"": []any{Descriptor{"spec", "Bar", nil, intPtr(0)}},
 					},
 				},
 				pathSegments: []string{"bar"},
@@ -149,7 +149,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}
 		out = getTypedDescriptors(markedFields, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
 		Expect(out).To(HaveLen(2))
-		Expect(out).To(BeEquivalentTo([]interface{}{
+		Expect(out).To(BeEquivalentTo([]any{
 			v1alpha1.SpecDescriptor{DisplayName: "Bar", Path: "bar"},
 			v1alpha1.SpecDescriptor{DisplayName: "Foo", Path: "foo"},
 		}))
@@ -166,7 +166,7 @@ func intPtr(i int) *int { return &i }
 
 // makeMockMarkedFields returns a randomly generated mock marked field set,
 // and the expected sorted set of descriptors.
-func makeMockMarkedFields() (markedFields map[crd.TypeIdent][]*fieldInfo, expected []interface{}) {
+func makeMockMarkedFields() (markedFields map[crd.TypeIdent][]*fieldInfo, expected []any) {
 	descBuckets := make(map[int][]v1alpha1.SpecDescriptor, 100)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	markedFields = make(map[crd.TypeIdent][]*fieldInfo, 100)
@@ -186,7 +186,7 @@ func makeMockMarkedFields() (markedFields map[crd.TypeIdent][]*fieldInfo, expect
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
-						"": []interface{}{Descriptor{"spec", name, nil, intPtr(order)}},
+						"": []any{Descriptor{"spec", name, nil, intPtr(order)}},
 					},
 				},
 				pathSegments: []string{s},
