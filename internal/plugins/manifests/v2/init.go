@@ -21,8 +21,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"sigs.k8s.io/kubebuilder/v4/pkg/plugin/util"
-
 	"github.com/spf13/afero"
 	"sigs.k8s.io/kubebuilder/v4/pkg/config"
 	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
@@ -125,15 +123,6 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 
 	if err := s.config.EncodePluginConfig(pluginKey, Config{}); err != nil && !errors.As(err, &config.UnsupportedFieldError{}) {
 		return err
-	}
-
-	// TODO: remove this when we bump kubebuilder to v5.x
-	// Not adopt changes introduced by mistake in the default Makefile of kubebuilder v4.x.
-	if operatorType == projutil.OperatorTypeGo {
-		err = util.ReplaceInFile("Makefile", "$(KIND) create cluster --name $(KIND_CLUSTER)", makefileTestFix)
-		if err != nil {
-			return fmt.Errorf("error replacing Makefile: %w", err)
-		}
 	}
 
 	return nil
@@ -322,15 +311,4 @@ catalog-build: opm ## Build a catalog image.
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 `
-
-	// TODO: remove it when we bump kubebuilder to v4.x
-	// We will not adopt this change since it did not work and was a bug introduced in the
-	// default Makefile of kubebuilder v4.x.
-	makefileTestFix = `@case "$$($(KIND) get clusters)" in \
-		*"$(KIND_CLUSTER)"*) \
-			echo "Kind cluster '$(KIND_CLUSTER)' already exists. Skipping creation." ;; \
-		*) \
-			echo "Creating Kind cluster '$(KIND_CLUSTER)'..."; \
-			$(KIND) create cluster --name $(KIND_CLUSTER) ;; \
-	esac`
 )

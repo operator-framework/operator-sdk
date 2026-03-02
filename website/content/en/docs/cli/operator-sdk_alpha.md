@@ -29,5 +29,6 @@ Alpha subcommands are for unstable features.
 
 * [operator-sdk](../operator-sdk)	 - 
 * [operator-sdk alpha config-3alpha-to-3](../operator-sdk_alpha_config-3alpha-to-3)	 - Convert your PROJECT config file from version 3-alpha to 3
-* [operator-sdk alpha generate](../operator-sdk_alpha_generate)	 - Re-scaffold an existing Kuberbuilder project
+* [operator-sdk alpha generate](../operator-sdk_alpha_generate)	 - Re-scaffold a Kubebuilder project from its PROJECT file
+* [operator-sdk alpha update](../operator-sdk_alpha_update)	 - Update your project to a newer version (3-way merge; squash by default)
 

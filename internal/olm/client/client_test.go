@@ -358,6 +358,10 @@ func (c *errClient) reset() {
 	c.noMatchCounter = 0
 }
 
+func (c *errClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return c.cli.Apply(ctx, obj, opts...)
+}
+
 func (c *errClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return c.cli.Get(ctx, key, obj, opts...)
 }

@@ -70,6 +70,7 @@ spec:
           value: memcached:1.4.36-alpine
         ports: []
         securityContext:
+          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           capabilities:
             drop:
