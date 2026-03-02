@@ -20,8 +20,8 @@ import (
 	"os/exec"
 	"strings"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:staticcheck
+	. "github.com/onsi/gomega"    //nolint:staticcheck
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-sdk/internal/testutils"

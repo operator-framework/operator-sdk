@@ -247,7 +247,7 @@ var _ = Describe("Deployment", func() {
 		})
 		It("should return a dployment for a custom made function", func() {
 			f := func(d *appsv1.Deployment) {
-				d.ObjectMeta.Namespace = "testns2"
+				d.Namespace = "testns2"
 			}
 			f(dep)
 
@@ -258,7 +258,7 @@ var _ = Describe("Deployment", func() {
 			f1(dep)
 
 			f2 := func(d *appsv1.Deployment) {
-				d.ObjectMeta.Namespace = "testns2"
+				d.Namespace = "testns2"
 			}
 			f2(dep)
 
