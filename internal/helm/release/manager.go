@@ -68,7 +68,7 @@ type manager struct {
 	releaseName string
 	namespace   string
 
-	values map[string]interface{}
+	values map[string]any
 	status *types.HelmAppStatus
 
 	isInstalled       bool
@@ -157,7 +157,7 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 }
 
 func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
-	values map[string]interface{}) (*rpb.Release, error) {
+	values map[string]any) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true

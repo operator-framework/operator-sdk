@@ -84,7 +84,7 @@ func ValidateBundleContent(logger *log.Entry, bundle *apimanifests.Bundle, media
 	}
 
 	// Validate all CRD versions in the bundle together.
-	var crds []interface{}
+	var crds []any
 	for _, crd := range bundle.V1beta1CRDs {
 		crds = append(crds, crd)
 	}

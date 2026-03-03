@@ -117,7 +117,7 @@ func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, type
 	return description, descriptionOrder, nil
 }
 
-func (g generator) getTypedDescriptors(pkg *loader.Package, kindType *markers.TypeInfo, t reflect.Type, descType string) ([]interface{}, error) {
+func (g generator) getTypedDescriptors(pkg *loader.Package, kindType *markers.TypeInfo, t reflect.Type, descType string) ([]any, error) {
 	// Find child in the kind type.
 	child, err := findChildForDescType(kindType, descType)
 	if err != nil {
@@ -133,7 +133,7 @@ func (g generator) getTypedDescriptors(pkg *loader.Package, kindType *markers.Ty
 	return getTypedDescriptors(markedFields, t, descType), nil
 }
 
-func getTypedDescriptors(markedFields map[crd.TypeIdent][]*fieldInfo, t reflect.Type, descType string) (descriptors []interface{}) {
+func getTypedDescriptors(markedFields map[crd.TypeIdent][]*fieldInfo, t reflect.Type, descType string) (descriptors []any) {
 	descriptorBuckets := make(map[int][]reflect.Value)
 	orders := make([]int, 0)
 	for _, fields := range markedFields {

@@ -46,7 +46,7 @@ type Uninstall struct {
 	DeleteOperatorGroups     bool
 	DeleteOperatorGroupNames []string
 
-	Logf func(string, ...interface{})
+	Logf func(string, ...any)
 }
 
 func NewUninstall(cfg *Configuration) *Uninstall {

@@ -35,7 +35,7 @@ type HelmApp struct {
 	Status            HelmAppStatus `json:"status,omitempty"`
 }
 
-type HelmAppSpec map[string]interface{}
+type HelmAppSpec map[string]any
 
 type HelmAppConditionType string
 type ConditionStatus string
@@ -79,8 +79,8 @@ type HelmAppStatus struct {
 	DeployedRelease *HelmAppRelease    `json:"deployedRelease,omitempty"`
 }
 
-func (s *HelmAppStatus) ToMap() (map[string]interface{}, error) {
-	var out map[string]interface{}
+func (s *HelmAppStatus) ToMap() (map[string]any, error) {
+	var out map[string]any
 	jsonObj, err := json.Marshal(&s)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func StatusFor(cr *unstructured.Unstructured) *HelmAppStatus {
 	switch s := cr.Object["status"].(type) {
 	case *HelmAppStatus:
 		return s
-	case map[string]interface{}:
+	case map[string]any:
 		var status *HelmAppStatus
 		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(s, &status); err != nil {
 			return &HelmAppStatus{}

@@ -84,10 +84,10 @@ var _ = Describe("Registry", func() {
 						Name: "testbundle",
 						Objects: []*unstructured.Unstructured{
 							{
-								Object: map[string]interface{}{"val1": "val1"},
+								Object: map[string]any{"val1": "val1"},
 							},
 							{
-								Object: map[string]interface{}{"val2": "va2"},
+								Object: map[string]any{"val2": "va2"},
 							},
 						},
 						CSV: &v1alpha1.ClusterServiceVersion{
@@ -145,10 +145,10 @@ var _ = Describe("Registry", func() {
 						Name: "testbundle",
 						Objects: []*unstructured.Unstructured{
 							{
-								Object: map[string]interface{}{"val1": "val1"},
+								Object: map[string]any{"val1": "val1"},
 							},
 							{
-								Object: map[string]interface{}{"val2": "va2"},
+								Object: map[string]any{"val2": "va2"},
 							},
 						},
 						CSV: &v1alpha1.ClusterServiceVersion{
@@ -226,10 +226,10 @@ var _ = Describe("Registry", func() {
 						Name:    "testbundle",
 						Objects: []*unstructured.Unstructured{
 							{
-								Object: map[string]interface{}{"val1": "val1"},
+								Object: map[string]any{"val1": "val1"},
 							},
 							{
-								Object: map[string]interface{}{"val2": "va2"},
+								Object: map[string]any{"val2": "va2"},
 							},
 						},
 						CSV: &v1alpha1.ClusterServiceVersion{

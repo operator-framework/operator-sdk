@@ -88,14 +88,14 @@ func TestStatusForFilledRaw(t *testing.T) {
 
 func newTestResource() *unstructured.Unstructured {
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"kind":       "Character",
 			"apiVersion": "stable.nicolerenee.io",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      "dory",
 				"namespace": testNamespaceName,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"Name": "Dory",
 				"From": "Finding Nemo",
 				"By":   "Disney",
@@ -119,9 +119,9 @@ func newTestStatus() *HelmAppStatus {
 	}
 }
 
-func newTestStatusRaw() map[string]interface{} {
-	return map[string]interface{}{
-		"conditions": []map[string]interface{}{
+func newTestStatusRaw() map[string]any {
+	return map[string]any{
+		"conditions": []map[string]any{
 			{
 				"type":               "Deployed",
 				"status":             "True",
@@ -130,6 +130,6 @@ func newTestStatusRaw() map[string]interface{} {
 				"lastTransitionTime": now.UTC(),
 			},
 		},
-		"deployedRelease": map[string]interface{}{"name": "SomeRelease"},
+		"deployedRelease": map[string]any{"name": "SomeRelease"},
 	}
 }

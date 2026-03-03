@@ -18,11 +18,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type MarshalFunc func(interface{}) ([]byte, error)
+type MarshalFunc func(any) ([]byte, error)
 
 // GetObjectBytes marshalls an object with m and removes runtime-managed fields:
 // 'status', 'creationTimestamp'
-func GetObjectBytes(obj interface{}, m MarshalFunc) ([]byte, error) {
+func GetObjectBytes(obj any, m MarshalFunc) ([]byte, error) {
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func GetObjectBytes(obj interface{}, m MarshalFunc) ([]byte, error) {
 	return m(u)
 }
 
-func deleteKeyFromUnstructured(u map[string]interface{}, key string) {
+func deleteKeyFromUnstructured(u map[string]any, key string) {
 	if _, ok := u[key]; ok {
 		delete(u, key)
 		return
@@ -42,11 +42,11 @@ func deleteKeyFromUnstructured(u map[string]interface{}, key string) {
 
 	for _, v := range u {
 		switch t := v.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			deleteKeyFromUnstructured(t, key)
-		case []interface{}:
+		case []any:
 			for _, ti := range t {
-				if m, ok := ti.(map[string]interface{}); ok {
+				if m, ok := ti.(map[string]any); ok {
 					deleteKeyFromUnstructured(m, key)
 				}
 			}

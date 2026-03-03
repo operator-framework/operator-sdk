@@ -57,7 +57,7 @@ func Open(dir, fileName string) (*File, error) {
 }
 
 // WriteObject writes a k8s object to w.
-func WriteObject(w io.Writer, obj interface{}) error {
+func WriteObject(w io.Writer, obj any) error {
 	b, err := k8sutil.GetObjectBytes(obj, yaml.Marshal)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func WriteObject(w io.Writer, obj interface{}) error {
 }
 
 // WriteObject writes any object to w.
-func WriteYAML(w io.Writer, obj interface{}) error {
+func WriteYAML(w io.Writer, obj any) error {
 	b, err := yaml.Marshal(obj)
 	if err != nil {
 		return err

@@ -43,7 +43,7 @@ type ActionConfigGetter interface {
 func NewActionConfigGetter(cfg *rest.Config, rm meta.RESTMapper, log logr.Logger) (ActionConfigGetter, error) {
 	rcg := newRESTClientGetter(cfg, rm, "")
 	// Setup the debug log function that Helm will use
-	debugLog := func(format string, v ...interface{}) {
+	debugLog := func(format string, v ...any) {
 		if log.Enabled() {
 			log.V(1).Info(fmt.Sprintf(format, v...))
 		}
@@ -72,7 +72,7 @@ var _ ActionConfigGetter = &actionConfigGetter{}
 type actionConfigGetter struct {
 	kubeClient          *kube.Client
 	kubeClientSet       kubernetes.Interface
-	debugLog            func(string, ...interface{})
+	debugLog            func(string, ...any)
 	restClientGetter    *restClientGetter
 	watchedSecrets      map[string]*WatchedSecrets
 	watchedSecretsMutex *sync.Mutex

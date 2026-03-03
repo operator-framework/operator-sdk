@@ -98,7 +98,7 @@ func BundleValidationTest(bundleRoot string, metadata registryutil.LabelsMap) sc
 		return wrapResult(r)
 	}
 
-	objs := []interface{}{bundle, bundle.CSV}
+	objs := []any{bundle, bundle.CSV}
 	for _, crd := range bundle.V1CRDs {
 		objs = append(objs, crd)
 	}
@@ -253,7 +253,7 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	hasStatusDefinition := false
 	if cr.Object["status"] != nil {
 		// Ensure that has no empty keys
-		hasStatusDefinition = len(cr.Object["status"].(map[string]interface{})) > 0
+		hasStatusDefinition = len(cr.Object["status"].(map[string]any)) > 0
 	}
 
 	if !hasStatusDefinition {
@@ -284,7 +284,7 @@ func checkOwnedCSVSpecDescriptors(cr unstructured.Unstructured, csv *operatorsv1
 		return r
 	}
 
-	block := cr.Object[specDescriptor].(map[string]interface{})
+	block := cr.Object[specDescriptor].(map[string]any)
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
@@ -359,7 +359,7 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 			}
 			failed := false
 			if cr.Object["spec"] != nil {
-				spec := cr.Object["spec"].(map[string]interface{})
+				spec := cr.Object["spec"].(map[string]any)
 				for key := range spec {
 					if _, ok := version.Schema.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
 						failed = true
@@ -370,7 +370,7 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 				}
 			}
 			if cr.Object["status"] != nil {
-				status := cr.Object["status"].(map[string]interface{})
+				status := cr.Object["status"].(map[string]any)
 				for key := range status {
 					if _, ok := version.Schema.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
 						failed = true

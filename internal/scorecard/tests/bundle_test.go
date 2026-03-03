@@ -182,11 +182,11 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			It("should pass when status descriptor field is present in CR", func() {
 				cr := unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"status": map[string]interface{}{
+					Object: map[string]any{
+						"status": map[string]any{
 							"status": "val",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"spec": "val",
 						},
 					},
@@ -203,11 +203,11 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			It("should pass when required spec descriptor field is present in CR", func() {
 				cr := unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"status": map[string]interface{}{
+					Object: map[string]any{
+						"status": map[string]any{
 							"status": "val",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"spec": "val",
 						},
 					},
@@ -224,8 +224,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			It("should pass with warning when no status descriptor field is present in CR", func() {
 				cr := unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"spec": map[string]interface{}{
+					Object: map[string]any{
+						"spec": map[string]any{
 							"spec": "val",
 						},
 					},
@@ -243,11 +243,11 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			It("should fail CRD with given GVK cannot be found", func() {
 				cr := unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"status": map[string]interface{}{
+					Object: map[string]any{
+						"status": map[string]any{
 							"status": "val",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"spec": "val",
 						},
 					},
@@ -264,8 +264,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			It("should fail when CR does not have GVK set", func() {
 				cr := unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"status": map[string]interface{}{
+					Object: map[string]any{
+						"status": map[string]any{
 							"status": "val",
 						},
 					},
@@ -277,8 +277,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			It("should fail when required spec descriptor field is not present in CR", func() {
 				cr := unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"spec": map[string]interface{}{
+					Object: map[string]any{
+						"spec": map[string]any{
 							"node": "val",
 						},
 					},
@@ -296,8 +296,8 @@ var _ = Describe("Basic and OLM tests", func() {
 			It("should pass when CRs have spec field specified", func() {
 				cr := []unstructured.Unstructured{
 					{
-						Object: map[string]interface{}{
-							"spec": map[string]interface{}{
+						Object: map[string]any{
+							"spec": map[string]any{
 								"spec": "val",
 							},
 						},
@@ -310,7 +310,7 @@ var _ = Describe("Basic and OLM tests", func() {
 			It("should pass with warning when CRs do not have spec field specified", func() {
 				cr := []unstructured.Unstructured{
 					{
-						Object: map[string]interface{}{},
+						Object: map[string]any{},
 					},
 				}
 				result = checkSpec(cr, result)
@@ -361,8 +361,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 		It("should pass when CR has Spec field", func() {
 			cr = unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{
+				Object: map[string]any{
+					"spec": map[string]any{
 						"node": "val",
 					},
 				},
@@ -380,8 +380,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 		It("should fail when cr does not have required fields in Spec", func() {
 			cr = unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{
+				Object: map[string]any{
+					"spec": map[string]any{
 						"items": "val",
 					},
 				},
@@ -399,8 +399,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 		It("should skip and pass when version/kind does not match for CR with CRD", func() {
 			cr = unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{
+				Object: map[string]any{
+					"spec": map[string]any{
 						"node": "val",
 					},
 				},
