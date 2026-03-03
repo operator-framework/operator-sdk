@@ -1,5 +1,5 @@
 # Build the custom-scorecard-tests binary
-FROM --platform=$BUILDPLATFORM golang:1.24 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 ARG TARGETARCH
 
 WORKDIR /workspace
