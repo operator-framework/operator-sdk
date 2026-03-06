@@ -1,0 +1,4 @@
+
+- aggregation.clusterrolebinding.yaml
+- aggregation-subrole.clusterrole.yaml
+- aggregation.clusterrole.yaml
