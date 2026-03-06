@@ -103,7 +103,7 @@ jobs:
         echo tags=$(.github/workflows/get_image_tags.sh "$IMG" "v") >> $GITHUB_OUTPUT
 
     - name: build and push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         file: ./images/${{ matrix.id }}/Dockerfile
         context: .
@@ -149,7 +149,7 @@ jobs:
         echo tags=$(.github/workflows/get_image_tags.sh "$IMG" "scorecard-kuttl/v") >> $GITHUB_OUTPUT
 
     - name: build and push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         file: ./images/scorecard-test-kuttl/Dockerfile
         context: .
