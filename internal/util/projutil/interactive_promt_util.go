@@ -106,7 +106,7 @@ func readArray(reader *bufio.Reader) []string {
 	arr := make([]string, 0)
 	text := readLine(reader)
 
-	for _, words := range strings.Split(text, ",") {
+	for words := range strings.SplitSeq(text, ",") {
 		arr = append(arr, strings.TrimSpace(words))
 	}
 	return arr
