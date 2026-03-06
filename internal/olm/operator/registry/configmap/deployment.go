@@ -106,7 +106,7 @@ func withContainerVolumeMounts(volName string, paths ...string) func(*appsv1.Dep
 func getDBContainerCmd(dbPath, logPath string) string {
 	initCmd := fmt.Sprintf("/bin/initializer -o %s -m %s", dbPath, containerManifestsDir)
 	srvCmd := fmt.Sprintf("/bin/registry-server -d %s -t %s", dbPath, logPath)
-	return fmt.Sprintf("%s && %s", initCmd, srvCmd)
+	return fmt.Sprintf("%s && exec %s", initCmd, srvCmd)
 }
 
 // withRegistryGRPCContainer returns a function that appends a container
