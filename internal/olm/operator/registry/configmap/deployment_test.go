@@ -160,7 +160,7 @@ var _ = Describe("Deployment", func() {
 			initCmd := "/bin/initializer -o /path/to/database.db -m /registry/manifests"
 			srvCmd := "/bin/registry-server -d /path/to/database.db -t /var/log/temp.log"
 
-			Expect(getDBContainerCmd("/path/to/database.db", "/var/log/temp.log")).Should(Equal(fmt.Sprintf("%s && %s", initCmd, srvCmd)))
+			Expect(getDBContainerCmd("/path/to/database.db", "/var/log/temp.log")).Should(Equal(fmt.Sprintf("%s && exec %s", initCmd, srvCmd)))
 		})
 	})
 
