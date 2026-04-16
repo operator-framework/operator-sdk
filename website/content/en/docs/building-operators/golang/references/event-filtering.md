@@ -73,7 +73,7 @@ func ignoreDeletionPredicate() predicate.Predicate {
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			// Evaluates to false if the object has been confirmed deleted.
-			return !e.DeleteStateUnknown
+			return e.DeleteStateUnknown
 		},
 	}
 }
