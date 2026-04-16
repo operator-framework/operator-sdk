@@ -140,6 +140,54 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	return nil
 }
 
+// GenerateAnnotations generates the annotations.yaml file using the provided
+// annotation values for the Operator Bundle.
+func (meta *BundleMetaData) GenerateAnnotations() error {
+	// Ensure the output directory exists
+	metadataDir := filepath.Join(meta.BundleDir, defaultMetadataDir)
+	if err := os.MkdirAll(metadataDir, projutil.DirMode); err != nil {
+		return err
+	}
+
+	// Prepare annotation values
+	values := annotationsValues{
+		BundleDir:                meta.BundleDir,
+		PackageName:              meta.PackageName,
+		Channels:                 meta.Channels,
+		DefaultChannel:           meta.DefaultChannel,
+		IsScorecardConfigPresent: meta.IsScoreConfigPresent,
+	}
+
+	// Add any other labels to the values
+	for k, v := range meta.OtherLabels {
+		values.OtherLabels = append(values.OtherLabels, fmt.Sprintf("%s=%s", k, v))
+	}
+	sort.Strings(values.OtherLabels)
+
+	// Define the path to annotations.yaml
+	annotationsPath := filepath.Join(metadataDir, "annotations.yaml")
+
+	// Open (or create) the annotations.yaml file
+	f, err := os.OpenFile(annotationsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Error(err)
+		}
+	}()
+
+	// Create and execute the annotations template
+	err = annotationsTemplate.Execute(f, values)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Annotations generated successfully at %s", annotationsPath)
+	return nil
+}
+
 // CopyOperatorManifests copies packagemanifestsDir/manifests to bundleDir/manifests.
 func (meta *BundleMetaData) CopyOperatorManifests() error {
 	return copyOperatorManifests(meta.PkgmanifestPath, filepath.Join(meta.BundleDir, defaultManifestDir))
