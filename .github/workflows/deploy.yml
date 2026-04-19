@@ -11,6 +11,9 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
 jobs:
   check_docs_only:
     name: check_docs_only

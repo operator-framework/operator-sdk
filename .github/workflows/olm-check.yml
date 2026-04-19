@@ -5,7 +5,10 @@ on:
    branches:
     - 'release-*'
  workflow_dispatch:
-   
+
+
+permissions:
+  contents: read
 
 jobs:
   check-olm-minor-releases:
