@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-sdk
 
-go 1.25.7
+go 1.26.3
 
 require (
 	github.com/blang/semver/v4 v4.0.0
@@ -10,10 +10,10 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/kr/text v0.2.0
 	github.com/markbates/inflect v1.0.4
-	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1
-	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.1
-	github.com/operator-framework/ansible-operator-plugins v1.42.2
+	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2
+	github.com/onsi/ginkgo/v2 v2.32.0
+	github.com/onsi/gomega v1.42.1
+	github.com/operator-framework/ansible-operator-plugins v1.42.3
 	github.com/operator-framework/api v0.34.0
 	github.com/operator-framework/operator-lib v0.19.0
 	github.com/operator-framework/operator-manifest-tools v0.10.0
@@ -27,9 +27,9 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/thoas/go-funk v0.9.3
-	golang.org/x/mod v0.35.0
-	golang.org/x/text v0.36.0
-	golang.org/x/tools v0.44.0
+	golang.org/x/mod v0.37.0
+	golang.org/x/text v0.38.0
+	golang.org/x/tools v0.47.0
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.18.6
 	k8s.io/api v0.33.9
@@ -131,7 +131,7 @@ require (
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.7 // indirect
-	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
+	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
@@ -258,13 +258,13 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/term v0.42.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
