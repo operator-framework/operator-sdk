@@ -20,7 +20,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -132,7 +133,7 @@ func failChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "broken",
 		},
-		Templates: []*chart.File{
+		Templates: []*chartcommon.File{
 			{Name: "broken1.yaml", Data: []byte(`invalid {{ template`)},
 		},
 	}
@@ -143,7 +144,7 @@ func unknownAPIChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "unknown",
 		},
-		Templates: []*chart.File{
+		Templates: []*chartcommon.File{
 			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 		},
@@ -155,7 +156,7 @@ func namespacedChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "namespaced",
 		},
-		Templates: []*chart.File{
+		Templates: []*chartcommon.File{
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 			{Name: "pod2.yaml", Data: testPodData("pod2")},
 		},
@@ -167,7 +168,7 @@ func clusterScopedChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "clusterscoped",
 		},
-		Templates: []*chart.File{
+		Templates: []*chartcommon.File{
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 			{Name: "pod2.yaml", Data: testPodData("pod2")},
 			{Name: "ns1.yaml", Data: testNamespaceData("ns1")},

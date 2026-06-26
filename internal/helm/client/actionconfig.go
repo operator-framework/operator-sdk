@@ -19,15 +19,16 @@ package client
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/go-logr/logr"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/kube"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v4/pkg/action"
+	"helm.sh/helm/v4/pkg/kube"
+	"helm.sh/helm/v4/pkg/storage"
+	"helm.sh/helm/v4/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,15 +43,10 @@ type ActionConfigGetter interface {
 
 func NewActionConfigGetter(cfg *rest.Config, rm meta.RESTMapper, log logr.Logger) (ActionConfigGetter, error) {
 	rcg := newRESTClientGetter(cfg, rm, "")
-	// Setup the debug log function that Helm will use
-	debugLog := func(format string, v ...any) {
-		if log.Enabled() {
-			log.V(1).Info(fmt.Sprintf(format, v...))
-		}
-	}
+	slogHandler := logr.ToSlogHandler(log.V(1))
 
 	kc := kube.New(rcg)
-	kc.Log = debugLog
+	kc.SetLogger(slogHandler)
 
 	kcs, err := kc.Factory.KubernetesClientSet()
 	if err != nil {
@@ -60,7 +56,7 @@ func NewActionConfigGetter(cfg *rest.Config, rm meta.RESTMapper, log logr.Logger
 	return &actionConfigGetter{
 		kubeClient:          kc,
 		kubeClientSet:       kcs,
-		debugLog:            debugLog,
+		slogHandler:         slogHandler,
 		restClientGetter:    rcg.restClientGetter,
 		watchedSecrets:      map[string]*WatchedSecrets{},
 		watchedSecretsMutex: &sync.Mutex{},
@@ -72,7 +68,7 @@ var _ ActionConfigGetter = &actionConfigGetter{}
 type actionConfigGetter struct {
 	kubeClient          *kube.Client
 	kubeClientSet       kubernetes.Interface
-	debugLog            func(string, ...any)
+	slogHandler         slog.Handler
 	restClientGetter    *restClientGetter
 	watchedSecrets      map[string]*WatchedSecrets
 	watchedSecretsMutex *sync.Mutex
@@ -97,26 +93,26 @@ func (acg *actionConfigGetter) ActionConfigFor(obj client.Object) (*action.Confi
 		refs:            []metav1.OwnerReference{*ownerRef},
 	})
 
-	// Also, use the debug log for the storage driver
-	d.Log = acg.debugLog
+	d.SetLogger(acg.slogHandler)
 
 	// Initialize the storage backend
 	s := storage.Init(d)
 
-	kubeClient := *acg.kubeClient
+	kubeClient := kube.New(acg.restClientGetter.ForNamespace(obj.GetNamespace()))
+	kubeClient.SetLogger(acg.slogHandler)
 	kubeClient.Namespace = obj.GetNamespace()
 
-	ownerRefClient, err := NewOwnerRefInjectingClient(&kubeClient, acg.restClientGetter.restMapper, obj)
+	ownerRefClient, err := NewOwnerRefInjectingClient(kubeClient, acg.restClientGetter.restMapper, obj)
 	if err != nil {
 		return nil, fmt.Errorf("could not create owner reference injecting client: %w", err)
 	}
 
-	return &action.Configuration{
-		RESTClientGetter: acg.restClientGetter.ForNamespace(obj.GetNamespace()),
-		Releases:         s,
-		KubeClient:       ownerRefClient,
-		Log:              acg.debugLog,
-	}, nil
+	cfg := action.NewConfiguration(action.ConfigurationSetLogger(acg.slogHandler))
+	cfg.RESTClientGetter = acg.restClientGetter.ForNamespace(obj.GetNamespace())
+	cfg.Releases = s
+	cfg.KubeClient = ownerRefClient
+
+	return cfg, nil
 }
 
 var _ v1.SecretInterface = &ownerRefSecretClient{}

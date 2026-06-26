@@ -23,10 +23,12 @@ import (
 	"text/template"
 
 	log "github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	"helm.sh/helm/v3/pkg/releaseutil"
+	"helm.sh/helm/v4/pkg/action"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/kube"
+	rpb "helm.sh/helm/v4/pkg/release/v1"
+	releaseutil "helm.sh/helm/v4/pkg/release/v1/util"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -348,17 +350,18 @@ func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.
 }
 
 func getDefaultManifests(c *chart.Chart) ([]releaseutil.Manifest, error) {
-	install := action.NewInstall(&action.Configuration{})
-	install.DryRun = true
+	install := action.NewInstall(action.NewConfiguration())
+	install.DryRunStrategy = action.DryRunClient
+	install.WaitStrategy = kube.LegacyStrategy
 	install.ReleaseName = "release-name"
 	install.Replace = true
-	install.ClientOnly = true
-	rel, err := install.Run(c, nil)
+	result, err := install.Run(c, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render chart templates: %v", err)
 	}
+	rel := result.(*rpb.Release)
 	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest),
-		chartutil.DefaultVersionSet, releaseutil.InstallOrder)
+		chartcommon.DefaultVersionSet, releaseutil.InstallOrder)
 	return manifests, err
 }
 

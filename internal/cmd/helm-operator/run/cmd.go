@@ -45,7 +45,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/helm/watches"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
-	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v4/pkg/chart/loader"
+	cpb "helm.sh/helm/v4/pkg/chart/v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -274,9 +275,13 @@ func configureSelectors(opts *manager.Options, ws []watches.Watch, sch *apimachr
 		}
 		selectorsByObject[crObj] = cache.ByObject{Label: sel}
 
-		chrt, err := loader.LoadDir(w.ChartDir)
+		loaded, err := loader.LoadDir(w.ChartDir)
 		if err != nil {
 			return fmt.Errorf("unable to load chart for %s: %v", w.GroupVersionKind, err)
+		}
+		chrt, ok := loaded.(*cpb.Chart)
+		if !ok {
+			return fmt.Errorf("unexpected chart type for %s: %T", w.GroupVersionKind, loaded)
 		}
 		chartNames = append(chartNames, chrt.Name())
 

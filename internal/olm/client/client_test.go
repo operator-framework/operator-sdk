@@ -424,3 +424,7 @@ func (c *errClient) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersion
 func (c *errClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
 	return c.cli.IsObjectNamespaced(obj)
 }
+
+func (c *errClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return c.cli.Apply(ctx, obj, opts...)
+}
