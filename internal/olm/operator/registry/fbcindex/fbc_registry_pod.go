@@ -148,14 +148,21 @@ func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration
 			},
 		}
 
-		// Update the Registry Pod container security context to be restrictive
-		f.pod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
+		restrictedSecurityContext := &corev1.SecurityContext{
 			Privileged:               pointer.To(false),
 			ReadOnlyRootFilesystem:   pointer.To(false),
 			AllowPrivilegeEscalation: pointer.To(false),
 			Capabilities: &corev1.Capabilities{
 				Drop: []corev1.Capability{"ALL"},
 			},
+		}
+
+		// Update the Registry Pod container security context to be restrictive
+		f.pod.Spec.Containers[0].SecurityContext = restrictedSecurityContext
+
+		// Update all init containers with the same restrictive security context
+		for i := range f.pod.Spec.InitContainers {
+			f.pod.Spec.InitContainers[i].SecurityContext = restrictedSecurityContext
 		}
 	}
 
