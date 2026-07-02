@@ -23,13 +23,14 @@ import (
 	"strings"
 
 	jsonpatch "gomodules.xyz/jsonpatch/v3"
-	"helm.sh/helm/v3/pkg/action"
-	cpb "helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/kube"
-	rpb "helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/releaseutil"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v4/pkg/action"
+	cpb "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/kube"
+	releasecommon "helm.sh/helm/v4/pkg/release/common"
+	rpb "helm.sh/helm/v4/pkg/release/v1"
+	releaseutil "helm.sh/helm/v4/pkg/release/v1/util"
+	"helm.sh/helm/v4/pkg/storage"
+	"helm.sh/helm/v4/pkg/storage/driver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -75,8 +76,6 @@ type manager struct {
 	isUpgradeRequired bool
 	deployedRelease   *rpb.Release
 	chart             *cpb.Chart
-
-	dryRunOption string
 }
 
 type InstallOption func(*action.Install) error
@@ -109,8 +108,9 @@ func (m *manager) Sync() error {
 	// Cleanup non-deployed release versions. If all release versions are
 	// non-deployed, this will ensure that failed installations are correctly
 	// retried.
-	for _, rel := range releases {
-		if rel.Info != nil && rel.Info.Status != rpb.StatusDeployed {
+	for _, r := range releases {
+		rel := r.(*rpb.Release)
+		if rel.Info != nil && rel.Info.Status != releasecommon.StatusDeployed {
 			_, err := m.storageBackend.Delete(rel.Name, rel.Version)
 			if err != nil && !notFoundErr(err) {
 				return fmt.Errorf("failed to delete stale release version: %w", err)
@@ -146,23 +146,27 @@ func notFoundErr(err error) bool {
 }
 
 func (m manager) getDeployedRelease() (*rpb.Release, error) {
-	deployedRelease, err := m.storageBackend.Deployed(m.releaseName)
+	deployed, err := m.storageBackend.Deployed(m.releaseName)
 	if err != nil {
 		if strings.Contains(err.Error(), "has no deployed releases") {
 			return nil, driver.ErrReleaseNotFound
 		}
 		return nil, err
 	}
-	return deployedRelease, nil
+	return deployed.(*rpb.Release), nil
 }
 
 func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 	values map[string]any) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
-	upgrade.DryRun = true
-	upgrade.DryRunOption = m.dryRunOption
-	return upgrade.Run(name, chart, values)
+	upgrade.DryRunStrategy = action.DryRunServer
+	upgrade.WaitStrategy = kube.LegacyStrategy
+	rel, err := upgrade.Run(name, chart, values)
+	if err != nil {
+		return nil, err
+	}
+	return rel.(*rpb.Release), nil
 }
 
 // InstallRelease performs a Helm release install.
@@ -170,17 +174,19 @@ func (m manager) InstallRelease(opts ...InstallOption) (*rpb.Release, error) {
 	install := action.NewInstall(m.actionConfig)
 	install.ReleaseName = m.releaseName
 	install.Namespace = m.namespace
+	install.WaitStrategy = kube.LegacyStrategy
 	for _, o := range opts {
 		if err := o(install); err != nil {
 			return nil, fmt.Errorf("failed to apply install option: %w", err)
 		}
 	}
 
-	installedRelease, err := install.Run(m.chart, m.values)
+	result, err := install.Run(m.chart, m.values)
 	if err != nil {
 		// Workaround for helm/helm#3338
-		if installedRelease != nil {
+		if result != nil {
 			uninstall := action.NewUninstall(m.actionConfig)
+			uninstall.WaitStrategy = kube.LegacyStrategy
 			_, uninstallErr := uninstall.Run(m.releaseName)
 
 			// In certain cases, InstallRelease will return a partial release in
@@ -197,12 +203,12 @@ func (m manager) InstallRelease(opts ...InstallOption) (*rpb.Release, error) {
 		}
 		return nil, fmt.Errorf("failed to install release: %w", err)
 	}
-	return installedRelease, nil
+	return result.(*rpb.Release), nil
 }
 
 func ForceUpgrade(force bool) UpgradeOption {
 	return func(u *action.Upgrade) error {
-		u.Force = force
+		u.ForceReplace = force
 		return nil
 	}
 }
@@ -213,6 +219,7 @@ var ErrUpgradeFailed = errors.New("upgrade failed; rollback required")
 func (m manager) UpgradeRelease(opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = m.namespace
+	upgrade.WaitStrategy = kube.LegacyStrategy
 
 	for _, o := range opts {
 		if err := o(upgrade); err != nil {
@@ -220,10 +227,10 @@ func (m manager) UpgradeRelease(opts ...UpgradeOption) (*rpb.Release, *rpb.Relea
 		}
 	}
 
-	upgradedRelease, err := upgrade.Run(m.releaseName, m.chart, m.values)
+	result, err := upgrade.Run(m.releaseName, m.chart, m.values)
 	if err != nil {
 		// Workaround for helm/helm#3338
-		if upgradedRelease != nil {
+		if result != nil {
 			// As of Helm 2.13, if UpgradeRelease returns a non-nil release, that
 			// means the release was also recorded in the release store.
 			// Therefore, we should perform the rollback when we have a non-nil
@@ -235,12 +242,12 @@ func (m manager) UpgradeRelease(opts ...UpgradeOption) (*rpb.Release, *rpb.Relea
 		}
 		return nil, nil, fmt.Errorf("failed to upgrade release: %w", err)
 	}
-	return m.deployedRelease, upgradedRelease, err
+	return m.deployedRelease, result.(*rpb.Release), err
 }
 
 func ForceRollback(force bool) RollBackOption {
 	return func(r *action.Rollback) error {
-		r.Force = force
+		r.ForceReplace = force
 		return nil
 	}
 }
@@ -248,6 +255,7 @@ func ForceRollback(force bool) RollBackOption {
 // RollBack attempts to reverse any partially applied releases
 func (m manager) RollBack(opts ...RollBackOption) error {
 	rollback := action.NewRollback(m.actionConfig)
+	rollback.WaitStrategy = kube.LegacyStrategy
 
 	for _, fn := range opts {
 		if err := fn(rollback); err != nil {
@@ -392,16 +400,17 @@ func createJSONMergePatch(existingJSON, expectedJSON []byte) ([]byte, error) {
 // UninstallRelease performs a Helm release uninstall.
 func (m manager) UninstallRelease(opts ...UninstallOption) (*rpb.Release, error) {
 	uninstall := action.NewUninstall(m.actionConfig)
+	uninstall.WaitStrategy = kube.LegacyStrategy
 	for _, o := range opts {
 		if err := o(uninstall); err != nil {
 			return nil, fmt.Errorf("failed to apply uninstall option: %w", err)
 		}
 	}
 	uninstallResponse, err := uninstall.Run(m.releaseName)
-	if uninstallResponse == nil {
+	if uninstallResponse == nil || uninstallResponse.Release == nil {
 		return nil, err
 	}
-	return uninstallResponse.Release, err
+	return uninstallResponse.Release.(*rpb.Release), err
 }
 
 // CleanupRelease deletes resources if they are not deleted already.
@@ -442,7 +451,7 @@ func (m manager) CleanupRelease(manifest string) (bool, error) {
 			return false, fmt.Errorf("failed to get resource: %w", err)
 		}
 		// found at least one resource that is not deleted so just delete everything again.
-		_, errs := m.kubeClient.Delete(resources)
+		_, errs := m.kubeClient.Delete(resources, metav1.DeletePropagationBackground)
 		if len(errs) > 0 {
 			return false, fmt.Errorf("failed to delete resources: %v", apiutilerrors.NewAggregate(errs))
 		}

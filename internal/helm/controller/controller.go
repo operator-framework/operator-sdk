@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	rpb "helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/releaseutil"
+	rpb "helm.sh/helm/v4/pkg/release/v1"
+	releaseutil "helm.sh/helm/v4/pkg/release/v1/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,7 +62,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 	r := &HelmOperatorReconciler{
 		Client:                 mgr.GetClient(),
-		EventRecorder:          mgr.GetEventRecorderFor(controllerName),
+		EventRecorder:          mgr.GetEventRecorder(controllerName),
 		GVK:                    options.GVK,
 		ManagerFactory:         options.ManagerFactory,
 		ReconcilePeriod:        options.ReconcilePeriod,

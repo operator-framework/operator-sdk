@@ -23,13 +23,13 @@ import (
 	"strings"
 	"time"
 
-	rpb "helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	rpb "helm.sh/helm/v4/pkg/release/v1"
+	"helm.sh/helm/v4/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -49,7 +49,7 @@ type ReleaseHookFunc func(*rpb.Release) error
 // HelmOperatorReconciler reconciles custom resources as Helm releases.
 type HelmOperatorReconciler struct {
 	Client                 client.Client
-	EventRecorder          record.EventRecorder
+	EventRecorder          events.EventRecorder
 	GVK                    schema.GroupVersionKind
 	ManagerFactory         release.ManagerFactory
 	ReconcilePeriod        time.Duration
@@ -239,7 +239,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			if r.SuppressOverrideValues {
 				v = "****"
 			}
-			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
+			r.EventRecorder.Eventf(o, nil, "Warning", "OverrideValuesInUse", "Reconciling",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		installedRelease, err := manager.InstallRelease()
@@ -310,7 +310,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			if r.SuppressOverrideValues {
 				v = "****"
 			}
-			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
+			r.EventRecorder.Eventf(o, nil, "Warning", "OverrideValuesInUse", "Reconciling",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		force := hasAnnotation(helmUpgradeForceAnnotation, o)

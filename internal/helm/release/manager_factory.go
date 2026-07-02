@@ -17,10 +17,11 @@ package release
 import (
 	"fmt"
 
-	"helm.sh/helm/v3/pkg/chart/loader"
-	helmrelease "helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/strvals"
+	"helm.sh/helm/v4/pkg/chart/loader"
+	cpb "helm.sh/helm/v4/pkg/chart/v2"
+	helmrelease "helm.sh/helm/v4/pkg/release/v1"
+	"helm.sh/helm/v4/pkg/storage"
+	"helm.sh/helm/v4/pkg/strvals"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	crmanager "sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -53,9 +54,13 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		return nil, fmt.Errorf("failed to get helm action config: %w", err)
 	}
 
-	crChart, err := loader.LoadDir(f.chartDir)
+	loaded, err := loader.LoadDir(f.chartDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load chart dir: %w", err)
+	}
+	crChart, ok := loaded.(*cpb.Chart)
+	if !ok {
+		return nil, fmt.Errorf("unexpected chart type: %T", loaded)
 	}
 
 	actionConfig.KubeClient = client.NewLabelInjectingClient(actionConfig.KubeClient, map[string]string{
@@ -86,10 +91,9 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		releaseName: releaseName,
 		namespace:   cr.GetNamespace(),
 
-		chart:        crChart,
-		values:       values,
-		status:       types.StatusFor(cr),
-		dryRunOption: dryRunOption,
+		chart:  crChart,
+		values: values,
+		status: types.StatusFor(cr),
 	}, nil
 }
 
@@ -138,14 +142,18 @@ func getReleaseName(storageBackend *storage.Storage, crChartName string,
 }
 
 func releaseHistory(storageBackend *storage.Storage, releaseName string) ([]*helmrelease.Release, bool, error) {
-	releaseHistory, err := storageBackend.History(releaseName)
+	history, err := storageBackend.History(releaseName)
 	if err != nil {
 		if notFoundErr(err) {
 			return nil, false, nil
 		}
 		return nil, false, err
 	}
-	return releaseHistory, len(releaseHistory) > 0, nil
+	releases := make([]*helmrelease.Release, len(history))
+	for i, r := range history {
+		releases[i] = r.(*helmrelease.Release)
+	}
+	return releases, len(releases) > 0, nil
 }
 
 func parseOverrides(in map[string]string) (map[string]any, error) {

@@ -25,7 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"helm.sh/helm/v3/pkg/chart"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
 	"sigs.k8s.io/kubebuilder/v4/pkg/config"
 	"sigs.k8s.io/kubebuilder/v4/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v4/pkg/model/resource"

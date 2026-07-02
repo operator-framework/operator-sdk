@@ -21,14 +21,14 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/chartutil"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/registry"
-	"helm.sh/helm/v3/pkg/repo"
+	"helm.sh/helm/v4/pkg/chart/loader"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	chartutil "helm.sh/helm/v4/pkg/chart/v2/util"
+	"helm.sh/helm/v4/pkg/cli"
+	"helm.sh/helm/v4/pkg/downloader"
+	"helm.sh/helm/v4/pkg/getter"
+	"helm.sh/helm/v4/pkg/registry"
+	repo "helm.sh/helm/v4/pkg/repo/v1"
 )
 
 const (
@@ -68,7 +68,11 @@ func NewChart(name string) (*chart.Chart, error) {
 		return nil, err
 	}
 
-	return loader.Load(chartPath)
+	loaded, err := loader.Load(chartPath)
+	if err != nil {
+		return nil, err
+	}
+	return loaded.(*chart.Chart), nil
 }
 
 // LoadChart creates a new helm chart for the project based on the passed opts.
@@ -121,7 +125,11 @@ func LoadChart(opts Options) (*chart.Chart, error) {
 		}
 	}
 
-	return loader.Load(chartPath)
+	loaded, err := loader.Load(chartPath)
+	if err != nil {
+		return nil, err
+	}
+	return loaded.(*chart.Chart), nil
 }
 
 func downloadChart(destDir string, opts Options) (string, error) {
@@ -139,11 +147,12 @@ func downloadChart(destDir string, opts Options) (string, error) {
 		Getters:          getters,
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		ContentCache:     settings.ContentCache,
 		RegistryClient:   registryClient,
 	}
 
 	if opts.Repo != "" {
-		chartURL, err := repo.FindChartInRepoURL(opts.Repo, opts.Chart, opts.Version, "", "", "", getters)
+		chartURL, err := repo.FindChartInRepoURL(opts.Repo, opts.Chart, getters, repo.WithChartVersion(opts.Version))
 		if err != nil {
 			return "", err
 		}
@@ -179,12 +188,12 @@ func ScaffoldChart(chrt *chart.Chart, projectDir string) (*chart.Chart, string, 
 	}
 
 	// Reload chart in case dependencies changed
-	chrt, err := loader.Load(chartPath)
+	loaded, err := loader.Load(chartPath)
 	if err != nil {
 		return chrt, "", fmt.Errorf("failed to reload chart: %w", err)
 	}
 
-	return chrt, filepath.Join(HelmChartsDir, chrt.Name()), nil
+	return loaded.(*chart.Chart), filepath.Join(HelmChartsDir, chrt.Name()), nil
 }
 
 func fetchChartDependencies(chartPath string) error {
@@ -204,6 +213,7 @@ func fetchChartDependencies(chartPath string) error {
 		Getters:          getters,
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		ContentCache:     settings.ContentCache,
 		RegistryClient:   registryClient,
 	}
 	if err := man.Build(); err != nil {

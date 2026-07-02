@@ -16,8 +16,8 @@ package manifestutil
 import (
 	"strings"
 
-	"helm.sh/helm/v3/pkg/kube"
-	"helm.sh/helm/v3/pkg/releaseutil"
+	"helm.sh/helm/v4/pkg/kube"
+	releaseutil "helm.sh/helm/v4/pkg/release/v1/util"
 )
 
 // Source from https://github.com/helm/helm/blob/v3.4.2/pkg/action/resource_policy.go
