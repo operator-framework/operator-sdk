@@ -2,6 +2,9 @@ name: integration
 on:
   pull_request: {}
 
+permissions:
+  contents: read
+
 jobs:
   check_docs_only:
     name: check_docs_only
