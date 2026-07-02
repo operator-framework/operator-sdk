@@ -12,7 +12,7 @@ jobs:
     name: check-olm-minor-releases
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - id: run-check-olm
         run: ./hack/check-olm.sh
     
