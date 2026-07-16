@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/validation"
@@ -62,9 +61,6 @@ func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion,
 		applyDeployments(c, &strategy.StrategySpec)
 	}
 	csv.Spec.InstallStrategy = strategy
-
-	// Update createdAt timestamp annotation since the CSV has been updated.
-	csv.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 
 	applyCustomResourceDefinitions(c, csv)
 	if err := applyCustomResources(c, csv); err != nil {

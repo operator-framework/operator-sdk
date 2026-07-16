@@ -15,10 +15,12 @@
 package clusterserviceversion
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/blang/semver/v4"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -156,6 +158,16 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 	if base == nil {
 		base = bases.New(g.OperatorName)
 	}
+
+	// Snapshot the existing CSV state (without createdAt) before any modifications so we
+	// can detect whether anything substantive changed and only update the timestamp then.
+	existingCreatedAt := ""
+	if base.Annotations != nil {
+		existingCreatedAt = base.Annotations["createdAt"]
+		delete(base.Annotations, "createdAt")
+	}
+	oldJSON, snapshotErr := json.Marshal(base)
+
 	if g.Version != "" {
 		// Use the existing version/name unless g.Version is set.
 		base.SetName(genutil.MakeCSVName(g.OperatorName, g.Version))
@@ -170,6 +182,22 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 
 	if err := ApplyTo(g.Collector, base, g.ExtraServiceAccounts); err != nil {
 		return nil, err
+	}
+
+	// Only update createdAt when substantive content has changed to avoid noisy git diffs.
+	if snapshotErr == nil {
+		newJSON, err2 := json.Marshal(base)
+		if err2 == nil && string(oldJSON) != string(newJSON) {
+			if base.Annotations == nil {
+				base.Annotations = map[string]string{}
+			}
+			base.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
+		} else if err2 == nil {
+			if base.Annotations == nil {
+				base.Annotations = map[string]string{}
+			}
+			base.Annotations["createdAt"] = existingCreatedAt
+		}
 	}
 
 	return base, nil
