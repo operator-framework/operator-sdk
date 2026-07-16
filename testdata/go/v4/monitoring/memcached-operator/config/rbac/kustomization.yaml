@@ -27,4 +27,8 @@ resources:
 - memcached_admin_role.yaml
 - memcached_editor_role.yaml
 - memcached_viewer_role.yaml
+- aggregation.clusterrolebinding.yaml
+- aggregation-subrole.clusterrole.yaml
+- aggregation.clusterrole.yaml
+
 

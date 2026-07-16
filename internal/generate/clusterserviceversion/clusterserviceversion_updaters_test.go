@@ -24,6 +24,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -65,6 +66,9 @@ var _ = Describe("apply functions", func() {
 			saName1    = "service-account-1"
 			roleName1  = "role-1"
 			cRoleName1 = "cluster-role-1"
+			cRoleName2 = "cluster-role-2"
+			cRoleName3 = "cluster-role-3"
+			cRoleName4 = "cluster-role-4"
 		)
 
 		BeforeEach(func() {
@@ -79,7 +83,8 @@ var _ = Describe("apply functions", func() {
 				rules := []rbacv1.PolicyRule{{Verbs: []string{"create"}}}
 				perms := []client.Object{newRole(roleName1, rules...)}
 				c.RoleBindings = []rbacv1.RoleBinding{newRoleBinding("role-binding", newRoleRef(roleName1), newServiceAccountSubject(saName1))}
-				applyRoles(c, perms, strategy, nil)
+				err := applyRoles(c, perms, strategy, nil)
+				Expect(err).NotTo(HaveOccurred())
 				Expect(strategy.Permissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{
 					{ServiceAccountName: saName1, Rules: rules},
 				}))
@@ -90,7 +95,55 @@ var _ = Describe("apply functions", func() {
 				rules := []rbacv1.PolicyRule{{Verbs: []string{"create"}}}
 				perms := []client.Object{newClusterRole(cRoleName1, rules...)}
 				c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{newClusterRoleBinding("cluster-role-binding", newClusterRoleRef(cRoleName1), newServiceAccountSubject(saName1))}
-				applyClusterRoles(c, perms, strategy, nil)
+				err := applyClusterRoles(c, perms, strategy, nil)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strategy.ClusterPermissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{
+					{ServiceAccountName: saName1, Rules: rules},
+				}))
+			})
+			It("adds rules from aggregated ClusterRoles eliminating duplicates to the CSV deployment strategy", func() {
+				c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depName1, saName1)}
+				c.ServiceAccounts = []corev1.ServiceAccount{newServiceAccount(saName1)}
+				rules := []rbacv1.PolicyRule{{Verbs: []string{"create"}}, {Verbs: []string{"update"}}}
+				var emptyRules []rbacv1.PolicyRule
+				perms := []client.Object{
+					func() *rbacv1.ClusterRole {
+						cr := newClusterRole(cRoleName1, emptyRules...)
+						cr.AggregationRule = &rbacv1.AggregationRule{
+							ClusterRoleSelectors: []metav1.LabelSelector{
+								{
+									MatchLabels: map[string]string{
+										"aggregate-to-cluster-role-1": "true",
+									},
+								},
+							},
+						}
+						return cr
+					}(),
+					func() *rbacv1.ClusterRole {
+						cr := newClusterRole(cRoleName2, rules...)
+						cr.Labels = map[string]string{
+							"aggregate-to-cluster-role-1": "true",
+						}
+						return cr
+					}(),
+					func() *rbacv1.ClusterRole {
+						cr := newClusterRole(cRoleName3, rules...)
+						cr.Labels = map[string]string{
+							"aggregate-to-cluster-role-1": "true",
+						}
+						return cr
+					}(),
+					// ClusterRole not bound to any ServiceAccount, nor matching any ClusterRule AggregationRule,
+					// it shouldn't land in strategy ClusterPermissions.
+					newClusterRole(cRoleName4, []rbacv1.PolicyRule{{Verbs: []string{"delete"}}}...),
+				}
+				for _, cr := range perms {
+					c.ClusterRoles = append(c.ClusterRoles, *cr.(*rbacv1.ClusterRole))
+				}
+				c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{newClusterRoleBinding("cluster-role-binding", newClusterRoleRef(cRoleName1), newServiceAccountSubject(saName1))}
+				err := applyClusterRoles(c, perms, strategy, nil)
+				Expect(err).NotTo(HaveOccurred())
 				Expect(strategy.ClusterPermissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{
 					{ServiceAccountName: saName1, Rules: rules},
 				}))
@@ -128,8 +181,10 @@ var _ = Describe("apply functions", func() {
 					newClusterRoleBinding("cluster-role-binding-2", newClusterRoleRef(cRoleName2), newServiceAccountSubject(extraSAName)),
 					newClusterRoleBinding("cluster-role-binding-3", newClusterRoleRef(cRoleName3), newServiceAccountSubject(extraSAName)),
 				}
-				applyRoles(c, perms, strategy, []string{extraSAName})
-				applyClusterRoles(c, cperms, strategy, []string{extraSAName})
+				err := applyRoles(c, perms, strategy, []string{extraSAName})
+				Expect(err).NotTo(HaveOccurred())
+				err = applyClusterRoles(c, cperms, strategy, []string{extraSAName})
+				Expect(err).NotTo(HaveOccurred())
 				Expect(strategy.Permissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{
 					{ServiceAccountName: saName1, Rules: rules},
 					{ServiceAccountName: extraSAName, Rules: rules},
@@ -146,14 +201,16 @@ var _ = Describe("apply functions", func() {
 				c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depName1, saName1)}
 				c.ServiceAccounts = []corev1.ServiceAccount{newServiceAccount(saName1)}
 				c.RoleBindings = []rbacv1.RoleBinding{newRoleBinding("role-binding", newRoleRef(roleName1), newServiceAccountSubject(saName1))}
-				applyRoles(c, nil, strategy, nil)
+				err := applyRoles(c, nil, strategy, nil)
+				Expect(err).NotTo(HaveOccurred())
 				Expect(strategy.Permissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{}))
 			})
 			It("adds no ClusterPermissions to the CSV deployment strategy", func() {
 				c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depName1, saName1)}
 				c.ServiceAccounts = []corev1.ServiceAccount{newServiceAccount(saName1)}
 				c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{newClusterRoleBinding("cluster-role-binding", newClusterRoleRef(cRoleName1), newServiceAccountSubject(saName1))}
-				applyClusterRoles(c, nil, strategy, nil)
+				err := applyClusterRoles(c, nil, strategy, nil)
+				Expect(err).NotTo(HaveOccurred())
 				Expect(strategy.ClusterPermissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{}))
 			})
 		})
