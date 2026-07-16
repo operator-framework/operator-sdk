@@ -208,6 +208,12 @@ $ tree ./bundle
 **Important:** bundle generation is supposed to be idempotent, so any changes to CSV fields able to be persisted
 (marked _(user)_ or _(marker)_ [below](#csv-fields)) must be made to the base set of manifests, typically found in `config/`.
 
+`make bundle` also refreshes release metadata in the generated bundle. For example, the generated CSV's
+`metadata.annotations.createdAt` value is updated when the CSV is regenerated. If you run `make bundle` in CI to
+check whether generated files are current, account for this metadata update instead of treating a `createdAt`-only
+diff as a source manifest change. For pre-release checks that only need to verify source manifests, prefer checking
+the manifests in `config/` before generating the release bundle.
+
 Bundle metadata in `bundle/metadata/annotations.yaml` contains information about a particular Operator version
 available in a registry. OLM uses this information to install specific Operator versions and resolve dependencies.
 That file and `bundle.Dockerfile` contain the same [annotations][bundle-metadata], the latter as `LABEL`s,
