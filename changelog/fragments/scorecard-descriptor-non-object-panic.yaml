@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      Fixed a panic in the scorecard `olm-spec-descriptors`, `olm-status-descriptors`,
+      and `olm-crds-have-validation` tests when a custom resource in a bundle's
+      `alm-examples` has a `spec` or `status` field that is not a JSON object (for
+      example a string or an array). These fields are now treated as having no
+      descriptors to check instead of crashing the scorecard test binary.
+    kind: bugfix
+    breaking: false

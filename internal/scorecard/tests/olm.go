@@ -251,9 +251,9 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	}
 
 	hasStatusDefinition := false
-	if cr.Object["status"] != nil {
+	if status, ok := cr.Object["status"].(map[string]any); ok {
 		// Ensure that has no empty keys
-		hasStatusDefinition = len(cr.Object["status"].(map[string]any)) > 0
+		hasStatusDefinition = len(status) > 0
 	}
 
 	if !hasStatusDefinition {
@@ -279,12 +279,14 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 // I don't think it will be validated.
 func checkOwnedCSVSpecDescriptors(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
 	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
-	if cr.Object[specDescriptor] == nil {
+	block, ok := cr.Object[specDescriptor].(map[string]any)
+	if !ok {
+		// A nil spec, or a spec that isn't a JSON object (for example a scalar
+		// or array coming from a malformed alm-examples CR), has no descriptor
+		// fields to check, so treat it the same as a missing spec.
 		r.State = scapiv1alpha3.FailState
 		return r
 	}
-
-	block := cr.Object[specDescriptor].(map[string]any)
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
@@ -358,8 +360,7 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 				continue
 			}
 			failed := false
-			if cr.Object["spec"] != nil {
-				spec := cr.Object["spec"].(map[string]any)
+			if spec, ok := cr.Object["spec"].(map[string]any); ok {
 				for key := range spec {
 					if _, ok := version.Schema.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
 						failed = true
@@ -369,8 +370,7 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 					}
 				}
 			}
-			if cr.Object["status"] != nil {
-				status := cr.Object["status"].(map[string]any)
+			if status, ok := cr.Object["status"].(map[string]any); ok {
 				for key := range status {
 					if _, ok := version.Schema.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
 						failed = true

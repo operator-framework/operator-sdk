@@ -293,6 +293,44 @@ var _ = Describe("Basic and OLM tests", func() {
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
+			It("should fail cleanly (not panic) when spec is not an object", func() {
+				cr := unstructured.Unstructured{
+					Object: map[string]any{
+						"spec": "i-am-a-string-not-a-map",
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:    "TestKind",
+					Group:   "test.example.com",
+					Version: "v1",
+				})
+
+				Expect(func() {
+					result = checkOwnedCSVSpecDescriptors(cr, &csv, result)
+				}).NotTo(Panic())
+				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
+			})
+
+			It("should not panic when status is not an object", func() {
+				cr := unstructured.Unstructured{
+					Object: map[string]any{
+						"status": []any{"not", "a", "map"},
+						"spec": map[string]any{
+							"spec": "val",
+						},
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:    "TestKind",
+					Group:   "test.example.com",
+					Version: "v1",
+				})
+
+				Expect(func() {
+					result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				}).NotTo(Panic())
+			})
+
 			It("should pass when CRs have spec field specified", func() {
 				cr := []unstructured.Unstructured{
 					{
@@ -414,6 +452,24 @@ var _ = Describe("Basic and OLM tests", func() {
 			result = isCRFromCRDApi(cr, crd, result)
 			Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 
+		})
+
+		It("should not panic when spec or status is not an object", func() {
+			cr = unstructured.Unstructured{
+				Object: map[string]any{
+					"spec":   "not-a-map",
+					"status": []any{"also", "not", "a", "map"},
+				},
+			}
+			cr.SetGroupVersionKind(schema.GroupVersionKind{
+				Kind:    "TestKind",
+				Group:   "test.example.com",
+				Version: "v1",
+			})
+
+			Expect(func() {
+				result = isCRFromCRDApi(cr, crd, result)
+			}).NotTo(Panic())
 		})
 
 	})
