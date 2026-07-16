@@ -70,7 +70,7 @@ func WriteObject(w io.Writer, obj any) error {
 	return write(w, b)
 }
 
-// WriteObject writes any object to w.
+// WriteYAML writes any object to w.
 func WriteYAML(w io.Writer, obj any) error {
 	b, err := yaml.Marshal(obj)
 	if err != nil {
