@@ -62,7 +62,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 	r := &HelmOperatorReconciler{
 		Client:                 mgr.GetClient(),
-		EventRecorder:          mgr.GetEventRecorderFor(controllerName),
+		EventRecorder:          mgr.GetEventRecorder(controllerName),
 		GVK:                    options.GVK,
 		ManagerFactory:         options.ManagerFactory,
 		ReconcilePeriod:        options.ReconcilePeriod,

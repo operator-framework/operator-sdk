@@ -365,6 +365,10 @@ func (c *errClient) Get(ctx context.Context, key client.ObjectKey, obj client.Ob
 func (c *errClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	return c.cli.List(ctx, list, opts...)
 }
+func (c *errClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return c.cli.Apply(ctx, obj, opts...)
+}
+
 func (c *errClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	switch obj.GetName() {
 	case "no-match":
