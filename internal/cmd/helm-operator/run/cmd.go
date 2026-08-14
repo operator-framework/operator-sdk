@@ -15,6 +15,7 @@
 package run
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -160,10 +161,31 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		options.NewClient = client.New
 	}
 
+	ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
+	defer cancel()
+
+	// If a distribution registered a ClusterTLSPolicy (see tlspolicy.go),
+	// give it a chance to augment the manager options (e.g. metrics TLS
+	// settings) before the manager is constructed. Nothing is registered
+	// by default, so this is a no-op for upstream operator-sdk builds.
+	if registeredTLSPolicy != nil {
+		options, err = registeredTLSPolicy.Apply(ctx, cfg, options)
+		if err != nil {
+			log.Error(err, "Failed to apply cluster TLS policy; continuing with unmodified TLS settings.")
+		}
+	}
+
 	mgr, err := manager.New(cfg, options)
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		os.Exit(1)
+	}
+
+	if registeredTLSPolicy != nil {
+		if err := registeredTLSPolicy.Watch(ctx, mgr, cancel); err != nil {
+			log.Error(err, "Failed to start cluster TLS policy watch.")
+			os.Exit(1)
+		}
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -204,8 +226,12 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		}
 	}
 
-	// Start the Cmd
-	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
+	// Start the Cmd. ctx is cancelled either by an OS signal, or by a
+	// registered ClusterTLSPolicy's Watch reacting to a policy change
+	// (see tlspolicy.go); either way this triggers a graceful shutdown,
+	// and the surrounding Deployment/container restart re-applies
+	// startup-time policy on the next boot.
+	if err = mgr.Start(ctx); err != nil {
 		log.Error(err, "Manager exited non-zero.")
 		os.Exit(1)
 	}

@@ -17,6 +17,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -29,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/kubectl/pkg/util/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -195,7 +195,7 @@ func (u *Uninstall) deleteOperatorGroup(ctx context.Context) error {
 		return fmt.Errorf("list operatorgroups: %v", err)
 	}
 	for _, og := range ogs.Items {
-		if len(u.DeleteOperatorGroupNames) == 0 || slice.ContainsString(u.DeleteOperatorGroupNames, og.GetName(), nil) {
+		if len(u.DeleteOperatorGroupNames) == 0 || slices.Contains(u.DeleteOperatorGroupNames, og.GetName()) {
 			if err := u.deleteObjects(ctx, false, &og); err != nil {
 				return err
 			}
