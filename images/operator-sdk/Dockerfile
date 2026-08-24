@@ -1,5 +1,5 @@
 # Build the operator-sdk binary
-FROM --platform=$BUILDPLATFORM golang:1.26 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27 AS builder
 ARG TARGETARCH
 
 WORKDIR /workspace
