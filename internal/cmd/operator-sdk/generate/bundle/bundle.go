@@ -17,6 +17,7 @@ package bundle
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -327,5 +328,53 @@ func (c bundleCmd) pinImages(manifestPath string) error {
 		}
 	}
 
-	return nil
+	return formatCSVs(manifestPath)
+}
+
+// formatCSVs re-encodes the ClusterServiceVersions under dir with the same
+// YAML encoder used to write them. operator-manifest-tools rewrites a pinned
+// CSV with gopkg.in/yaml.v3, which indents sequences, so without this a bundle
+// generated with --use-image-digests differs from one without it on nearly
+// every list rather than only on the image references.
+func formatCSVs(dir string) error {
+	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if ext := filepath.Ext(path); ext != ".yaml" && ext != ".yml" {
+			return nil
+		}
+
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var meta struct {
+			Kind string `json:"kind"`
+		}
+		if err := yaml.Unmarshal(b, &meta); err != nil {
+			return fmt.Errorf("error reading %s: %v", path, err)
+		}
+		if meta.Kind != "ClusterServiceVersion" {
+			return nil
+		}
+
+		j, err := yaml.YAMLToJSON(b)
+		if err != nil {
+			return fmt.Errorf("error converting %s to JSON: %v", path, err)
+		}
+		out, err := yaml.JSONToYAML(j)
+		if err != nil {
+			return fmt.Errorf("error converting %s to YAML: %v", path, err)
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(path, out, info.Mode().Perm())
+	})
 }

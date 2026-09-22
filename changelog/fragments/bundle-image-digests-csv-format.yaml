@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      `generate bundle --use-image-digests` now writes the ClusterServiceVersion
+      with the same formatting as a bundle generated without it, so the two
+      differ only in their image references and `relatedImages`. Previously
+      every list in the CSV was re-indented.
+    kind: bugfix
+    breaking: false
