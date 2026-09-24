@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      For Helm-based operators, changes to dependent resources now trigger a reconcile
+      of the owning custom resource for resources that omit `metadata.namespace`, kinds
+      rendered both inside and outside the release namespace, resources with
+      `helm.sh/resource-policy: keep`, and cluster-scoped and cross-namespace resources.
+      Before, these changes waited for the next periodic reconcile.
+    kind: bugfix
+    breaking: false

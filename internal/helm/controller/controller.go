@@ -36,6 +36,7 @@ import (
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-lib/predicate"
+	helmclient "github.com/operator-framework/operator-sdk/internal/helm/client"
 	"github.com/operator-framework/operator-sdk/internal/helm/release"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
@@ -99,7 +100,11 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 // that adds watches for resources in released Helm charts.
 func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c controller.Controller) {
 	var m sync.RWMutex
-	watches := map[schema.GroupVersionKind]struct{}{}
+	type watchKey struct {
+		gvk         schema.GroupVersionKind
+		useOwnerRef bool
+	}
+	watches := map[watchKey]struct{}{}
 	releaseHook := func(release *rpb.Release) error {
 		owner := &unstructured.Unstructured{}
 		owner.SetGroupVersionKind(r.GVK)
@@ -123,17 +128,25 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 					return nil
 				}
 
-				m.RLock()
-				_, ok := watches[gvkDependent]
-				m.RUnlock()
-				if ok {
-					return nil
+				// Helm installs resources with an omitted namespace into the release namespace.
+				depNamespace := ""
+				if unstructuredObj.GetNamespace() == "" {
+					depNamespace = release.Namespace
 				}
 
 				restMapper := mgr.GetRESTMapper()
-				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent, "")
+				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent, depNamespace)
 				if err != nil {
 					return err
+				}
+				useOwnerRef = useOwnerRef && !helmclient.ContainsResourcePolicyKeep(unstructuredObj.GetAnnotations())
+
+				key := watchKey{gvkDependent, useOwnerRef}
+				m.RLock()
+				_, ok := watches[key]
+				m.RUnlock()
+				if ok {
+					return nil
 				}
 
 				if useOwnerRef { // Setup watch using owner references.
@@ -151,17 +164,18 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 						source.Kind(
 							mgr.GetCache(),
 							client.Object(unstructuredObj),
-							&libhandler.EnqueueRequestForAnnotation[client.Object]{Type: gvkDependent.GroupKind()},
+							&libhandler.EnqueueRequestForAnnotation[client.Object]{Type: r.GVK.GroupKind()},
 							predicate.DependentPredicate{}))
 					if err != nil {
 						return err
 					}
 				}
 				m.Lock()
-				watches[gvkDependent] = struct{}{}
+				watches[key] = struct{}{}
 				m.Unlock()
 				log.Info("Watching dependent resource", "ownerApiVersion", r.GVK.GroupVersion(),
-					"ownerKind", r.GVK.Kind, "apiVersion", gvkDependent.GroupVersion(), "kind", gvkDependent.Kind)
+					"ownerKind", r.GVK.Kind, "apiVersion", gvkDependent.GroupVersion(), "kind", gvkDependent.Kind,
+					"useOwnerRef", useOwnerRef)
 				return nil
 			}
 
