@@ -130,8 +130,14 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 					return nil
 				}
 
+				// Helm installs resources with an omitted namespace into the release namespace.
+				depNamespace := ""
+				if unstructuredObj.GetNamespace() == "" {
+					depNamespace = release.Namespace
+				}
+
 				restMapper := mgr.GetRESTMapper()
-				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent, "")
+				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent, depNamespace)
 				if err != nil {
 					return err
 				}
