@@ -106,6 +106,39 @@ metadata:
 	}
 }
 
+func TestWatchDependentResourcesMixedNamespaces(t *testing.T) {
+	ownerGVK := schema.GroupVersionKind{Group: "example.com", Version: "v1", Kind: "Nginx"}
+	restMapper := meta.NewDefaultRESTMapper(nil)
+	restMapper.Add(ownerGVK, meta.RESTScopeNamespace)
+	restMapper.Add(schema.GroupVersionKind{Version: "v1", Kind: "ConfigMap"}, meta.RESTScopeNamespace)
+
+	sameNamespace := `
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cm-same
+      namespace: ns`
+	otherNamespace := `
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cm-other
+      namespace: other`
+
+	// A List keeps item order, so both orders are exercised deterministically.
+	for _, items := range []string{sameNamespace + otherNamespace, otherNamespace + sameNamespace} {
+		r := &HelmOperatorReconciler{GVK: ownerGVK}
+		ctr := &fakeController{}
+		watchDependentResources(&fakeManager{restMapper: restMapper}, r, ctr)
+
+		manifest := "apiVersion: v1\nkind: List\nitems:" + items
+		assert.NoError(t, r.releaseHook(&rpb.Release{Namespace: "ns", Manifest: manifest}))
+		if assert.Len(t, ctr.sources, 2) {
+			assert.NotEqual(t, isAnnotationHandler(ctr.sources[0]), isAnnotationHandler(ctr.sources[1]))
+		}
+	}
+}
+
 func sourceHandler(src source.Source) handler.EventHandler {
 	return reflect.ValueOf(src).Elem().FieldByName("Handler").Interface().(handler.EventHandler)
 }
