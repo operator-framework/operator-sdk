@@ -164,7 +164,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 						source.Kind(
 							mgr.GetCache(),
 							client.Object(unstructuredObj),
-							&libhandler.EnqueueRequestForAnnotation[client.Object]{Type: gvkDependent.GroupKind()},
+							&libhandler.EnqueueRequestForAnnotation[client.Object]{Type: r.GVK.GroupKind()},
 							predicate.DependentPredicate{}))
 					if err != nil {
 						return err

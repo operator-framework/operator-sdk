@@ -15,19 +15,25 @@
 package controller
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	rpb "helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
@@ -147,6 +153,45 @@ func TestWatchDependentResourcesMixedNamespaces(t *testing.T) {
 		if assert.Len(t, ctr.sources, 2) {
 			assert.NotEqual(t, isAnnotationHandler(ctr.sources[0]), isAnnotationHandler(ctr.sources[1]))
 		}
+	}
+}
+
+func TestWatchDependentResourcesAnnotationHandlerEnqueuesOwner(t *testing.T) {
+	ownerGVK := schema.GroupVersionKind{Group: "example.com", Version: "v1", Kind: "Nginx"}
+	restMapper := meta.NewDefaultRESTMapper(nil)
+	restMapper.Add(ownerGVK, meta.RESTScopeNamespace)
+	restMapper.Add(schema.GroupVersionKind{Version: "v1", Kind: "ConfigMap"}, meta.RESTScopeNamespace)
+
+	r := &HelmOperatorReconciler{GVK: ownerGVK}
+	ctr := &fakeController{}
+	watchDependentResources(&fakeManager{restMapper: restMapper}, r, ctr)
+	manifest := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm
+  namespace: other`
+	assert.NoError(t, r.releaseHook(&rpb.Release{Namespace: "ns", Manifest: manifest}))
+	if !assert.Len(t, ctr.sources, 1) || !assert.True(t, isAnnotationHandler(ctr.sources[0])) {
+		return
+	}
+
+	owner := &unstructured.Unstructured{}
+	owner.SetGroupVersionKind(ownerGVK)
+	owner.SetNamespace("ns")
+	owner.SetName("nginx")
+	dependent := &unstructured.Unstructured{}
+	dependent.SetGroupVersionKind(schema.GroupVersionKind{Version: "v1", Kind: "ConfigMap"})
+	dependent.SetNamespace("other")
+	dependent.SetName("cm")
+	assert.NoError(t, libhandler.SetOwnerAnnotations(owner, dependent))
+
+	q := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[reconcile.Request]())
+	defer q.ShutDown()
+	h := sourceHandler(ctr.sources[0])
+	h.Delete(context.TODO(), event.DeleteEvent{Object: dependent}, q)
+	if assert.Equal(t, 1, q.Len()) {
+		req, _ := q.Get()
+		assert.Equal(t, types.NamespacedName{Namespace: "ns", Name: "nginx"}, req.NamespacedName)
 	}
 }
 
