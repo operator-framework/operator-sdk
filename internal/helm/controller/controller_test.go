@@ -89,6 +89,17 @@ metadata:
   namespace: other`,
 			expectAnnotations: true,
 		},
+		{
+			name: "Uses annotations when the dependent has the resource-policy keep annotation",
+			manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm
+  namespace: ns
+  annotations:
+    helm.sh/resource-policy: keep`,
+			expectAnnotations: true,
+		},
 	}
 
 	for _, c := range cases {

@@ -36,6 +36,7 @@ import (
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-lib/predicate"
+	helmclient "github.com/operator-framework/operator-sdk/internal/helm/client"
 	"github.com/operator-framework/operator-sdk/internal/helm/release"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
@@ -138,6 +139,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 				if err != nil {
 					return err
 				}
+				useOwnerRef = useOwnerRef && !helmclient.ContainsResourcePolicyKeep(unstructuredObj.GetAnnotations())
 
 				key := watchKey{gvkDependent, useOwnerRef}
 				m.RLock()

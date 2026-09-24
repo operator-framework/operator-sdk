@@ -77,7 +77,7 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 
 		// If the resource contains the Helm resource-policy keep annotation, then do not add
 		// the owner reference. So when the CR is deleted, Kubernetes won't GCs the resource.
-		if useOwnerRef && !containsResourcePolicyKeep(u.GetAnnotations()) {
+		if useOwnerRef && !ContainsResourcePolicyKeep(u.GetAnnotations()) {
 			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GetObjectKind().GroupVersionKind())
 			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
@@ -94,7 +94,8 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 	return resourceList, nil
 }
 
-func containsResourcePolicyKeep(annotations map[string]string) bool {
+// ContainsResourcePolicyKeep reports whether annotations carry the Helm resource-policy keep annotation.
+func ContainsResourcePolicyKeep(annotations map[string]string) bool {
 	if annotations == nil {
 		return false
 	}

@@ -74,6 +74,6 @@ func TestContainsResourcePolicyKeep(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, test.expectedVal, containsResourcePolicyKeep(test.input), test.name)
+		assert.Equal(t, test.expectedVal, ContainsResourcePolicyKeep(test.input), test.name)
 	}
 }
