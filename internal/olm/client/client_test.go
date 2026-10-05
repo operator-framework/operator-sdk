@@ -397,6 +397,10 @@ func (c *errClient) Patch(ctx context.Context, obj client.Object, patch client.P
 	return c.cli.Patch(ctx, obj, patch, opts...)
 }
 
+func (c *errClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return c.cli.Apply(ctx, obj, opts...)
+}
+
 func (c *errClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
 	return c.cli.DeleteAllOf(ctx, obj, opts...)
 }

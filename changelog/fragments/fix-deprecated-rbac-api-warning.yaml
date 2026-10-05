@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Avoid deprecated API warnings for RBAC rules that reference resources
+      with supported API versions.
+    kind: bugfix
+    breaking: false
