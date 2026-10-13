@@ -29,8 +29,10 @@ import (
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/sirupsen/logrus"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -44,6 +46,12 @@ const (
 	OLMStatusDescriptorsTest  = "olm-status-descriptors"
 	statusDescriptor          = "status"
 	specDescriptor            = "spec"
+
+	// scorecardNolintAnnotation is a golangci-lint-style per-object opt-out.
+	// The value is a comma-separated list of scorecard test names.
+	scorecardNolintAnnotation = "scorecard.operatorframework.io/nolint"
+	// olmStatusDescriptorsTestLabel is the public scorecard selector for this test.
+	olmStatusDescriptorsTestLabel = OLMStatusDescriptorsTest + "-test"
 )
 
 // BundleValidationTest validates an on-disk bundle
@@ -223,7 +231,7 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult
 	// otherwise check the spec
 	for _, cr := range crs {
 		if descriptor == statusDescriptor {
-			r = checkOwnedCSVStatusDescriptor(cr, bundle.CSV, r)
+			r = checkOwnedCSVStatusDescriptor(cr, bundle, r)
 		} else {
 			r = checkOwnedCSVSpecDescriptors(cr, bundle.CSV, r)
 		}
@@ -231,12 +239,12 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult
 	return r
 }
 
-func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
+func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, bundle *apimanifests.Bundle,
 	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 
 	var crdDescription *operatorsv1alpha1.CRDDescription
 
-	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+	for _, owned := range bundle.CSV.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == cr.GetKind() && owned.Version == cr.GroupVersionKind().Version {
 			crdDescription = &owned
 			break
@@ -257,10 +265,15 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	}
 
 	if !hasStatusDefinition {
-		r.Suggestions = append(r.Suggestions, fmt.Sprintf("%s does not have status spec. Note that "+
-			"all objects that represent a physical resource whose state may vary from the user's desired "+
-			"intent SHOULD have a spec and a status. "+
-			"More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status", crdDescription.Name))
+		if skipMissingStatusWarning(cr, bundle) {
+			r.Log += fmt.Sprintf("Skipping missing status warning for %s due to %s=%s\n",
+				crdDescription.Name, scorecardNolintAnnotation, olmStatusDescriptorsTestLabel)
+		} else {
+			r.Suggestions = append(r.Suggestions, fmt.Sprintf("%s does not have status spec. Note that "+
+				"all objects that represent a physical resource whose state may vary from the user's desired "+
+				"intent SHOULD have a spec and a status. "+
+				"More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status", crdDescription.Name))
+		}
 	}
 
 	if hasStatusDefinition && len(crdDescription.StatusDescriptors) == 0 {
@@ -392,4 +405,87 @@ func wrapResult(r scapiv1alpha3.TestResult) scapiv1alpha3.TestStatus {
 	return scapiv1alpha3.TestStatus{
 		Results: []scapiv1alpha3.TestResult{r},
 	}
+}
+
+// skipMissingStatusWarning reports whether the missing-status suggestion should
+// be omitted for this CR. The default remains a warning; authors opt out by
+// annotating the example CR or the matching CRD with
+// scorecard.operatorframework.io/nolint=olm-status-descriptors-test.
+func skipMissingStatusWarning(cr unstructured.Unstructured, bundle *apimanifests.Bundle) bool {
+	if hasScorecardNolint(cr.GetAnnotations(), olmStatusDescriptorsTestLabel) {
+		return true
+	}
+	if bundle == nil {
+		return false
+	}
+	gvk := cr.GroupVersionKind()
+	for _, crd := range bundle.V1CRDs {
+		if crd == nil {
+			continue
+		}
+		if !crdMatchesGVK(crd.Spec.Group, crd.Spec.Names.Kind, crdVersionNames(crd), gvk) {
+			continue
+		}
+		if hasScorecardNolint(crd.GetAnnotations(), olmStatusDescriptorsTestLabel) {
+			return true
+		}
+	}
+	for _, crd := range bundle.V1beta1CRDs {
+		if crd == nil {
+			continue
+		}
+		if !crdMatchesGVK(crd.Spec.Group, crd.Spec.Names.Kind, v1beta1CRDVersionNames(crd), gvk) {
+			continue
+		}
+		if hasScorecardNolint(crd.GetAnnotations(), olmStatusDescriptorsTestLabel) {
+			return true
+		}
+	}
+	return false
+}
+
+func crdVersionNames(crd *apiextv1.CustomResourceDefinition) []string {
+	names := make([]string, 0, len(crd.Spec.Versions))
+	for _, version := range crd.Spec.Versions {
+		names = append(names, version.Name)
+	}
+	return names
+}
+
+func v1beta1CRDVersionNames(crd *apiextv1beta1.CustomResourceDefinition) []string {
+	if len(crd.Spec.Versions) == 0 && crd.Spec.Version != "" {
+		return []string{crd.Spec.Version}
+	}
+	names := make([]string, 0, len(crd.Spec.Versions))
+	for _, version := range crd.Spec.Versions {
+		names = append(names, version.Name)
+	}
+	return names
+}
+
+func crdMatchesGVK(group, kind string, versions []string, gvk schema.GroupVersionKind) bool {
+	if !strings.EqualFold(kind, gvk.Kind) || group != gvk.Group {
+		return false
+	}
+	if len(versions) == 0 {
+		return true
+	}
+	for _, version := range versions {
+		if strings.EqualFold(version, gvk.Version) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasScorecardNolint(annotations map[string]string, testName string) bool {
+	if annotations == nil || testName == "" {
+		return false
+	}
+	for _, item := range strings.Split(annotations[scorecardNolintAnnotation], ",") {
+		if strings.EqualFold(strings.TrimSpace(item), testName) {
+			return true
+		}
+	}
+	return false
 }
