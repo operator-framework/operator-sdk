@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      Added a per-CRD opt-out for the scorecard `olm-status-descriptors`
+      missing-status warning. Annotate a CRD or an `alm-examples` Custom
+      Resource with `scorecard.operatorframework.io/nolint: olm-status-descriptors-test`
+      to skip the suggestion for CRDs that legitimately have no status. The
+      warning remains the default without the annotation.
+    kind: addition
+    breaking: false

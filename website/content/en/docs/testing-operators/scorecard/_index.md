@@ -185,6 +185,16 @@ The scorecard ships with pre-defined tests that are arranged into suites.
 | Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV.| olm-spec-descriptors-test |
 | Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV.| olm-status-descriptors-test |
 
+If an example Custom Resource has no `status`, `olm-status-descriptors-test` still passes and emits a suggestion that the CRD should include a status. That warning remains the default. To silence it for a CRD that legitimately has no status, add a golangci-lint-style annotation on the matching CRD or on that CR in `alm-examples`:
+
+```yaml
+metadata:
+  annotations:
+    scorecard.operatorframework.io/nolint: olm-status-descriptors-test
+```
+
+The value is a comma-separated list of scorecard test names. Only the missing-status suggestion is skipped; missing owned CRDs and missing status descriptors for CRs that do have a status are still reported.
+
 ## Scorecard Output
 
 The `--output` flag specifies the scorecard results output format.

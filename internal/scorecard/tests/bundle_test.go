@@ -24,6 +24,7 @@ import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -165,6 +166,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				},
 			}
+			bundle := &apimanifests.Bundle{CSV: &csv}
 
 			It("should pass when CR Object Descriptor is nil", func() {
 				cr := unstructured.Unstructured{
@@ -176,7 +178,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					Version: "v1",
 				})
 
-				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 			})
 
@@ -197,7 +199,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					Version: "v1",
 				})
 
-				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 			})
 
@@ -236,9 +238,140 @@ var _ = Describe("Basic and OLM tests", func() {
 					Version: "v1",
 				})
 
-				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
 				Expect(result.Suggestions).To(HaveLen(1))
 				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
+			})
+
+			It("should skip missing status warning when CR has nolint annotation", func() {
+				cr := unstructured.Unstructured{
+					Object: map[string]any{
+						"spec": map[string]any{
+							"spec": "val",
+						},
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:    "TestKind",
+					Group:   "test.example.com",
+					Version: "v1",
+				})
+				cr.SetAnnotations(map[string]string{
+					scorecardNolintAnnotation: olmStatusDescriptorsTestLabel,
+				})
+
+				result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
+				Expect(result.Suggestions).To(BeEmpty())
+				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
+				Expect(result.Log).To(ContainSubstring(scorecardNolintAnnotation))
+			})
+
+			It("should skip missing status warning when matching CRD has nolint annotation", func() {
+				cr := unstructured.Unstructured{
+					Object: map[string]any{
+						"spec": map[string]any{
+							"spec": "val",
+						},
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:    "TestKind",
+					Group:   "test.example.com",
+					Version: "v1",
+				})
+				annotatedBundle := &apimanifests.Bundle{
+					CSV: &csv,
+					V1CRDs: []*apiextv1.CustomResourceDefinition{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "tests.test.example.com",
+								Annotations: map[string]string{
+									scorecardNolintAnnotation: "olm-spec-descriptors-test, olm-status-descriptors-test",
+								},
+							},
+							Spec: apiextv1.CustomResourceDefinitionSpec{
+								Group: "test.example.com",
+								Names: apiextv1.CustomResourceDefinitionNames{Kind: "TestKind"},
+								Versions: []apiextv1.CustomResourceDefinitionVersion{
+									{Name: "v1"},
+								},
+							},
+						},
+					},
+				}
+
+				result = checkOwnedCSVStatusDescriptor(cr, annotatedBundle, result)
+				Expect(result.Suggestions).To(BeEmpty())
+				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
+			})
+
+			It("should still warn when CRD nolint annotation does not match the CR GVK", func() {
+				cr := unstructured.Unstructured{
+					Object: map[string]any{
+						"spec": map[string]any{
+							"spec": "val",
+						},
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:    "TestKind",
+					Group:   "test.example.com",
+					Version: "v1",
+				})
+				mismatchedBundle := &apimanifests.Bundle{
+					CSV: &csv,
+					V1CRDs: []*apiextv1.CustomResourceDefinition{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "others.other.example.com",
+								Annotations: map[string]string{
+									scorecardNolintAnnotation: olmStatusDescriptorsTestLabel,
+								},
+							},
+							Spec: apiextv1.CustomResourceDefinitionSpec{
+								Group: "other.example.com",
+								Names: apiextv1.CustomResourceDefinitionNames{Kind: "OtherKind"},
+								Versions: []apiextv1.CustomResourceDefinitionVersion{
+									{Name: "v1"},
+								},
+							},
+						},
+					},
+				}
+
+				result = checkOwnedCSVStatusDescriptor(cr, mismatchedBundle, result)
+				Expect(result.Suggestions).To(HaveLen(1))
+				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
+			})
+
+			It("should still fail missing status descriptors when CR has nolint annotation", func() {
+				csvWithoutStatusDescriptors := csv
+				csvWithoutStatusDescriptors.Spec.CustomResourceDefinitions.Owned = []operatorsv1alpha1.CRDDescription{
+					{
+						Name:    "Test",
+						Version: "v1",
+						Kind:    "TestKind",
+					},
+				}
+				cr := unstructured.Unstructured{
+					Object: map[string]any{
+						"status": map[string]any{
+							"status": "val",
+						},
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:    "TestKind",
+					Group:   "test.example.com",
+					Version: "v1",
+				})
+				cr.SetAnnotations(map[string]string{
+					scorecardNolintAnnotation: olmStatusDescriptorsTestLabel,
+				})
+
+				result = checkOwnedCSVStatusDescriptor(cr, &apimanifests.Bundle{CSV: &csvWithoutStatusDescriptors}, result)
+				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
+				Expect(result.Errors).To(ContainElement("Test does not have a status descriptor"))
 			})
 
 			It("should fail CRD with given GVK cannot be found", func() {
@@ -258,7 +391,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					Version: "unknown",
 				})
 
-				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
@@ -271,7 +404,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 
-				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
@@ -327,7 +460,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				})
 
 				Expect(func() {
-					result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+					result = checkOwnedCSVStatusDescriptor(cr, bundle, result)
 				}).NotTo(Panic())
 			})
 
