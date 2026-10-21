@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      Fixed `generate bundle` so that bundle metadata (`bundle.Dockerfile` and
+      `annotations.yaml`) references the scorecard config when the manifests are read
+      with `--input-dir`. Previously the config was written to the output directory
+      but looked up in the input directory, so the scorecard labels and `COPY` line
+      were omitted.
+    kind: bugfix
+    breaking: false

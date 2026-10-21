@@ -291,18 +291,32 @@ func (c bundleCmd) runMetadata() error {
 		}
 	}
 
-	scorecardConfigPath := filepath.Join(bundleRoot, scorecard.DefaultConfigDir, scorecard.ConfigFileName)
-
 	bundleMetadata := bundleutil.BundleMetaData{
 		BundleDir:            c.outputDir,
 		PackageName:          c.packageName,
 		Channels:             c.channels,
 		DefaultChannel:       c.defaultChannel,
 		OtherLabels:          metricsannotations.MakeBundleMetadataLabels(c.layout),
-		IsScoreConfigPresent: genutil.IsExist(scorecardConfigPath),
+		IsScoreConfigPresent: hasScorecardConfig(bundleRoot, c.outputDir),
 	}
 
 	return bundleMetadata.GenerateMetadata()
+}
+
+// hasScorecardConfig reports whether a scorecard config exists in any of the given
+// bundle directories. The config is written to the output directory by runManifests,
+// which differs from the input directory when manifests are read from --input-dir,
+// so both must be checked.
+func hasScorecardConfig(dirs ...string) bool {
+	for _, dir := range dirs {
+		if dir == "" {
+			continue
+		}
+		if genutil.IsExist(filepath.Join(dir, scorecard.DefaultConfigDir, scorecard.ConfigFileName)) {
+			return true
+		}
+	}
+	return false
 }
 
 // pinImages is used to replace all image tags in the given manifests with digests
