@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      `generate bundle` and `generate packagemanifests` now keep the order of
+      `spec.customresourcedefinitions.owned` from the base CSV, so the
+      `+operator-sdk:csv:customresourcedefinitions:order` marker and manual
+      ordering take effect in the generated CSV. Previously the list was
+      rewritten in the order the CRD manifests were read.
+    kind: bugfix
+    breaking: false

@@ -293,6 +293,53 @@ var _ = Describe("applyCustomResourceDefinitions", func() {
 			Kind:    "Memcached",
 		}))
 	})
+
+	It("should preserve the order of CRDs specified in CSV", func() {
+		newCRD := func(name, kind string) apiextv1.CustomResourceDefinition {
+			crd := apiextv1.CustomResourceDefinition{
+				Spec: apiextv1.CustomResourceDefinitionSpec{
+					Group: "Test",
+					Names: apiextv1.CustomResourceDefinitionNames{
+						Kind: kind,
+					},
+					Versions: []apiextv1.CustomResourceDefinitionVersion{
+						{
+							Name:   "v1",
+							Served: true,
+						},
+					},
+				}}
+			crd.SetName(name)
+			return crd
+		}
+		c = &collector.Manifests{}
+		c.V1CustomResourceDefinitions = []apiextv1.CustomResourceDefinition{
+			newCRD("a.test", "A"),
+			newCRD("b.test", "B"),
+			newCRD("c.test", "C"),
+		}
+
+		orderedCSV := operatorsv1alpha1.ClusterServiceVersion{
+			Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
+				CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
+					Owned: []operatorsv1alpha1.CRDDescription{
+						{Name: "b.test", Version: "v1", Kind: "B", DisplayName: "B first"},
+						{Name: "stale.test", Version: "v1", Kind: "Stale"},
+						{Name: "a.test", Version: "v1", Kind: "A", DisplayName: "A second"},
+					},
+				},
+			},
+		}
+
+		applyCustomResourceDefinitions(c, &orderedCSV)
+
+		By("test if CSV order is kept, stale CRDs are removed and new CRDs are appended")
+		Expect(orderedCSV.Spec.CustomResourceDefinitions.Owned).To(Equal([]operatorsv1alpha1.CRDDescription{
+			{Name: "b.test", Version: "v1", Kind: "B", DisplayName: "B first"},
+			{Name: "a.test", Version: "v1", Kind: "A", DisplayName: "A second"},
+			{Name: "c.test", Version: "v1", Kind: "C"},
+		}))
+	})
 })
 
 var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {

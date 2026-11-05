@@ -260,17 +260,11 @@ func newFieldRefEnvVar(name, fieldPath string) corev1.EnvVar {
 // with CustomResourceDefinitions in the collector.
 // customresourcedefinitions.required are left as-is, since they are
 // manually-defined values.
+// The order of descriptions already in csv is preserved, since it may have been
+// set by the customresourcedefinitions order marker or by hand. Descriptions for
+// CRDs not yet in csv are appended in collector order.
 func applyCustomResourceDefinitions(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) {
 	ownedDescs := []operatorsv1alpha1.CRDDescription{}
-	descMap := map[registry.DefinitionKey]operatorsv1alpha1.CRDDescription{}
-	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		defKey := registry.DefinitionKey{
-			Name:    owned.Name,
-			Version: owned.Version,
-			Kind:    owned.Kind,
-		}
-		descMap[defKey] = owned
-	}
 
 	var defKeys []registry.DefinitionKey
 	v1crdKeys := k8sutil.DefinitionsForV1CustomResourceDefinitions(c.V1CustomResourceDefinitions...)
@@ -282,15 +276,32 @@ func applyCustomResourceDefinitions(c *collector.Manifests, csv *operatorsv1alph
 		defKeys[i].Group = ""
 	}
 
+	collected := make(map[registry.DefinitionKey]bool, len(defKeys))
 	for _, defKey := range defKeys {
-		if owned, ownedExists := descMap[defKey]; ownedExists {
+		collected[defKey] = true
+	}
+
+	added := make(map[registry.DefinitionKey]bool, len(defKeys))
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		defKey := registry.DefinitionKey{
+			Name:    owned.Name,
+			Version: owned.Version,
+			Kind:    owned.Kind,
+		}
+		if collected[defKey] && !added[defKey] {
 			ownedDescs = append(ownedDescs, owned)
-		} else {
+			added[defKey] = true
+		}
+	}
+
+	for _, defKey := range defKeys {
+		if !added[defKey] {
 			ownedDescs = append(ownedDescs, operatorsv1alpha1.CRDDescription{
 				Name:    defKey.Name,
 				Version: defKey.Version,
 				Kind:    defKey.Kind,
 			})
+			added[defKey] = true
 		}
 	}
 
