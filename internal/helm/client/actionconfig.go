@@ -81,12 +81,14 @@ type actionConfigGetter struct {
 // Creates a new watcher for each namespace to not require cluster-wide secret access
 func (acg *actionConfigGetter) getWatchedSecretsForNamespace(namespace string) *WatchedSecrets {
 	acg.watchedSecretsMutex.Lock()
-	if _, found := acg.watchedSecrets[namespace]; !found {
-		acg.watchedSecrets[namespace] = NewWatchedSecrets(acg.kubeClientSet, namespace)
-		acg.watchedSecrets[namespace].Run()
+	defer acg.watchedSecretsMutex.Unlock()
+	ws, found := acg.watchedSecrets[namespace]
+	if !found {
+		ws = NewWatchedSecrets(acg.kubeClientSet, namespace)
+		ws.Run()
+		acg.watchedSecrets[namespace] = ws
 	}
-	acg.watchedSecretsMutex.Unlock()
-	return acg.watchedSecrets[namespace]
+	return ws
 }
 
 func (acg *actionConfigGetter) ActionConfigFor(obj client.Object) (*action.Configuration, error) {
