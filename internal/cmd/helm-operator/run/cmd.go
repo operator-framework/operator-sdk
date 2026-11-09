@@ -189,7 +189,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 
 		err := controller.Add(mgr, controller.WatchOptions{
 			GVK:                     w.GroupVersionKind,
-			ManagerFactory:          release.NewManagerFactory(mgr, acg, w.ChartDir),
+			ManagerFactory:          release.NewManagerFactory(mgr, acg, w.ChartDir, f.DisableDryRunOpenAPIValidation),
 			ReconcilePeriod:         reconcilePeriod,
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,

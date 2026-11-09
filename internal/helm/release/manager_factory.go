@@ -40,11 +40,13 @@ type managerFactory struct {
 	mgr      crmanager.Manager
 	acg      client.ActionConfigGetter
 	chartDir string
+
+	disableDryRunOpenAPIValidation bool
 }
 
 // NewManagerFactory returns a new Helm manager factory capable of installing and uninstalling releases.
-func NewManagerFactory(mgr crmanager.Manager, acg client.ActionConfigGetter, chartDir string) ManagerFactory {
-	return &managerFactory{mgr, acg, chartDir}
+func NewManagerFactory(mgr crmanager.Manager, acg client.ActionConfigGetter, chartDir string, disableDryRunOpenAPIValidation bool) ManagerFactory {
+	return &managerFactory{mgr, acg, chartDir, disableDryRunOpenAPIValidation}
 }
 
 func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues map[string]string, dryRunOption string) (Manager, error) {
@@ -90,6 +92,8 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		values:       values,
 		status:       types.StatusFor(cr),
 		dryRunOption: dryRunOption,
+
+		disableDryRunOpenAPIValidation: f.disableDryRunOpenAPIValidation,
 	}, nil
 }
 
