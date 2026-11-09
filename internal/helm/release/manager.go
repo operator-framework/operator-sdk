@@ -77,6 +77,8 @@ type manager struct {
 	chart             *cpb.Chart
 
 	dryRunOption string
+
+	disableDryRunOpenAPIValidation bool
 }
 
 type InstallOption func(*action.Install) error
@@ -162,6 +164,7 @@ func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true
 	upgrade.DryRunOption = m.dryRunOption
+	upgrade.DisableOpenAPIValidation = m.disableDryRunOpenAPIValidation
 	return upgrade.Run(name, chart, values)
 }
 

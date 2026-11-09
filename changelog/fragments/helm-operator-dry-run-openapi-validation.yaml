@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      For Helm-based operators, added the `--disable-dry-run-openapi-validation` flag. It skips the
+      OpenAPI validation in the dry-run upgrade that decides whether a release needs an upgrade, which
+      can use most of the CPU of a reconcile. Installs and upgrades are still validated.
+    kind: addition
+    breaking: false

@@ -41,6 +41,8 @@ type Flags struct {
 	SecureMetrics           bool
 	MetricsRequireRBAC      bool
 
+	DisableDryRunOpenAPIValidation bool
+
 	// If not nil, used to deduce which flags were set in the CLI.
 	flagSet *pflag.FlagSet
 }
@@ -67,6 +69,12 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"max-concurrent-reconciles",
 		runtime.NumCPU(),
 		"Maximum number of concurrent reconciles for controllers.",
+	)
+	flagSet.BoolVar(&f.DisableDryRunOpenAPIValidation,
+		"disable-dry-run-openapi-validation",
+		false,
+		"Skip OpenAPI schema validation in the dry-run upgrade that decides whether a release needs an upgrade."+
+			" Installs and upgrades are still validated.",
 	)
 
 	_ = flagSet.MarkDeprecated("config",

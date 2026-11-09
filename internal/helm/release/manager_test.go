@@ -15,19 +15,52 @@
 package release
 
 import (
+	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"helm.sh/helm/v3/pkg/action"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/resource"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+type fakeActionConfigGetter struct{}
+
+func (fakeActionConfigGetter) ActionConfigFor(crclient.Object) (*action.Configuration, error) {
+	return &action.Configuration{
+		Releases:   storage.Init(driver.NewMemory()),
+		KubeClient: &kubefake.PrintingKubeClient{Out: io.Discard},
+	}, nil
+}
+
+func TestNewManagerDryRunOpenAPIValidation(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "Chart.yaml"), []byte("apiVersion: v2\nname: test\nversion: 0.1.0\n"), 0o600))
+	cr := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": "test", "namespace": "ns"},
+		"spec":     map[string]any{},
+	}}
+
+	for _, disable := range []bool{false, true} {
+		m, err := NewManagerFactory(nil, fakeActionConfigGetter{}, dir, disable).NewManager(cr, nil, "")
+		require.NoError(t, err)
+		assert.Equal(t, disable, m.(*manager).disableDryRunOpenAPIValidation)
+	}
+}
 
 func newTestUnstructured(containers []any) *unstructured.Unstructured {
 	return &unstructured.Unstructured{

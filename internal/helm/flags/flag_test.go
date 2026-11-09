@@ -67,6 +67,27 @@ var _ = Describe("Flags", func() {
 	})
 })
 
+var _ = Describe("Helm action flags", func() {
+	var (
+		f       *flags.Flags
+		flagSet *pflag.FlagSet
+	)
+	BeforeEach(func() {
+		f = &flags.Flags{}
+		flagSet = pflag.NewFlagSet("test", pflag.ExitOnError)
+		f.AddTo(flagSet)
+	})
+
+	It("validates the dry-run upgrade by default", func() {
+		parseArgs(flagSet)
+		Expect(f.DisableDryRunOpenAPIValidation).To(BeFalse())
+	})
+	It("disables the dry-run upgrade validation when the flag is set", func() {
+		parseArgs(flagSet, "--disable-dry-run-openapi-validation")
+		Expect(f.DisableDryRunOpenAPIValidation).To(BeTrue())
+	})
+})
+
 func parseArgs(fs *pflag.FlagSet, extraArgs ...string) {
 	Expect(fs.Parse(extraArgs)).To(Succeed())
 }
