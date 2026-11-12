@@ -237,12 +237,12 @@ func configureWatchNamespaces(options *manager.Options, log logr.Logger) {
 		}
 	} else {
 		log.Info("Watching all namespaces")
-		// in order to properly establish cluster level watches
-		// we need to override the default label selectors configured
-		// in later config steps
-		namespaceConfigs[metav1.NamespaceAll] = cache.Config{
-			LabelSelector: labels.Everything(),
-		}
+		// Leave LabelSelector unset so dependent resources fall back to the
+		// chart-label DefaultLabelSelector set in configureSelectors. A
+		// selector here would take precedence over it and cache every object
+		// of each dependent kind in the cluster. Watched custom resources keep
+		// their own ByObject selector.
+		namespaceConfigs[metav1.NamespaceAll] = cache.Config{}
 	}
 
 	options.Cache.DefaultNamespaces = namespaceConfigs

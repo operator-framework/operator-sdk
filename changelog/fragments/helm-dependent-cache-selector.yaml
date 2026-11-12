@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      For Helm-based operators that watch all namespaces, the cache for dependent
+      resources is filtered by the `helm.sdk.operatorframework.io/chart` label again,
+      instead of holding every object of each dependent kind in the cluster.
+    kind: bugfix
+    breaking: false
