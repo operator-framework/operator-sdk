@@ -15,11 +15,25 @@
 package controller
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	rpb "helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	helmtypes "github.com/operator-framework/operator-sdk/internal/helm/internal/types"
+	"github.com/operator-framework/operator-sdk/internal/helm/release"
 )
 
 func TestDetermineReconcilePeriod(t *testing.T) {
@@ -250,4 +264,166 @@ func Test_readBoolAnnotationWithDefault(t *testing.T) {
 			}
 		})
 	}
+}
+
+var testGVK = schema.GroupVersionKind{Group: "example.com", Version: "v1", Kind: "App"}
+
+func TestReconcileSetsObservedGeneration(t *testing.T) {
+	deployed := &rpb.Release{Name: "app", Version: 2, Manifest: "kind: ConfigMap\n"}
+
+	tests := []struct {
+		name          string
+		status        map[string]any
+		manager       *fakeManager
+		wantErr       bool
+		wantCondition helmtypes.HelmAppConditionType
+	}{
+		{
+			name:          "Should record the generation on install",
+			manager:       &fakeManager{installed: &rpb.Release{Name: "app", Version: 1, Manifest: "kind: ConfigMap\n"}},
+			wantCondition: helmtypes.ConditionDeployed,
+		},
+		{
+			name:          "Should record the generation on upgrade",
+			status:        deployedStatus(t, 1, deployed),
+			manager:       &fakeManager{isInstalled: true, upgradeRequired: true, upgraded: deployed},
+			wantCondition: helmtypes.ConditionDeployed,
+		},
+		{
+			// The release is unchanged, so only the generation differs from
+			// the stored status.
+			name:          "Should record the generation when the release is unchanged",
+			status:        deployedStatus(t, 1, deployed),
+			manager:       &fakeManager{isInstalled: true, reconciled: deployed},
+			wantCondition: helmtypes.ConditionDeployed,
+		},
+		{
+			name:          "Should record the generation when sync fails",
+			status:        deployedStatus(t, 1, deployed),
+			manager:       &fakeManager{isInstalled: true, syncErr: errors.New("sync failed")},
+			wantErr:       true,
+			wantCondition: helmtypes.ConditionIrreconcilable,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			obj := newApp(2, tc.status)
+			c := fake.NewClientBuilder().WithObjects(obj).WithStatusSubresource(obj).
+				WithInterceptorFuncs(interceptor.Funcs{SubResourceUpdate: typedStatusToMap}).Build()
+			r := HelmOperatorReconciler{
+				Client:         c,
+				EventRecorder:  record.NewFakeRecorder(10),
+				GVK:            testGVK,
+				ManagerFactory: fakeManagerFactory{tc.manager},
+			}
+
+			_, err := r.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: "ns", Name: "app"}})
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			got := &unstructured.Unstructured{}
+			got.SetGroupVersionKind(testGVK)
+			require.NoError(t, c.Get(context.Background(), client.ObjectKeyFromObject(obj), got))
+			status := helmtypes.StatusFor(got)
+			assert.Equal(t, got.GetGeneration(), status.ObservedGeneration)
+			assert.True(t, hasCondition(status, tc.wantCondition), "missing condition %s", tc.wantCondition)
+		})
+	}
+}
+
+// typedStatusToMap converts the typed status that updateResourceStatus stores
+// in the unstructured object into a map, as JSON serialization does for a real
+// API server. The fake client cannot deep copy the typed value.
+func typedStatusToMap(ctx context.Context, c client.Client, subResource string, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	if u, ok := obj.(*unstructured.Unstructured); ok {
+		if s, ok := u.Object["status"].(*helmtypes.HelmAppStatus); ok {
+			m, err := s.ToMap()
+			if err != nil {
+				return err
+			}
+			u.Object["status"] = m
+		}
+	}
+	return c.SubResource(subResource).Update(ctx, obj, opts...)
+}
+
+func newApp(generation int64, status map[string]any) *unstructured.Unstructured {
+	obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"replicas": int64(1)}}}
+	obj.SetGroupVersionKind(testGVK)
+	obj.SetNamespace("ns")
+	obj.SetName("app")
+	obj.SetGeneration(generation)
+	obj.SetFinalizers([]string{uninstallFinalizer})
+	if status != nil {
+		obj.Object["status"] = status
+	}
+	return obj
+}
+
+func deployedStatus(t *testing.T, generation int64, rel *rpb.Release) map[string]any {
+	t.Helper()
+	status := &helmtypes.HelmAppStatus{
+		Conditions: []helmtypes.HelmAppCondition{
+			{Type: helmtypes.ConditionInitialized, Status: helmtypes.StatusTrue},
+			{Type: helmtypes.ConditionDeployed, Status: helmtypes.StatusTrue, Reason: helmtypes.ReasonUpgradeSuccessful},
+		},
+		DeployedRelease:    &helmtypes.HelmAppRelease{Name: rel.Name, Manifest: rel.Manifest},
+		ObservedGeneration: generation,
+	}
+	m, err := status.ToMap()
+	require.NoError(t, err)
+	return m
+}
+
+func hasCondition(status *helmtypes.HelmAppStatus, ct helmtypes.HelmAppConditionType) bool {
+	for _, c := range status.Conditions {
+		if c.Type == ct && c.Status == helmtypes.StatusTrue {
+			return true
+		}
+	}
+	return false
+}
+
+type fakeManagerFactory struct {
+	manager *fakeManager
+}
+
+func (f fakeManagerFactory) NewManager(*unstructured.Unstructured, map[string]string, string) (release.Manager, error) {
+	return f.manager, nil
+}
+
+type fakeManager struct {
+	isInstalled     bool
+	upgradeRequired bool
+	syncErr         error
+	installed       *rpb.Release
+	upgraded        *rpb.Release
+	reconciled      *rpb.Release
+}
+
+func (m *fakeManager) ReleaseName() string                      { return "app" }
+func (m *fakeManager) IsInstalled() bool                        { return m.isInstalled }
+func (m *fakeManager) IsUpgradeRequired() bool                  { return m.upgradeRequired }
+func (m *fakeManager) Sync() error                              { return m.syncErr }
+func (m *fakeManager) RollBack(...release.RollBackOption) error { return nil }
+func (m *fakeManager) CleanupRelease(string) (bool, error)      { return true, nil }
+
+func (m *fakeManager) InstallRelease(...release.InstallOption) (*rpb.Release, error) {
+	return m.installed, nil
+}
+
+func (m *fakeManager) UpgradeRelease(...release.UpgradeOption) (*rpb.Release, *rpb.Release, error) {
+	return m.upgraded, m.upgraded, nil
+}
+
+func (m *fakeManager) ReconcileRelease(context.Context) (*rpb.Release, error) {
+	return m.reconciled, nil
+}
+
+func (m *fakeManager) UninstallRelease(...release.UninstallOption) (*rpb.Release, error) {
+	return nil, nil
 }
