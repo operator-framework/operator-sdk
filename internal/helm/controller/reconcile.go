@@ -106,6 +106,8 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 	status := types.StatusFor(o)
 	originalStatus := types.StatusFor(o.DeepCopy())
+	// Set first so every status write records it, even when the release is unchanged.
+	status.ObservedGeneration = o.GetGeneration()
 	log = log.WithValues("release", manager.ReleaseName())
 
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}

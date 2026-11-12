@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      For Helm-based operators, the custom resource status now records
+      `observedGeneration`, the `metadata.generation` that its conditions and
+      `deployedRelease` describe, so clients can tell whether the status
+      reflects the current spec.
+    kind: addition
+    breaking: false

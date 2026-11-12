@@ -75,8 +75,9 @@ const (
 )
 
 type HelmAppStatus struct {
-	Conditions      []HelmAppCondition `json:"conditions"`
-	DeployedRelease *HelmAppRelease    `json:"deployedRelease,omitempty"`
+	Conditions         []HelmAppCondition `json:"conditions"`
+	DeployedRelease    *HelmAppRelease    `json:"deployedRelease,omitempty"`
+	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
 }
 
 func (s *HelmAppStatus) ToMap() (map[string]any, error) {
