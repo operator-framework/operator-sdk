@@ -33,7 +33,7 @@ and what they do:
 
 - `kubeconfig` string - path to kubeconfig. This option sets the kubeconfig for internal plugins and sets the `KUBECONFIG` env var for external plugins
 - `output` string - sets output format. Valid values: `text` and `json`
-- `plugin-dir` string - path to scorecard plugin directory. This is the directory where the plugins are run from, and all executable files in a `bin` subdirectory of the `plugin-dir` are automtically run by default.
+- `plugin-dir` string - path to scorecard plugin directory. This is the directory where the plugins are run from, and all executable files in a `bin` subdirectory of the `plugin-dir` are automatically run by default.
 - `plugins` - an array of objects that configure both internal and external scorecard plugins
 
 The objects in the `plugins` configuration have 3 elements: `name`, `disable`, and either `basic`, `olm`, or `external`. The `name` is

@@ -23,7 +23,7 @@ status: implementable
 - \[x\] Enhancement is `implementable`
 - \[x\] Design details are appropriately documented from clear requirements
 - \[ \] Test plan is defined
-- \[ \] Accceptance criteria
+- \[ \] Acceptance criteria
 - \[ \] User-facing documentation is created
 
 

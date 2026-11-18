@@ -98,7 +98,7 @@ assertions necessary.
 Errors and Warnings are both implementations of the `error` interface
 and need `ErrorType`, `Level`, `Field`, `BadValue`, and `Detail`, which
 are all initialized by arbitrary strings. When using Golang, validator
-authors can use the [operator-framework/api][of-api] impementation of
+authors can use the [operator-framework/api][of-api] implementation of
 [errors and warnings][errors-pkg]
 
 ```go

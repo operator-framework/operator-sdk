@@ -134,7 +134,7 @@ marginally higher maintenance burden when changing Ansible versions.
 
 1. We will add at least one test for each molecule scenario (when possible).
 1. We will add tests that make Ansible emit messages of each type that it supports,
-    to help ensure that we can easily catch changes to the messag format.
+    to help ensure that we can easily catch changes to the message format.
 1. We will add a test scenario that uses `up local`.
 
 ### Graduation Criteria

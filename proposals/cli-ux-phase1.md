@@ -32,7 +32,7 @@ newcomers.
 
 ## Goal
 
-Implement a proof-of-concept with an initial set of CLI additions to support a simplified workflow for an Operator SDK user to run an Operator SDK-developed project in a cluster using the Operator Lifecyle Manager (OLM).
+Implement a proof-of-concept with an initial set of CLI additions to support a simplified workflow for an Operator SDK user to run an Operator SDK-developed project in a cluster using the Operator Lifecycle Manager (OLM).
 
 ## Use cases
 

@@ -241,7 +241,7 @@ make prerelease
 
 All of the following changes should be present (and no others).
 
-- Makefile: IMAGE_VERSION should be modified to the upcoming release tag. (This variable ensures sampleprojects have been tagged correctpy priror to the release commit.)
+- Makefile: IMAGE_VERSION should be modified to the upcoming release tag. (This variable ensures sampleprojects have been tagged correctpy prior to the release commit.)
 - changelog/: all fragments should be deleted and consolidated into the new file `changelog/generated/v1.3.1.md`
 - docs: If there are migration steps, a new migration doc will be created. The installation docs should also contain a link update.
 - testdata/: Generated samples and tests should have version bumps
