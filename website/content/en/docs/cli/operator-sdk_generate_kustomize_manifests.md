@@ -47,7 +47,7 @@ operator-sdk generate kustomize manifests [flags]
 ### Options
 
 ```
-      --apis-dir string     Root directory for API type defintions
+      --apis-dir string     Root directory for API type definitions
   -h, --help                help for manifests
       --input-dir string    Directory containing existing kustomize files
       --interactive         When set to false, if no kustomize base exists, an interactive command prompt will be presented to accept non-inferrable metadata

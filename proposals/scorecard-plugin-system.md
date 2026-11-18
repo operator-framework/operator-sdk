@@ -25,7 +25,7 @@ binary.
 ### Plugin System
 
 In order to increase the flexibility of the user defined tests and allow users to implement more complex E2E style tests for scorecard,
-the user-defined tests will be implemented via a plugin system. Users would put executable files (etiher scripts or binaries) in a directory
+the user-defined tests will be implemented via a plugin system. Users would put executable files (either scripts or binaries) in a directory
 in the project root, for example `<root>/scorecard/bin` (the path can be configured via a flag). The scorecard would run all executable files
 sequentially and each plugin is expected to print out the result as JSON to stdout. If a plugin has a fatal error or does not return a valid JSON
 result, the scorecard will have a default failure JSON result that specifies that the binary/script failed to run along with what the executable printed
@@ -55,7 +55,7 @@ type ScorecardTestSpec struct {
 type ScorecardTestResults struct {
     // Log contains the scorecard's current log.
     Log string `json:"log"`
-    // Results is an array of ScorecardResult for each suite of the curent scorecard run.
+    // Results is an array of ScorecardResult for each suite of the current scorecard run.
     Results []ScorecardResult `json:"results"`
 }
 

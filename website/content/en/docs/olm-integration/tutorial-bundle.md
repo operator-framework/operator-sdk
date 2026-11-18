@@ -262,7 +262,7 @@ memcached-operator bundle image for version v0.0.1, run:
 $ make bundle-build bundle-push BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
-Now you can build and push the catalog by running `catalog-*` Makfile targets, which use
+Now you can build and push the catalog by running `catalog-*` Makefile targets, which use
 the Operator package manager tool [`opm`][opm] to [build][doc-index-build] the catalog:
 
 ```console

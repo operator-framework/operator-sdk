@@ -169,7 +169,7 @@ specifying `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment
 variables in the Operator deployment. (These variables can be handled by OLM.)
 
 Proxy-friendly Operators are responsible for inspecting the Operator
-environment and passing these variables along to the rquired operands.
+environment and passing these variables along to the required operands.
 For more information and examples, please see the type-specific docs:
 - [Ansible][ansible-proxy-vars]
 - [Golang][go-proxy-vars]
